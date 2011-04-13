@@ -11,7 +11,7 @@ public class testklient1{
   public String name;
 
   private void sendStr(String msg){
-      out.write(name + " says: " + msg);
+      out.write(msg);
       out.flush();
   }
 
@@ -24,7 +24,7 @@ public class testklient1{
       testklient1 tk = new testklient1();
     try{
       tk.sc = new Scanner(System.in);
-      tk.client = new Socket("localhost", 4711);
+      tk.client = new Socket("localhost", 1233);
       System.out.println("connected");
       tk.out = new PrintWriter(tk.client.getOutputStream());
       tk.in = new BufferedReader(new InputStreamReader(tk.client.getInputStream()));
@@ -34,7 +34,7 @@ public class testklient1{
     tk.name = tk.sc.nextLine();
     while (true){
       System.out.println("Msg att skicka: ");
-      tk.sendStr(tk.sc.nextLine());
+      tk.sendInt(tk.sc.nextInt());
     }
   }
 }
