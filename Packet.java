@@ -1,4 +1,6 @@
 
+import java.util.List;
+
 class Packet
 {
 	private Buffer m_buffer;
@@ -41,6 +43,21 @@ class Packet
 			m_buffer.addData((byte)1);
 		else
 			m_buffer.addData((byte)0);
+	}
+	
+	public <T> void add(List<T> list)
+	{
+		for(T t : list)
+		{
+			if(t instanceof String)
+				add((String)t);
+			else if(t instanceof Integer)
+				add((Integer)t);
+			else if(t instanceof Boolean)
+				add((Boolean)t);
+			else if(t instanceof List)
+				add((List)t);
+		}
 	}
 	/*
 	public void add(List<String> list)
