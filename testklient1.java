@@ -27,7 +27,7 @@ public class testklient1{
     out.flush();
 	}
 	catch(IOException e){
-	client.close();
+		System.out.println("Något gick fel när det skulle skickas.");
 	}
   }
 
