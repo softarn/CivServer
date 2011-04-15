@@ -55,8 +55,8 @@ class Packet
 	{
 	}
 	*/
-	public Buffer getBuffer()
+	public byte [] getBuffer()
 	{
-		return m_buffer;
+		return m_buffer.getByteArray();
 	}
 }

@@ -4,14 +4,42 @@ import java.util.Scanner;
 
 public class testklient1
 {
-	Socket client;
-	OutputStream out;
-	BufferedReader in;
-	Scanner sc;
-	public String name;
+	private Socket 			m_clientSocket;
+	private OutputStream 	m_outStream;
+	//BufferedReader in;
+	//Scanner sc;
+	//public String name;
+	
+	public testklient1(String host, int port)
+	{
+		try
+		{
+			m_clientSocket 	= new Socket(host, port);
+			m_outStream 	= m_clientSocket.getOutputStream();
+			
+			System.out.println("[+] Connected to server \""+ host +"\" on port "+ port);
+		}
+		catch(UnknownHostException e)
+		{
+			e.printStackTrace();
+		}
+		catch(IOException e)
+		{
+			e.printStackTrace();
+		}
+	}
 
 	public void send(Packet p)
 	{
+		try
+		{
+			m_outStream.write(p.getBuffer());
+			m_outStream.flush();
+		} 
+		catch (IOException ioe)
+		{
+			ioe.printStackTrace();
+		}
 	}
 /*
 	private void sendString(String msg)
@@ -93,4 +121,12 @@ public class testklient1
 		}
 	}
 */
+	public static void main(String [] args)
+	{
+		testklient1 k = new testklient1("130.229.128.72", 1234);
+		
+		Packet test = new Packet((byte)2);
+		test.add(1337);
+		k.send(test);
+	}
 }
