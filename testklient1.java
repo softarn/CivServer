@@ -4,7 +4,6 @@ import java.util.Scanner;
 
 public class testklient1
 {
-
 	Socket client;
 	OutputStream out;
 	BufferedReader in;
@@ -89,4 +88,5 @@ public class testklient1
 			tk.sendByte((byte)tk.sc.nextInt());
 		}
 	}
+
 }
