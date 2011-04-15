@@ -5,7 +5,7 @@ import java.util.Scanner;
 public class testklient1{
 
   Socket client;
-  PrintWriter out;
+  OutputStream out;
   BufferedReader in;
   Scanner sc;
 
@@ -37,13 +37,19 @@ public class testklient1{
       tk.sc = new Scanner(System.in);
       tk.client = new Socket("localhost", 1234);
       System.out.println("connected");
-      tk.out = new PrintWriter(tk.client.getOutputStream());
+      tk.out = tk.client.getOutputStream();
       tk.in = new BufferedReader(new InputStreamReader(tk.client.getInputStream()));
     } 
     catch (IOException ioe) { ioe.printStackTrace(); }
     while (true){
-      System.out.println("Msg att skicka: ");
-      tk.sendInt(tk.sc.nextInt());
+      tk.sendInt(2, 9);
+      System.out.println("Skickade: 2, 9");
+      try{
+        System.out.println("Ska ta emot");
+        for (;;) {
+          System.out.println(tk.in.readLine());
+        }
+      } catch (IOException ioe) {System.out.println("Fångat");}
     }
   }
 }
