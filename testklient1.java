@@ -14,7 +14,7 @@ public class testklient1{
       out.write(msg);
       out.flush();
   }
-
+//skickar en int
   private void sendInt(int msg){
 //	byte[] newMsg = new byte[4];
 //	newMsg[0] = (byte)(msg >> 24);
