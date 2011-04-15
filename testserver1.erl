@@ -3,7 +3,7 @@
 -export([init/0, accept/2]).
 
 init() ->
-	{ok, ListenSocket} = gen_tcp:listen(1233, [binary, {active, false}]),
+	{ok, ListenSocket} = gen_tcp:listen(1234, [binary, {active, false}]),
 	accept(ListenSocket, 0).
 
 accept(ListenSocket, Count) ->
@@ -12,20 +12,24 @@ accept(ListenSocket, Count) ->
 	spawn(?MODULE, accept, [ListenSocket, Count+1]),
 	recv(Socket).
 
+decodeHeader(<<Header:8, Rest/binary>>) -> %unsigned, TODO: FIXA SIGNED!
+	io:format("~w\n", [Header]),
+	io:format("~w\n", [Rest]),
+	{Header, Rest}.
+
+decodeInteger(<<Int:32, Rest/binary>>) ->
+	{Int, Rest}.
+
 recv(Socket) ->
 	case gen_tcp:recv(Socket, 0) of
 		{ok, Data} -> %Data = Binärt
-			[Header|_T] = bitstring_to_list(Data), %Header = first byte of received packet as integer
-			io:format("~w\n", [bit_size(<<Header>>)]),
-			io:format("~w\n", [Header]),
-			case Header of
-				1 ->
-					io:format("~p\n", ["Confirm'd"]);
-
+			io:format("tog emot ok, Data\n"),
+			{Header, Rest} = decodeHeader(Data),
+			case Header of 
 				2 ->
-					io:format("~p\n", ["Hello World"]);
-				_ -> 
-					io:format("~p\n", ["Nope"])
+					{Int, Rest2} = decodeInteger(Rest),
+					io:format("Hello World! Versionsnr: "),
+					io:format("~w\n", [Int])
 			end,
 			recv(Socket);
 
