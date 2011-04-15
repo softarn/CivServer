@@ -5,7 +5,7 @@ import java.util.Scanner;
 public class testklient1{
 
   Socket client;
-  OutputStream out;
+  PrintWriter out;
   BufferedReader in;
   Scanner sc;
 
@@ -37,7 +37,7 @@ public class testklient1{
       tk.sc = new Scanner(System.in);
       tk.client = new Socket("localhost", 1234);
       System.out.println("connected");
-      tk.out = tk.client.getOutputStream();
+      tk.out = new PrintWriter(tk.client.getOutputStream());
       tk.in = new BufferedReader(new InputStreamReader(tk.client.getInputStream()));
     } 
     catch (IOException ioe) { ioe.printStackTrace(); }
