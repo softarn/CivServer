@@ -1,0 +1,62 @@
+
+class Packet
+{
+	private Buffer m_buffer;
+	
+	public Packet(byte header)
+	{
+		m_buffer = new Buffer();
+		m_buffer.addData(header);
+	}
+	
+	// Method to add a string to the buffer
+	public void add(String string)
+	{
+		byte[] message = new byte[string.length() + 1];
+		for(int i = 0; i < string.length(); ++i)
+			message[i] = (byte)string.charAt(i);
+		
+		// Null termination
+		message[string.length()] = 0;
+		
+		m_buffer.addData(message, message.length);
+	}
+	
+	// Method to add an integer to the buffer
+	public void add(int integer)
+	{
+		byte[] newMsg = new byte[4];
+		newMsg[0] = (byte)(integer >> 24);
+		newMsg[1] = (byte)((integer << 8) >> 24);
+		newMsg[2] = (byte)((integer << 16) >> 24);
+		newMsg[3] = (byte)((integer << 24) >> 24);
+		
+		m_buffer.addData(newMsg, newMsg.length);
+	}
+	
+	// Method to add a boolean to the buffer
+	public void add(boolean bool)
+	{
+		if(bool)
+			m_buffer.addData((byte)1);
+		else
+			m_buffer.addData((byte)0);
+	}
+	/*
+	public void add(List<String> list)
+	{
+	}
+	
+	public void add(List<Integer> list)
+	{
+	}
+	
+	public void add(List<List<String>> list)
+	{
+	}
+	*/
+	public Buffer getBuffer()
+	{
+		return m_buffer;
+	}
+}

@@ -10,6 +10,10 @@ public class testklient1
 	Scanner sc;
 	public String name;
 
+	public void send(Packet p)
+	{
+	}
+/*
 	private void sendString(String msg)
 	{
 		byte[] message = new byte[msg.length() + 1];
@@ -88,5 +92,5 @@ public class testklient1
 			tk.sendByte((byte)tk.sc.nextInt());
 		}
 	}
-
+*/
 }
