@@ -13,9 +13,12 @@ public class testklient1
 
 	private void sendString(String msg)
 	{
-		byte[] message = new byte[msg.length()];
+		byte[] message = new byte[msg.length() + 1];
 		for(int i = 0; i < msg.length(); ++i)
 			message[i] = (byte)msg.charAt(i);
+		
+		// Null termination
+		message[msg.length()] = 0;
 		
 		try
 		{
