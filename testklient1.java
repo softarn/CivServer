@@ -16,7 +16,12 @@ public class testklient1{
   }
 
   private void sendInt(int msg){
-    out.write(msg);
+	byte[] newMsg = new byte[4];
+	newMsg[0] = (byte)(msg >> 24);
+	newMsg[1] = (byte)((msg << 8) >> 24);
+	newMsg[2] = (byte)((msg << 16) >> 24);
+	newMsg[3] = (byte)((msg << 24) >> 24);
+    out.write(newMsg);
     out.flush();
   }
 
