@@ -76,7 +76,7 @@ recv(Socket) ->
 					io:format("~w\n", [PversionInt]),
 					case PversionInt =:= ?PROTOCOLVERSION of
 						true ->
-							Response = list_to_binary([<<3?HEADER>>, "Welcome to the real world\0"]),
+							Response = list_to_binary([<<3?HEADER>>]),
 							gen_tcp:send(Socket, Response);
 						false ->
 							createFailPacket(<<0?INTEGER>>, <<Header?HEADER>>, Socket)
