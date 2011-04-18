@@ -1,7 +1,7 @@
 -module(testserver1).
 
 -export([init/0, accept/2]).
-
+-define(CHARACTER, :8/unsigned-big-integer).
 -define(INTEGER, :32/signed-big-integer).
 -define(BOOLEAN, :8/signed-big-integer).
 -define(HEADER, :8/signed-big-integer).
@@ -22,6 +22,17 @@ decodeHeader(<<Head?HEADER, RestOfPacket/binary>>) -> % Tar ut den första byten
 
 decodeInteger(<<Int?INTEGER, RestOfPacket/binary>>) -> % Tar ut de första 4 bytes och tolkar som Integer utifrån protokollet.
 	{Int, RestOfPacket}.
+
+decodeString(Package) ->
+	{String, RestOfPacket} = decodeString(Package, []).
+
+decodeString(<<Byte?CHARACTER, RestOfPacket/binary>>, List) -> % Läser den första byte av Paketet ända tills \0. Returnerar {Strängen, Resterande paketet}
+	case Byte of
+		0 ->
+			{lists:reverse(List), RestOfPacket};
+		_ ->
+			decodeString(RestOfPacket, [Byte|List])
+	end.
 
 getFailMsg(FailureType) ->
 	case FailureType of
@@ -53,8 +64,10 @@ getFailMsg(FailureType) ->
 			Msg = "Out of range\0";
 		12 ->
 			Msg = "Building does not exist\0"
-end,
-Msg.
+	end,
+	Msg.
+
+
 
 createFailPacket(<<FailureID?INTEGER>>, <<ReqHeader?HEADER>>, Socket) -> % 1:Number to identify failure. 2:Head of failed package. NEGATIVT FAILUREID FUNGERAR EJ MED LIST2BINARY 
 	io:format("Inne i createFailPacket\n"),
@@ -69,13 +82,20 @@ recv(Socket) ->
 	case gen_tcp:recv(Socket, 0) of
 		{ok, Packet} -> 
 			{Header, PacketAfterHeader} = decodeHeader(Packet),
+
 			case Header of 
-				2 ->
-					{PversionInt, RestOfPacket} = decodeInteger(PacketAfterHeader),
-					io:format("PversionInt = "), 
-					io:format("~w\n", [PversionInt]),
-					case PversionInt =:= ?PROTOCOLVERSION of
+				2 -> % Hello World
+					{ProtocolVersion, PacketAfterInt1} = decodeInteger(PacketAfterHeader),
+					io:format("ProtocolVersion = "), 
+					io:format("~w\n", [ProtocolVersion]),
+
+					case ProtocolVersion =:= ?PROTOCOLVERSION of
 						true ->
+							{PlayerName, PacketAfterStr} = decodeString(PacketAfterInt1),
+							io:format("Playernane= "), 
+							io:format("~p\n", [PlayerName]),
+							io:format("RestofPacket= "), 
+							io:format("~p\n", [PacketAfterStr]),
 							Response = list_to_binary([<<3?HEADER>>]),
 							gen_tcp:send(Socket, Response);
 						false ->
