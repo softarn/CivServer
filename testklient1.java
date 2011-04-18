@@ -175,10 +175,12 @@ public class testklient1
 */
 	public static void main(String [] args)
 	{
-		testklient1 k = new testklient1("localhost", 1234);//130.229.128.72", 1234);
+		testklient1 k = new testklient1("130.237.238.235", 1234);//130.229.128.72", 1234);
 		
 		Packet test = new Packet((byte)2);
 		test.add(0);
+		test.add("Kalle");
+		test.add("Hej");
 		k.send(test);
 	}
 }
