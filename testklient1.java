@@ -4,8 +4,9 @@ import java.util.Scanner;
 
 public class testklient1
 {
-	private Socket 			m_clientSocket;
+	private Socket 		m_clientSocket;
 	private OutputStream 	m_outStream;
+	private InputStream	m_inStream;
 	//BufferedReader in;
 	//Scanner sc;
 	//public String name;
@@ -16,6 +17,7 @@ public class testklient1
 		{
 			m_clientSocket 	= new Socket(host, port);
 			m_outStream 	= m_clientSocket.getOutputStream();
+			m_inStream	= m_clientSocket.getInputStream();
 			
 			System.out.println("[+] Connected to server \""+ host +"\" on port "+ port);
 		}
@@ -40,6 +42,58 @@ public class testklient1
 		{
 			ioe.printStackTrace();
 		}
+		receive();
+	}
+
+	public void receive()		// Waits for an answer from the server and parses what it gets.
+	{
+		try
+		{
+			int header = m_inStream.read();		// First the header.
+			if(header == 3)
+			{
+				System.out.println("Welcome to the Real World");
+			}
+			else if(header == 0)			// Possible fail'd.
+			{
+				System.out.println("fail'd");
+				int theFail = m_inStream.read();
+				System.out.println(theFail);
+				System.out.println("Fail'd\nRequest that fail'd: " + theFail + "\n" + receiveString());
+			}
+		}catch(IOException e)
+		{
+			e.printStackTrace();
+		}	
+	}
+
+	public String receiveString() // To receive Strings from the server.
+	{
+		System.out.println("loop");
+		String toReturn = "";
+		for(;;)
+		{
+			try
+			{
+				int chara = m_inStream.read();
+				if(chara == -1)
+				{
+					break;
+				}
+				else if(chara == 0)
+				{
+					break;
+				}
+				else
+				{
+					toReturn+=(char)chara;
+				}
+			}catch(IOException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		return toReturn;
 	}
 /*
 	private void sendString(String msg)
