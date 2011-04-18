@@ -178,7 +178,7 @@ public class testklient1
 		testklient1 k = new testklient1("130.229.128.72", 1234);
 		
 		Packet test = new Packet((byte)2);
-		test.add(1337);
+		test.add(0);
 		k.send(test);
 	}
 }
