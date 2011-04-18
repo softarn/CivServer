@@ -1,7 +1,6 @@
 
 #include "serializer.h"
 #include "buffer.h"
-#include <boost/scoped_array.hpp>
 
 
 #include <arpa/inet.h>
@@ -33,7 +32,7 @@ template <> void Serializer::put(const int8_t &b)
 
 template <> void Serializer::get(int8_t &b)
 {
-	put(reinterpret_cast<uint8_t &>(b));
+	get(reinterpret_cast<uint8_t &>(b));
 }
 
 

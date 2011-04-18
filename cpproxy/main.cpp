@@ -15,22 +15,28 @@ int main()
 	try
 	{
 		Socket socket;
-		socket.connect("130.229.128.72", 1233);
+		// socket.connect("130.229.128.72", 1233);
+		socket.connect("localhost", 1234);
 
-		std::string s = "Ohai";
-		int8_t header = 1;
+		int8_t header = 2;
 		socket.send(header);
-		socket.send(12345);
+		socket.send(int(0));
+		socket.send(std::string("Kebab"));
 
-		char lol[1];
+
 
 		std::cout << "Receiving...\n";
 
-		std::cout << socket.recv(lol, sizeof(lol)) << std::endl;
+		header = socket.recv<int8_t>();
+		//int failure = socket.recv<int>();
+		//int8_t h = socket.recv<int8_t>();
 
-		for(unsigned int i = 0; i < sizeof(lol); ++i)
-			std::cout << lol[i];
-		std::cout << std::endl;
+		std::cout << "Header: " << int(header) << std::endl;
+		//std::cout << "Failure: " << failure << std::endl;
+		//std::cout << "Failed header: " << h << std::endl;
+
+		//std::cout << socket.recv<std::string>() << std::endl;
+
 	}
 	catch(std::exception &e)
 	{

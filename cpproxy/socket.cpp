@@ -40,6 +40,7 @@ void Socket::connect(const std::string &address, unsigned short port)
 
 unsigned int Socket::send(const char *data, unsigned int size)
 {
+	std::cout << "Sending " << size << " bytes\n";
 	int sendSize = ::send(m_socket, data, size, 0);
 	if(sendSize < 0)
 		throw std::runtime_error("Unable to send");
