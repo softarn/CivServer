@@ -80,6 +80,8 @@ recv(Socket) ->
 							gen_tcp:send(Socket, Msg);
 						false ->
 							createFailPacket(<<0?INTEGER>>, <<Header?HEADER>>, Socket)
+
+						createFailPacket(<<0?INTEGER>>, <<Header?HEADER>>, Socket)
 					end
 			end,
 			recv(Socket);
