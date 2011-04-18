@@ -175,7 +175,7 @@ public class testklient1
 */
 	public static void main(String [] args)
 	{
-		testklient1 k = new testklient1("130.229.128.72", 1234);
+		testklient1 k = new testklient1("localhost", 1234);//130.229.128.72", 1234);
 		
 		Packet test = new Packet((byte)2);
 		test.add(0);

@@ -71,17 +71,15 @@ recv(Socket) ->
 			{Header, PacketAfterHeader} = decodeHeader(Packet),
 			case Header of 
 				2 ->
-					{Int, RestOfMsg2} = decodeInteger(PacketAfterHeader),
-					io:format("Int = "), 
-					io:format("~w\n", [Int]),
-					case Int =:= ?PROTOCOLVERSION of
+					{PversionInt, RestOfPacket} = decodeInteger(PacketAfterHeader),
+					io:format("PversionInt = "), 
+					io:format("~w\n", [PversionInt]),
+					case PversionInt =:= ?PROTOCOLVERSION of
 						true ->
-							Msg = list_to_binary([3]),
-							gen_tcp:send(Socket, Msg);
+							Response = list_to_binary([<<3?HEADER>>, "Welcome to the real world\0"]),
+							gen_tcp:send(Socket, Response);
 						false ->
 							createFailPacket(<<0?INTEGER>>, <<Header?HEADER>>, Socket)
-
-						createFailPacket(<<0?INTEGER>>, <<Header?HEADER>>, Socket)
 					end
 			end,
 			recv(Socket);
