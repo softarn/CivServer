@@ -60,7 +60,7 @@ createFailPacket(<<FailureID?INTEGER>>, <<ReqHeader?HEADER>>, Socket) -> % 1:Num
 	io:format("Inne i createFailPacket\n"),
 	FailText = getFailMsg(FailureID), % Text that describes the failure
 	io:format(FailText),
-	FailMsg = list_to_binary([0?HEADER, FailureID, ReqHeader, FailText]),
+	FailMsg = list_to_binary([<<0?HEADER>>, FailureID, ReqHeader, FailText]),
 	%io:format("~w\n", [FailMsg]),
 	gen_tcp:send(Socket, FailMsg),
 	FailMsg.
@@ -79,12 +79,7 @@ recv(Socket) ->
 							Msg = list_to_binary([3]),
 							gen_tcp:send(Socket, Msg);
 						false ->
-							createFailPacket(<<0?INTEGER>>, Header, Socket)
-							%B1 = <<0:8>>,
-							%B2 = <<0:32>>,
-							%FailMsg = list_to_binary([B1, B2, getFailMsg(0)]), 
-							%io:format("~w\n", [FailMsg]),
-							%gen_tcp:send(Socket, FailMsg)
+							createFailPacket(<<0?INTEGER>>, <<Header?HEADER>>, Socket)
 					end
 			end,
 			recv(Socket);
