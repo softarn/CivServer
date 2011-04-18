@@ -56,11 +56,11 @@ getFailMsg(FailureType) ->
 end,
 Msg.
 
-createFailPacket(<<FailureID?INTEGER>>, <<ReqHeader?INTEGER>>, Socket) -> % 1:Number to identify failure. 2:Head of failed package. NEGATIVT FAILUREID FUNGERAR EJ MED LIST2BINARY 
+createFailPacket(<<FailureID?INTEGER>>, <<ReqHeader?HEADER>>, Socket) -> % 1:Number to identify failure. 2:Head of failed package. NEGATIVT FAILUREID FUNGERAR EJ MED LIST2BINARY 
 	io:format("Inne i createFailPacket\n"),
 	FailText = getFailMsg(FailureID), % Text that describes the failure
 	io:format(FailText),
-	FailMsg = list_to_binary([FailureID, ReqHeader, FailText]),
+	FailMsg = list_to_binary([0?HEADER, FailureID, ReqHeader, FailText]),
 	%io:format("~w\n", [FailMsg]),
 	gen_tcp:send(Socket, FailMsg),
 	FailMsg.
@@ -79,7 +79,7 @@ recv(Socket) ->
 							Msg = list_to_binary([3]),
 							gen_tcp:send(Socket, Msg);
 						false ->
-							createFailPacket(<<0?INTEGER>>, <<Header?INTEGER>>, Socket)
+							createFailPacket(<<0?INTEGER>>, Header, Socket)
 							%B1 = <<0:8>>,
 							%B2 = <<0:32>>,
 							%FailMsg = list_to_binary([B1, B2, getFailMsg(0)]), 
