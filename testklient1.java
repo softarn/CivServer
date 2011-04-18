@@ -56,10 +56,9 @@ public class testklient1
 			}
 			else if(header == 0)			// Possible fail'd.
 			{
-				System.out.println("fail'd");
 				int theFail = m_inStream.read();
-				System.out.println(theFail);
-				System.out.println("Fail'd\nRequest that fail'd: " + theFail + "\n" + receiveString());
+				int reqFail = m_inStream.read();
+				System.out.println("Fail'd\nWhat fail: " + theFail + "\nRequest that fail'd: " + reqFail + "\n" + receiveString());
 			}
 		}catch(IOException e)
 		{
@@ -69,7 +68,6 @@ public class testklient1
 
 	public String receiveString() // To receive Strings from the server.
 	{
-		System.out.println("loop");
 		String toReturn = "";
 		for(;;)
 		{
