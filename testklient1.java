@@ -49,29 +49,34 @@ public class testklient1
 		try
 		{
 			int header = m_inStream.read();		// First the header.
-			System.out.println(header);
+
+			// Header 3, welcome to the real world.
 			if(header == 3)
 			{
 				return "Welcome to the Real World";
 			}
-			else if(header == 0)			// Possible fail'd.
+
+			// Header 0, fail'd.
+			else if(header == 0)
 			{
 				int theFail = m_inStream.read();
 				int reqFail = m_inStream.read();
 				System.out.println("Fail'd\nWhat fail: " + theFail + "\nRequest that fail'd: " + reqFail + "\n" + receiveString());
 				return "Fail'd";
 			}
+
+			// Header 1, the confirm'd, but right now we receive a string for testing purposes.
 			else if(header == 1)
 			{
-				return "Confirm'd";
+				return receiveString();
 			}
+
+			// Header 6, List-testing but listGameAnswer later.
 			else if(header == 6)
 			{
 				ArrayList toReturn = null;
 				int size = m_inStream.read();
-				System.out.println(size);
 				String type = receiveString();
-				System.out.println(type);
 				if(type.equals("String"))
 				{
 					toReturn = receiveListString(size);
@@ -155,6 +160,15 @@ public class testklient1
 		ArrayList<Integer> toReturn = new ArrayList<Integer>();
 		for(int i=0; i<size; i++)
 		{
+		/*	try
+			{
+				toReturn.add((int)m_inStream.read());
+			}
+			catch(IOException e)
+			{
+				e.printStackTrace();
+			}
+		*/
 			toReturn.add(receiveInt());
 		}
 		return toReturn;
@@ -180,12 +194,20 @@ public class testklient1
 		send(toSend);
 		return receive();
 	}
-
+	
+	// Method to test sending and receiving lists.
 	public String listTest(ArrayList list)
 	{
 		Packet toSend = new Packet((byte)13);
 		toSend.add(list);
 		send(toSend);
+		return receive();
+	}
+
+	// Method for testing-purposes
+	public String serverTest()
+	{
+		send(new Packet((byte)1));
 		return receive();
 	}
 
@@ -223,5 +245,6 @@ public class testklient1
 		skaMed.add("Hej");
 		skaMed.add("Magnus");
 		System.out.println(k.listTest(skaMed));
+		System.out.println(k.serverTest());
 	}
 }
