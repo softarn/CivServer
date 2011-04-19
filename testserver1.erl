@@ -52,11 +52,10 @@ readString(Socket) ->% Tar ut bytes tills /0 påträffas, tolkar sedan som Strin
 
 readString(Socket, List) ->
 	{ok, <<Char?CHARACTER>>} = gen_tcp:recv(Socket, 1),
-	io:format("~w\n", [Char]),
 	case Char of
 		0 ->
 			io:format("Read the following string: "),
-			io:format("~w\n", [lists:reverse(List)]),
+			io:format("~p\n", [lists:reverse(List)]),
 			lists:reverse(List);
 		_ ->
 			readString(Socket, [Char|List])
@@ -66,7 +65,6 @@ readList(Socket) ->
 	NumberOfElements = readInteger(Socket),
 	ElemType = readString(Socket),
 	readList(Socket, NumberOfElements, ElemType, []).
-
 
 readList(_, 0, _, List) ->
 	lists:reverse(List);
@@ -102,17 +100,47 @@ readPerhaps(Socket, "String") ->
 readPerhaps(Socket, "Boolean") ->
 	readBoolean(Socket).
 
+sendHeader(Socket, Header) ->
+	gen_tcp:send(Socket, <<Header?HEADER>>),
+	io:format("SendHeader sent: "),
+	io:format("~p\n", [Header]).
+
 sendString(Socket, List) ->
-	gen_tcp:send(Socket,list_to_binary(List)).
+	gen_tcp:send(Socket,list_to_binary(List)),
+	io:format("SendString sent: "),
+	io:format("~p\n", [List]).
 
 sendInteger(Socket, Int) ->
-	gen_tcp:send(Socket, Int).
+	gen_tcp:send(Socket, Int),
+	io:format("SendInteger sent: "),
+	io:format("~p\n", [Int]).
 
 sendBoolean(Socket, <<Bool?BOOLEAN>>) ->
-	gen_tcp:send(Socket, Bool).
+	gen_tcp:send(Socket, Bool),
+	io:format("SendBoolean sent: "),
+	io:format("~p\n", [Bool]).
 
-sendList(Socket, List) ->
-	gen_tcp:send(Socket, list_to_binary(List)).
+sendList(Socket, ElemType, List) ->
+	NumberOfElements = length(List),
+	Packet = list_to_binary([NumberOfElements, ElemType, List]),
+	gen_tcp:send(Socket, Packet),
+	io:format("SendList sent: "),
+	io:format("~p\n", [List]).
+
+sendPerhaps(Socket, false) ->
+	sendInteger(Socket, 0).
+
+sendPerhaps(Socket, true, Type, Elem) ->
+	sendInteger(Socket, 1),
+	sendString(Socket, Type),
+	case Type of
+		"Integer" ->
+			sendInteger(Socket, Type);
+		"String" ->
+			sendString(Socket, Type);
+		"Boolean" ->
+			sendBoolean(Socket, Type)
+	end.
 
 getFailMsg(FailureType) ->
 	case FailureType of
@@ -159,23 +187,20 @@ recv(Socket) ->
 	Header = readHeader(Socket),
 	case Header of 
 		 13 ->  
-			%io:format("Skickat");
 			TheList = readList(Socket),
 			io:format("Listan: "),
 			io:format("~p\n", [TheList]),
-			createFailPacket(<<10?INTEGER>>, <<Header?HEADER>>, Socket);
+			sendHeader(Socket, 6),
+			sendList(Socket, "String\0", ["Maggan\0", "Fredde\0", "Simon\0", "De var ett vackert par\0"]);
 		2 -> % Hello World
 			ProtocolVersion = readInteger(Socket),
 
 			case ProtocolVersion =:= ?PROTOCOLVERSION of
 				true ->
-					io:format("HEJ!"),
 					PlayerName = readString(Socket),
-					io:format("~w\n", [PlayerName]),
 					Response = list_to_binary([<<3?HEADER>>]),
 					gen_tcp:send(Socket, Response);
 				false ->
-					io:format("NEJ!"),
 					createFailPacket(<<0?INTEGER>>, <<Header?HEADER>>, Socket)
 			end
 	end,
