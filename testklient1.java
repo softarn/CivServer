@@ -126,11 +126,15 @@ public class testklient1
 	// Public method for connecting to the server.
 	public String connect(String name)
 	{
-		Packet toSend = new Packet((byte)2);
-		toSend.add(protocolVersion);
-		toSend.add(name);
-		send(toSend);
-		return receive();
+		Packet toSend = new Packet((byte)13);
+                send(toSend);
+		//toSend.add(protocolVersion);
+		String integer = receiveString();
+                //toSend.add(name);
+		//send(toSend);
+		//return receive();
+                System.out.println(integer);
+                return "hej";
 	}
 
 /*
@@ -155,7 +159,7 @@ public class testklient1
 */
 	public static void main(String [] args)
 	{
-		testklient1 k = new testklient1("localhost", 1233);//130.229.128.72", 1234);
+		testklient1 k = new testklient1("localhost", 1235);//130.229.128.72", 1234);
 		/*
 		Packet test = new Packet((byte)2);
 		test.add(0);
