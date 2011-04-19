@@ -46,6 +46,8 @@ class Packet
 	
 	public <T> void add(List<T> list)
 	{
+		add(list.size());
+		add("String");
 		for(T t : list)
 		{
 			if(t instanceof String)

@@ -1,5 +1,6 @@
 import java.io.*;
 import java.net.*;
+import java.util.ArrayList;
 
 public class testklient1
 {
@@ -59,6 +60,10 @@ public class testklient1
 				int reqFail = m_inStream.read();
 				System.out.println("Fail'd\nWhat fail: " + theFail + "\nRequest that fail'd: " + reqFail + "\n" + receiveString());
 				return "Fail'd";
+			}
+			else if(header == 1)
+			{
+				return "Confirm'd";
 			}
 		}catch(IOException e)
 		{
@@ -133,6 +138,14 @@ public class testklient1
 		return receive();
 	}
 
+	public String listTest(ArrayList list)
+	{
+		Packet toSend = new Packet((byte)13);
+		toSend.add(list);
+		send(toSend);
+		return receive();
+	}
+
 /*
 	private void sendInt(int msg)
 	{
@@ -155,7 +168,7 @@ public class testklient1
 */
 	public static void main(String [] args)
 	{
-		testklient1 k = new testklient1("localhost", 1233);//130.229.128.72", 1234);
+		testklient1 k = new testklient1("130.237.238.225", 1234);//130.229.128.72", 1234);
 		/*
 		Packet test = new Packet((byte)2);
 		test.add(0);
@@ -163,5 +176,9 @@ public class testklient1
 		k.send(test, true);
 		*/
 		System.out.println(k.connect("Kalle"));
+		ArrayList<String> skaMed = new ArrayList<String>();
+		skaMed.add("Hej");
+		skaMed.add("Magnus");
+		System.out.println(k.listTest(skaMed));
 	}
 }
