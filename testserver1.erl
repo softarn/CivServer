@@ -106,9 +106,10 @@ sendHeader(Socket, Header) ->
 	io:format("~p\n", [Header]).
 
 sendString(Socket, List) ->
-	gen_tcp:send(Socket,list_to_binary(List)),
+	NewList = List ++ "\0",
+	gen_tcp:send(Socket, NewList),
 	io:format("SendString sent: "),
-	io:format("~p\n", [List]).
+	io:format("~p\n", [NewList]).
 
 sendInteger(Socket, Int) ->
 	gen_tcp:send(Socket, Int),
@@ -122,7 +123,19 @@ sendBoolean(Socket, <<Bool?BOOLEAN>>) ->
 
 sendList(Socket, ElemType, List) ->
 	NumberOfElements = length(List),
-	Packet = list_to_binary([NumberOfElements, ElemType, List]),
+	NewType = ElemType ++ "\0",
+	case ElemType of 
+		"String" ->
+			NewList = [X ++ "\0"|| X <- List], % Lägger till nullterminering på alla strängar i listan
+			Packet = [NumberOfElements, NewType, NewList];
+	       	"Integer" ->
+			IntList = [<<X?INTEGER>> || X <- List], % Tolkar alla intar i listan som ?INTEGER
+		       	Packet = [NumberOfElements, NewType, IntList];
+		Other ->
+			io:format("Invalid ElemType in function sendList!"),
+			Packet = "Error!\0"
+	end,	       
+	
 	gen_tcp:send(Socket, Packet),
 	io:format("SendList sent: "),
 	io:format("~p\n", [List]).
@@ -135,11 +148,11 @@ sendPerhaps(Socket, true, Type, Elem) ->
 	sendString(Socket, Type),
 	case Type of
 		"Integer" ->
-			sendInteger(Socket, Type);
+			sendInteger(Socket, Elem);
 		"String" ->
-			sendString(Socket, Type);
+			sendString(Socket, Elem);
 		"Boolean" ->
-			sendBoolean(Socket, Type)
+			sendBoolean(Socket, Elem)
 	end.
 
 getFailMsg(FailureType) ->
@@ -186,12 +199,16 @@ createFailPacket(<<FailureID?INTEGER>>, <<ReqHeader?HEADER>>, Socket) -> % 1:Num
 recv(Socket) ->
 	Header = readHeader(Socket),
 	case Header of 
+		 1 ->
+			 sendHeader(Socket, 1),
+			 sendString(Socket, "hejsan");
 		 13 ->  
 			TheList = readList(Socket),
 			io:format("Listan: "),
 			io:format("~p\n", [TheList]),
 			sendHeader(Socket, 6),
-			sendList(Socket, "String\0", ["Maggan\0", "Fredde\0", "Simon\0", "De var ett vackert par\0"]);
+			%sendList(Socket, "Integer", [1, 2, 3, 4, 5, 6, 8]);
+			sendList(Socket, "String", ["Maggan", "Fredde", "Simon", "De var ett vackert par"]);
 		2 -> % Hello World
 			ProtocolVersion = readInteger(Socket),
 
