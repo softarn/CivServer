@@ -131,11 +131,15 @@ public class testklient1
 	// Public method for connecting to the server.
 	public String connect(String name)
 	{
-		Packet toSend = new Packet((byte)2);
-		toSend.add(protocolVersion);
-		toSend.add(name);
-		send(toSend);
-		return receive();
+		Packet toSend = new Packet((byte)13);
+                send(toSend);
+		//toSend.add(protocolVersion);
+		String integer = receiveString();
+                //toSend.add(name);
+		//send(toSend);
+		//return receive();
+                System.out.println(integer);
+                return "hej";
 	}
 
 	public String listTest(ArrayList list)
