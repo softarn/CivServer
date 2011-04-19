@@ -1,6 +1,5 @@
 import java.io.*;
 import java.net.*;
-import java.util.Scanner;
 
 public class testklient1
 {
@@ -9,9 +8,6 @@ public class testklient1
 	private InputStream	m_inStream;
 	private boolean		turn = false;
 	private final int	protocolVersion = 0;
-	//BufferedReader in;
-	//Scanner sc;
-	//public String name;
 	
 	public testklient1(String host, int port)
 	{
@@ -70,6 +66,34 @@ public class testklient1
 		}	
 		return "Fail'd";
 	}
+	private int receiveInt()
+	{
+		byte[] toParse = new byte[4];
+		try
+		{
+			m_inStream.read(toParse);
+		}catch(IOException e)
+		{
+			e.printStackTrace();
+		}
+		int toReturn = ((int)toParse[0]<<24)
+				+(makeInt(toParse[1])<<16)
+				+(makeInt(toParse[2])<<8)
+				+(makeInt(toParse[3]));
+		return toReturn;
+	}
+
+	private int makeInt(byte b)
+	{
+		if((int)b < 0)
+		{
+			return ((int)b)+256;
+		}
+		else
+		{
+			return (int)b;
+		}
+	}
 
 	private String receiveString() // To receive Strings from the server.
 	{
@@ -110,41 +134,6 @@ public class testklient1
 	}
 
 /*
-	private void sendString(String msg)
-	{
-		byte[] message = new byte[msg.length() + 1];
-		for(int i = 0; i < msg.length(); ++i)
-			message[i] = (byte)msg.charAt(i);
-		
-		// Null termination
-		message[msg.length()] = 0;
-		
-		try
-		{
-			out.write(message);
-			out.flush();
-		}
-		catch(IOException e)
-		{
-			System.out.println("Något gick fel när det skulle skickas.");
-		}
-		
-	}
-	
-
-	private void sendByte(byte msg)
-	{
-		try
-		{
-			out.write(msg);
-			out.flush();
-		}
-		catch(IOException e)
-		{
-			System.out.println("Något gick fel när det skulle skickas.");
-		}
-	}
-
 	private void sendInt(int msg)
 	{
 		byte[] newMsg = new byte[4];
@@ -163,31 +152,6 @@ public class testklient1
 		}
 	}
 
-	public static void main(String[] args)
-	{
-		testklient1 tk = new testklient1();
-		try
-		{
-			tk.sc = new Scanner(System.in);
-			tk.client = new Socket("localhost", 1233);
-			System.out.println("connected");
-			tk.out = tk.client.getOutputStream();
-			tk.in = new BufferedReader(new InputStreamReader(tk.client.getInputStream()));
-		} 
-		catch (IOException ioe)
-		{
-			ioe.printStackTrace();
-		}
-		
-		System.out.println("Name: ");
-		tk.name = tk.sc.nextLine();
-		while (true)
-		{
-			System.out.println("Msg att skicka: ");
-			//tk.sendInt(tk.sc.nextInt());
-			tk.sendByte((byte)tk.sc.nextInt());
-		}
-	}
 */
 	public static void main(String [] args)
 	{
