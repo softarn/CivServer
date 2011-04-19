@@ -112,12 +112,12 @@ sendString(Socket, List) ->
 	io:format("~p\n", [NewList]).
 
 sendInteger(Socket, Int) ->
-	gen_tcp:send(Socket, Int),
+	gen_tcp:send(Socket, <<Int?INTEGER>>),
 	io:format("SendInteger sent: "),
 	io:format("~p\n", [Int]).
 
-sendBoolean(Socket, <<Bool?BOOLEAN>>) ->
-	gen_tcp:send(Socket, Bool),
+sendBoolean(Socket, Bool) ->
+	gen_tcp:send(Socket, <<Bool?BOOLEAN>>),
 	io:format("SendBoolean sent: "),
 	io:format("~p\n", [Bool]).
 
@@ -127,10 +127,10 @@ sendList(Socket, ElemType, List) ->
 	case ElemType of 
 		"String" ->
 			NewList = [X ++ "\0"|| X <- List], % Lägger till nullterminering på alla strängar i listan
-			Packet = [NumberOfElements, NewType, NewList];
+			Packet = [<<NumberOfElements?INTEGER>>, NewType, NewList];
 	       	"Integer" ->
 			IntList = [<<X?INTEGER>> || X <- List], % Tolkar alla intar i listan som ?INTEGER
-		       	Packet = [NumberOfElements, NewType, IntList];
+		       	Packet = [<<NumberOfElements?INTEGER>>, NewType, IntList];
 		Other ->
 			io:format("Invalid ElemType in function sendList!"),
 			Packet = "Error!\0"
@@ -155,52 +155,56 @@ sendPerhaps(Socket, true, Type, Elem) ->
 			sendBoolean(Socket, Elem)
 	end.
 
+sendFailPacket(FailureID, ReqHeader, Socket) -> % 1:Number to identify failure. 2:Head of failed package. NEGATIVT FAILUREID FUNGERAR EJ MED LIST2BINARY 
+	io:format("Created the following failmsg: "),
+	FailText = getFailMsg(FailureID), % Text that describes the failure
+
+	sendHeader(Socket, 0),
+	sendInteger(Socket, FailureID),
+	sendHeader(Socket, ReqHeader),
+	sendString(Socket, FailText).
+
 getFailMsg(FailureType) ->
 	case FailureType of
 		-1 ->
-			Msg = "Invalid state\0";
+			Msg = "Invalid state";
 		0 ->
-			Msg = "Invalid protocol version\0";
+			Msg = "Invalid protocol version";
 		1 ->
-			Msg = "Name already exists\0";
+			Msg = "Name already exists";
 		2 ->
-			Msg = "Game does not exist\0";
+			Msg = "Game does not exist";
 		3 ->
-			Msg = "Game is locked\0";
+			Msg = "Game is locked";
 		4 ->
-			Msg = "Permission denied\0";
+			Msg = "Permission denied";
 		5 ->
-			Msg = "Occupied tile\0";
+			Msg = "Occupied tile";
 		6 ->
-			Msg = "No movement left\0";
+			Msg = "No movement left";
 		7 ->
-			Msg = "Invalid tile\0";
+			Msg = "Invalid tile";
 		8 ->
-			Msg = "Build in process\0";
+			Msg = "Build in process";
 		9 ->
-			Msg = "Building already exists\0";
+			Msg = "Building already exists";
 		10 ->
-			Msg = "Friendly fire is off\0";
+			Msg = "Friendly fire is off";
 		11 ->
-			Msg = "Out of range\0";
+			Msg = "Out of range";
 		12 ->
-			Msg = "Building does not exist\0"
+			Msg = "Building does not exist"
 	end,
 	Msg.
 
-createFailPacket(<<FailureID?INTEGER>>, <<ReqHeader?HEADER>>, Socket) -> % 1:Number to identify failure. 2:Head of failed package. NEGATIVT FAILUREID FUNGERAR EJ MED LIST2BINARY 
-	FailText = getFailMsg(FailureID), % Text that describes the failure
-	FailMsg = list_to_binary([<<0?HEADER>>, FailureID, ReqHeader, FailText]),
-	io:format("Created the following failmsg: "),
-	io:format("~w\n", [FailMsg]),
-	gen_tcp:send(Socket, FailMsg),
-	FailMsg.
 
 recv(Socket) ->
 	Header = readHeader(Socket),
 	case Header of 
 		 1 ->
+			 
 			 sendHeader(Socket, 1),
+			 sendInteger(Socket, 4),
 			 sendString(Socket, "hejsan");
 		 13 ->  
 			TheList = readList(Socket),
@@ -218,7 +222,8 @@ recv(Socket) ->
 					Response = list_to_binary([<<3?HEADER>>]),
 					gen_tcp:send(Socket, Response);
 				false ->
-					createFailPacket(<<0?INTEGER>>, <<Header?HEADER>>, Socket)
+					readString(Socket),
+					sendFailPacket(0, Header, Socket)
 			end
 	end,
 	recv(Socket).
