@@ -47,7 +47,25 @@ class Packet
 	public <T> void add(List<T> list)
 	{
 		add(list.size());
-		add("String");
+		T test = list.get(0);
+
+		if(test instanceof String)
+		{
+			add("String");
+		}
+		else if(test instanceof Integer)
+		{
+			add("Integer");
+		}
+		else if(test instanceof Boolean)
+		{
+			add("Boolean");
+		}
+		else if(test instanceof List)
+		{
+			add("List");
+		}
+		
 		for(T t : list)
 		{
 			if(t instanceof String)

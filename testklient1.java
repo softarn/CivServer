@@ -49,9 +49,9 @@ public class testklient1
 		try
 		{
 			int header = m_inStream.read();		// First the header.
+			System.out.println(header);
 			if(header == 3)
 			{
-				System.out.println("Welcome to the Real World");
 				return "Welcome to the Real World";
 			}
 			else if(header == 0)			// Possible fail'd.
@@ -65,12 +65,31 @@ public class testklient1
 			{
 				return "Confirm'd";
 			}
+			else if(header == 6)
+			{
+				ArrayList toReturn = null;
+				int size = m_inStream.read();
+				System.out.println(size);
+				String type = receiveString();
+				System.out.println(type);
+				if(type.equals("String"))
+				{
+					toReturn = receiveListString(size);
+				}
+				else if(type.equals("Integer"))
+				{
+					toReturn = receiveListInteger(size);
+				}
+				return toReturn.toString();
+			}
 		}catch(IOException e)
 		{
 			e.printStackTrace();
 		}	
 		return "Fail'd";
 	}
+
+	// Läser in ett heltal från inStream:en.
 	private int receiveInt()
 	{
 		byte[] toParse = new byte[4];
@@ -88,6 +107,7 @@ public class testklient1
 		return toReturn;
 	}
 
+	// Gör om 4 bytes till ett heltal.
 	private int makeInt(byte b)
 	{
 		if((int)b < 0)
@@ -99,8 +119,9 @@ public class testklient1
 			return (int)b;
 		}
 	}
-
-	private String receiveString() // To receive Strings from the server.
+	
+	// To receive Strings from the server.
+	private String receiveString() 
 	{
 		String toReturn = "";
 		for(;;)
@@ -128,18 +149,36 @@ public class testklient1
 		return toReturn;
 	}
 
+	// Läser in en lista och returnerar den.
+	private ArrayList<Integer> receiveListInteger(int size)
+	{
+		ArrayList<Integer> toReturn = new ArrayList<Integer>();
+		for(int i=0; i<size; i++)
+		{
+			toReturn.add(receiveInt());
+		}
+		return toReturn;
+	}
+
+	// Läser in en lista och returnerar den.
+	private ArrayList<String> receiveListString(int size)
+	{
+		ArrayList<String> toReturn = new ArrayList<String>();
+		for(int i=0; i<size; i++)
+		{
+			toReturn.add(receiveString());
+		}
+		return toReturn;
+	}
+
 	// Public method for connecting to the server.
 	public String connect(String name)
 	{
-		Packet toSend = new Packet((byte)13);
-                send(toSend);
-		//toSend.add(protocolVersion);
-		String integer = receiveString();
-                //toSend.add(name);
-		//send(toSend);
-		//return receive();
-                System.out.println(integer);
-                return "hej";
+		Packet toSend = new Packet((byte)2);
+		toSend.add(protocolVersion);
+                toSend.add(name);
+		send(toSend);
+		return receive();
 	}
 
 	public String listTest(ArrayList list)
