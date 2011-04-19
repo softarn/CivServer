@@ -7,6 +7,8 @@ public class testklient1
 	private Socket 		m_clientSocket;
 	private OutputStream 	m_outStream;
 	private InputStream	m_inStream;
+	private boolean		turn = false;
+	private final int	protocolVersion = 0;
 	//BufferedReader in;
 	//Scanner sc;
 	//public String name;
@@ -31,7 +33,8 @@ public class testklient1
 		}
 	}
 
-	public void send(Packet p)
+	// Sends the packet.
+	private void send(Packet p)
 	{
 		try
 		{
@@ -42,10 +45,9 @@ public class testklient1
 		{
 			ioe.printStackTrace();
 		}
-		receive();
 	}
 
-	public void receive()		// Waits for an answer from the server and parses what it gets.
+	private String receive()		// Waits for an answer from the server and parses what it gets.
 	{
 		try
 		{
@@ -53,20 +55,23 @@ public class testklient1
 			if(header == 3)
 			{
 				System.out.println("Welcome to the Real World");
+				return "Welcome to the Real World";
 			}
 			else if(header == 0)			// Possible fail'd.
 			{
 				int theFail = m_inStream.read();
 				int reqFail = m_inStream.read();
 				System.out.println("Fail'd\nWhat fail: " + theFail + "\nRequest that fail'd: " + reqFail + "\n" + receiveString());
+				return "Fail'd";
 			}
 		}catch(IOException e)
 		{
 			e.printStackTrace();
 		}	
+		return "Fail'd";
 	}
 
-	public String receiveString() // To receive Strings from the server.
+	private String receiveString() // To receive Strings from the server.
 	{
 		String toReturn = "";
 		for(;;)
@@ -93,6 +98,17 @@ public class testklient1
 		}
 		return toReturn;
 	}
+
+	// Public method for connecting to the server.
+	public String connect(String name)
+	{
+		Packet toSend = new Packet((byte)2);
+		toSend.add(protocolVersion);
+		toSend.add(name);
+		send(toSend);
+		return receive();
+	}
+
 /*
 	private void sendString(String msg)
 	{
@@ -175,11 +191,13 @@ public class testklient1
 */
 	public static void main(String [] args)
 	{
-		testklient1 k = new testklient1("130.237.238.235", 1233);//130.229.128.72", 1234);
-		
+		testklient1 k = new testklient1("localhost", 1233);//130.229.128.72", 1234);
+		/*
 		Packet test = new Packet((byte)2);
 		test.add(0);
 		test.add("Kalle");
-		k.send(test);
+		k.send(test, true);
+		*/
+		System.out.println(k.connect("Kalle"));
 	}
 }
