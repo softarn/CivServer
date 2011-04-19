@@ -8,7 +8,7 @@ public class testklient1
 	private OutputStream 	m_outStream;
 	private InputStream	m_inStream;
 	private boolean		turn = false;
-	private final int	protocolVersion = 0;
+	private final int	protocolVersion = 1;
 	
 	public testklient1(String host, int port)
 	{
@@ -59,7 +59,7 @@ public class testklient1
 			// Header 0, fail'd.
 			else if(header == 0)
 			{
-				int theFail = m_inStream.read();
+				int theFail = receiveInt();
 				int reqFail = m_inStream.read();
 				System.out.println("Fail'd\nWhat fail: " + theFail + "\nRequest that fail'd: " + reqFail + "\n" + receiveString());
 				return "Fail'd";
@@ -68,14 +68,14 @@ public class testklient1
 			// Header 1, the confirm'd, but right now we receive a string for testing purposes.
 			else if(header == 1)
 			{
-				return receiveString();
+				return receiveInt() + " " + receiveString();
 			}
 
 			// Header 6, List-testing but listGameAnswer later.
 			else if(header == 6)
 			{
 				ArrayList toReturn = null;
-				int size = m_inStream.read();
+				int size = receiveInt();
 				String type = receiveString();
 				if(type.equals("String"))
 				{
