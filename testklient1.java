@@ -1,6 +1,6 @@
 import java.io.*;
 import java.net.*;
-import java.util.ArrayList;
+import java.util.*;
 
 public class testklient1
 {
@@ -8,7 +8,7 @@ public class testklient1
 	private OutputStream 	m_outStream;
 	private InputStream	m_inStream;
 	private boolean		turn = false;
-	private final int	protocolVersion = 1;
+	private final int	protocolVersion = 0;
 	
 	public testklient1(String host, int port)
 	{
@@ -185,6 +185,67 @@ public class testklient1
 		return toReturn;
 	}
 
+	// Method for reading a boolean from the inputStream.
+	private boolean receiveBool()
+	{
+		boolean bool = false;
+		int boolVal = 0;
+		try
+		{
+			boolVal = m_inStream.read();
+		}
+		catch(IOException e)
+		{
+			e.printStackTrace();
+		}
+		if(boolVal != 0)
+		{
+			bool = true;
+		}
+		return bool;
+	}
+
+	// Method to receive the perhaps-type according to the protocol;
+	private List receivePerhaps()
+	{
+		List toReturn = null;
+		boolean read = receiveBool();
+		if(read)
+		{
+			String type = receiveString();
+			if(type.equals("String"))
+			{
+				toReturn = new ArrayList<String>();
+				toReturn.add(receiveString());
+			}
+			else if(type.equals("Integer"))
+			{
+				toReturn = new ArrayList<Integer>();
+				toReturn.add(receiveInt());
+			}	
+			else if(type.equals("List"))
+			{
+				int size = receiveInt();
+				String type2 = receiveString();
+				if(type2.equals("String"))
+				{
+					toReturn = new ArrayList<List>();
+					toReturn.add(receiveListString(size));
+				}
+				else if(type2.equals("Integer"))
+				{
+					toReturn = new ArrayList<List>();
+					toReturn.add(receiveListInteger(size));
+				}
+			}
+		}
+		else
+		{
+			receiveString();
+		}
+		return toReturn;
+	}
+
 	// Public method for connecting to the server.
 	public String connect(String name)
 	{
@@ -233,7 +294,7 @@ public class testklient1
 */
 	public static void main(String [] args)
 	{
-		testklient1 k = new testklient1("130.237.238.225", 1234);//130.229.128.72", 1234);
+		testklient1 k = new testklient1("localhost", 1234);//130.229.128.72", 1234);
 		/*
 		Packet test = new Packet((byte)2);
 		test.add(0);
