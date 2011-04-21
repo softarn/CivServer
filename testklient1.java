@@ -44,8 +44,11 @@ public class testklient1
 		}
 	}
 
-	private String receive()		// Waits for an answer from the server and parses what it gets.
+	// Waits for an answer from the server and parses what it gets.
+	// Puts what it gets into an object of the Result class, which is then returned.
+	private Result receive()
 	{
+		Result toReturn = new Result();
 		try
 		{
 			int header = m_inStream.read();		// First the header.
@@ -53,45 +56,37 @@ public class testklient1
 			// Header 3, welcome to the real world.
 			if(header == 3)
 			{
-				return "Welcome to the Real World";
+				toReturn.addOkMsg("Welcome to the Real World");
 			}
 
 			// Header 0, fail'd.
 			else if(header == 0)
 			{
-				int theFail = receiveInt();
-				int reqFail = m_inStream.read();
-				System.out.println("Fail'd\nWhat fail: " + theFail + "\nRequest that fail'd: " + reqFail + "\n" + receiveString());
-				return "Fail'd";
+				toReturn.add(false);
+				toReturn.addFailNumber(receiveInt());
+				toReturn.addRequestFail(m_inStream.read());
+				toReturn.addFailMsg(receiveString());
 			}
 
 			// Header 1, the confirm'd, but right now we receive a string for testing purposes.
 			else if(header == 1)
 			{
-				return receiveInt() + " " + receiveString();
+				toReturn.addRequestOk(m_inStream.read());
+				toReturn.add(true);
 			}
 
 			// Header 6, List-testing but listGameAnswer later.
 			else if(header == 6)
 			{
-				ArrayList toReturn = null;
 				int size = receiveInt();
 				String type = receiveString();
-				if(type.equals("String"))
-				{
-					toReturn = receiveListString(size);
-				}
-				else if(type.equals("Integer"))
-				{
-					toReturn = receiveListInteger(size);
-				}
-				return toReturn.toString();
+				toReturn.addSessions(receiveListString(size));
 			}
 		}catch(IOException e)
 		{
 			e.printStackTrace();
 		}	
-		return "Fail'd";
+		return toReturn;
 	}
 
 	// Läser in ett heltal från inStream:en.
@@ -154,7 +149,7 @@ public class testklient1
 		return toReturn;
 	}
 
-	// Läser in en lista och returnerar den.
+	// Läser in en lista av heltal och returnerar den.
 	private ArrayList<Integer> receiveListInteger(int size)
 	{
 		ArrayList<Integer> toReturn = new ArrayList<Integer>();
@@ -174,7 +169,7 @@ public class testklient1
 		return toReturn;
 	}
 
-	// Läser in en lista och returnerar den.
+	// Läser in en lista av strängar och returnerar den.
 	private ArrayList<String> receiveListString(int size)
 	{
 		ArrayList<String> toReturn = new ArrayList<String>();
@@ -205,7 +200,8 @@ public class testklient1
 		return bool;
 	}
 
-	// Method to receive the perhaps-type according to the protocol;
+	// Method to receive the perhaps-type according to the protocol, 
+	// should be checked and perhaps fixed before released and tested.
 	private List receivePerhaps()
 	{
 		List toReturn = null;
@@ -239,15 +235,11 @@ public class testklient1
 				}
 			}
 		}
-		else
-		{
-			receiveString();
-		}
 		return toReturn;
 	}
 
 	// Public method for connecting to the server.
-	public String connect(String name)
+	public Result connect(String name)
 	{
 		Packet toSend = new Packet((byte)2);
 		toSend.add(protocolVersion);
@@ -257,7 +249,7 @@ public class testklient1
 	}
 	
 	// Method to test sending and receiving lists.
-	public String listTest(ArrayList list)
+	public Result listTest(ArrayList list)
 	{
 		Packet toSend = new Packet((byte)13);
 		toSend.add(list);
@@ -266,7 +258,7 @@ public class testklient1
 	}
 
 	// Method for testing-purposes
-	public String serverTest()
+	public Result serverTest()
 	{
 		send(new Packet((byte)1));
 		return receive();
@@ -301,11 +293,11 @@ public class testklient1
 		test.add("Kalle");
 		k.send(test, true);
 		*/
-		System.out.println(k.connect("Kalle"));
+		//System.out.println(k.connect("Kalle"));
 		ArrayList<String> skaMed = new ArrayList<String>();
 		skaMed.add("Hej");
 		skaMed.add("Magnus");
-		System.out.println(k.listTest(skaMed));
-		System.out.println(k.serverTest());
+		//System.out.println(k.listTest(skaMed));
+		//System.out.println(k.serverTest());
 	}
 }
