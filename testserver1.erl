@@ -232,7 +232,6 @@ sendPerhaps(Socket, true, Type, Elem) ->
 sendFailPacket(Socket, FailureID, ReqHeader) -> % 2:Number to identify failure. 3:Head of failed package. NEGATIVT FAILUREID FUNGERAR EJ MED LIST2BINARY 
 	io:format("Created the following failmsg: "),
 	FailText = getFailMsg(FailureID), % Text that describes the failure
-
 	sendHeader(Socket, 0),
 	sendInteger(Socket, FailureID),
 	sendHeader(Socket, ReqHeader),
@@ -281,16 +280,41 @@ recv(Socket) ->
 			case ProtocolVersion =:= ?PROTOCOLVERSION of
 				true ->
 					PlayerName = readString(Socket),
-					sendHeader(Socket, 3);
+					sendHeader(Socket, 3); % Welcome to the Real world
 				false ->
 					readString(Socket),
-					sendFailPacket(Socket, 0, Header)
+					sendFailPacket(Socket, 0, Header) %Fail'd
 			end;
-		5 ->  
-			sendHeader(Socket, 6),
+		5 ->  % List game request
 			ListOfGames = [],% Hämta available games... och skicka tillbaka som List<String>
-			sendList(Socket, "String", ListOfGames)
+			sendHeader(Socket, 6), %List game answer
+			sendList(Socket, "String", ListOfGames);
+		7 -> % Host request
+			case readBoolean(Socket) of
+				0 -> %false
+					'creategame()', % gör nytt spel
+					GameName = "Hämta gamename",
+					sendHeader(Socket, 9), % Join answer
+					sendString(Socket, GameName);
+				_ ->
+					'loadgame()' % ladda spel
 
+			end;
+		8 -> % Join request
+			HostName = readString(Socket),
+			% Kolla upp om spelet finns ELLER om det är låst - isf fail'd
+			% Annars 9 - joinanswer
+			GameName = "Hämta gamename",
+			sendHeader(Socket, 9), % Join answer
+			sendString(Socket, GameName);
+		11 ->
+			GameLocked = "Hämta info om gameIsLocked()",
+			case gameLocked of
+				true ->
+					sendFailPacket(Socket, 11, Header); % Fail'd
+				false ->
+					sendGameSessionInformation
+			end
 
 			%TheList = readList(Socket, "String"),
 			%io:format("Listan: "),
