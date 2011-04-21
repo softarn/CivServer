@@ -79,7 +79,6 @@ public class testklient1
 			else if(header == 6)
 			{
 				int size = receiveInt();
-				String type = receiveString();
 				toReturn.addSessions(receiveListString(size));
 			}
 		}catch(IOException e)
@@ -202,7 +201,7 @@ public class testklient1
 
 	// Method to receive the perhaps-type according to the protocol, 
 	// should be checked and perhaps fixed before released and tested.
-	private List receivePerhaps()
+/*	private List receivePerhaps()
 	{
 		List toReturn = null;
 		boolean read = receiveBool();
@@ -237,6 +236,7 @@ public class testklient1
 		}
 		return toReturn;
 	}
+*/
 
 	// Public method for connecting to the server.
 	public Result connect(String name)

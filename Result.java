@@ -171,5 +171,33 @@ class Result{
 		public Tile(Position placement){
 			this.placement = placement;
 		}
+
+		public void addUnit(Unit unit){
+			this.unit = unit;
+		}
+
+		public void addCity(City city){
+			this.city = city;
+		}
+
+		public void addImprovement(String improvement){
+			this.improvement = improvement;
+		}
+
+		public Position getPosition(){
+			return placement;
+		}
+
+		public Unit getUnit(){
+			return unit;
+		}
+
+		public City getCity(){
+			return city;
+		}
+
+		public String getImprovement(){
+			return improvement;
+		}
 	}
 }
