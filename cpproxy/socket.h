@@ -5,14 +5,21 @@
 #include "serializer.h"
 #include "socketstream.h"
 
+
+
 class Socket
 {
 private:
+	static int ms_socketCount;
 	int m_socket;
 	SocketStream m_stream;
 
+	Socket(const Socket &);
+	Socket &operator=(const Socket &);
+
 public:
 	Socket();
+	~Socket();
 
 	void connect(const std::string &address, unsigned short port);
 	unsigned int send(const char *data, unsigned int size);
