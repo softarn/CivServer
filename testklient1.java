@@ -56,13 +56,14 @@ public class testklient1
 			// Header 3, welcome to the real world.
 			if(header == 3)
 			{
+				toReturn.addOk(true);
 				toReturn.addOkMsg("Welcome to the Real World");
 			}
 
 			// Header 0, fail'd.
 			else if(header == 0)
 			{
-				toReturn.add(false);
+				toReturn.addOk(false);
 				toReturn.addFailNumber(receiveInt());
 				toReturn.addRequestFail(m_inStream.read());
 				toReturn.addFailMsg(receiveString());
@@ -72,15 +73,56 @@ public class testklient1
 			else if(header == 1)
 			{
 				toReturn.addRequestOk(m_inStream.read());
-				toReturn.add(true);
+				toReturn.addOk(true);
 			}
-
-			// Header 6, List-testing but listGameAnswer later.
+		
+			// Header 4, a ping and answers directly with a pong.
+			else if(header == 4)
+			{
+				receiveBool();
+				Packet toSend = new Packet((byte)4);
+				toSend.add(true);
+				send(toSend);
+			}	
+	
+			// Header 6, listGameAnswer, returns a list of games.
 			else if(header == 6)
 			{
 				int size = receiveInt();
 				toReturn.addSessions(receiveListString(size));
 			}
+
+			// Header 9, Join answer, returns what game you are connected to.
+			else if(header == 9)
+			{
+				toReturn.addOk(true);
+				toReturn.addName(receiveString());
+			}
+
+			// Header 10, Game session info, returns all the other players and if the game is locked.
+			else if(header == 10)
+			{
+				toReturn.setupPlayers();
+				int size = receiveInt();
+				for(int i=0; i<size; i++)
+				{
+					toReturn.addPlayer(receiveString(), receiveString());
+				}
+				toReturn.addLocked(receiveBool());
+			}
+
+			// Header 14, Start game answer, receives the map and hopefully returns it.
+			else if(header == 14)
+			{
+				toReturn.addMap(receiveListList(receiveInt()));
+			}
+
+			// Header 16, Tile Update, this one needs more work.
+			else if(header == 16)
+			{
+
+			}
+	
 		}catch(IOException e)
 		{
 			e.printStackTrace();
@@ -175,6 +217,18 @@ public class testklient1
 		for(int i=0; i<size; i++)
 		{
 			toReturn.add(receiveString());
+		}
+		return toReturn;
+	}
+
+	// Läser in en lista av listor av strängar, 2D-lista av strängar.
+	private ArrayList<ArrayList<String>> receiveListList(int size)
+	{
+		ArrayList<ArrayList<String>> toReturn = new ArrayList<ArrayList<String>>();
+		for(int i=0; i<size; i++)
+		{
+			int nextSize = receiveInt();
+			toReturn.add(receiveListString(nextSize));
 		}
 		return toReturn;
 	}
@@ -293,11 +347,11 @@ public class testklient1
 		test.add("Kalle");
 		k.send(test, true);
 		*/
-		//System.out.println(k.connect("Kalle"));
+		System.out.println(k.connect("Kalle"));
 		ArrayList<String> skaMed = new ArrayList<String>();
 		skaMed.add("Hej");
 		skaMed.add("Magnus");
-		//System.out.println(k.listTest(skaMed));
-		//System.out.println(k.serverTest());
+		System.out.println(k.listTest(skaMed));
+		System.out.println(k.serverTest());
 	}
 }
