@@ -68,37 +68,9 @@ readList(Socket, ElemType) ->
 readList(_, 0, _, List) ->
 	lists:reverse(List);
 
-readList(Socket, NumberOfElements, "Integer", List) -> % Lista av Integers
-	Element = readInteger(Socket),
-	readList(Socket, NumberOfElements-1, "Integer", [Element|List]);
-
-readList(Socket, NumberOfElements, "Boolean", List) -> % Lista av Booleans
-	Element = readBoolean(Socket),
-	readList(Socket, NumberOfElements-1, "Boolean", [Element|List]);
-
-readList(Socket, NumberOfElements, "String", List) -> % Lista av Strings
-	Element = readString(Socket),
-	readList(Socket, NumberOfElements-1, "String", [Element|List]);
-
-readList(Socket, NumberOfElements, "Player", List) -> % Lista av Player
-	Name = readString(Socket),
-	Civ = readString(Socket),
-	readList(Socket, NumberOfElements-1, "Player", [Name, Civ | List]);
-
-readList(Socket, NumberOfElements, "Unit", List) -> % Lista av Unit
-	Owner = readString(Socket),
-	UnitType = readString(Socket),
-	ManPower = readInteger(Socket),
-	readList(Socket, NumberOfElements-1, "Unit", [Owner, UnitType, ManPower | List]);
-
-readList(Socket, NumberOfElements, "Position", List) -> % Lista av Position
-	X = readInteger(Socket),
-	Y = readInteger(Socket),
-	readList(Socket, NumberOfElements-1, "Position", [X, Y | List]);
-
-readList(Socket, NumberOfElements, "Column", List) -> % Lista av Column
-	Column = readList(Socket, "String"),  
-	readList(Socket, NumberOfElements-1, "Column", [Column | List]).
+readList(Socket, NumberOfElements, ElemType, List) ->
+	Element = readElement(Socket, ElemType),
+	readList(Socket, NumberOfElements-1, ElemType, [Element|List]).
 
 readPerhaps(Socket, ElemType) ->
 	Perhaps = readBoolean(Socket),
@@ -106,33 +78,48 @@ readPerhaps(Socket, ElemType) ->
 		0 ->
 			none;
 		_ ->
-			helpReadPerhaps(Socket, ElemType)
+			readElement(Socket, ElemType)
 	end.
 
-helpReadPerhaps(Socket, "Integer") ->
+readElement(Socket, "Integer") ->
 	readInteger(Socket);
 
-helpReadPerhaps(Socket, "String") ->
+readElement(Socket, "String") ->
 	readString(Socket);
 
-helpReadPerhaps(Socket, "List") ->
+readElement(Socket, "Boolean") ->
+	readBoolean(Socket);
+
+readElement(Socket, "List") ->
 	readList(Socket, "List");
 
-helpReadPerhaps(Socket, "Unit") ->
+readElement(Socket, "Unit") ->
 	Owner = readString(Socket),
 	UnitType = readString(Socket),
 	ManPower = readInteger(Socket),
 	{unit, Owner, UnitType, ManPower};
 
-helpReadPerhaps(Socket, "City") ->
+readElement(Socket, "City") ->
 	Owner = readString(Socket),
 	UnitList = readList(Socket, "String"),
 	Buildings = readList(Socket, "String"),
 	Name = readString(Socket),
 	{city, Owner, UnitList, Buildings, Name};
 
-helpReadPerhaps(Socket, "Boolean") ->
-	readBoolean(Socket).
+readElement(Socket, "Player") -> % Lista av Player
+	Name = readString(Socket),
+	Civ = readString(Socket),
+	{player, Name, Civ};
+
+readElement(Socket, "Position") -> % Lista av Position
+	X = readInteger(Socket),
+	Y = readInteger(Socket),
+	{position, X, Y};
+
+readElement(Socket, "Column") -> % Lista av Column
+	Column = readList(Socket, "String"),  
+	{column, Column}.
+
 
 sendHeader(Socket, Header) ->
 	gen_tcp:send(Socket, <<Header?HEADER>>),
@@ -210,12 +197,12 @@ sendPerhaps(Socket, true, Type, Elem) ->
 		"List" ->
 			sendList(Socket, Type, Elem);
 		"Unit" ->
-			{Owner, Type, ManPower} = Elem,
+			{unit, Owner, Type, ManPower} = Elem,
 			sendString(Socket, Owner),
 			sendString(Socket, Type),
 			sendInteger(Socket, ManPower);
 		"City" ->
-			{Owner, Units, Buildings, Name} = Elem,
+			{city, Owner, Units, Buildings, Name} = Elem,
 			sendString(Socket, Owner),
 			sendList(Socket, "Unit", Units),
 			sendList(Socket, "String", Buildings),
