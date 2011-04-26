@@ -309,11 +309,15 @@ class Result{
 		public String getCiv(){
 			return civilization;
 		}
+
+		public String toString(){
+			return name + "\t" + civilization;
+		}
 	}
 
 	// Tänkte lägga en toString här nedan, om man vill se det mesta kommer den bli cp-lång.
 	
 	public String toString(){
-		return "Request accepted: " + ok;
+		return "Request accepted: " + ok + "\n" + players;
 	}
 }
