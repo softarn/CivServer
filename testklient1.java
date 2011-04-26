@@ -120,7 +120,23 @@ public class testklient1
 			// Header 16, Tile Update, this one needs more work.
 			else if(header == 16)
 			{
+				
+			}
 
+			// Test
+			else if(header == 99)
+			{
+				int size = receiveInt();
+				toReturn.addSessions(receiveListString(size));
+			}
+
+			// Testing perhaps
+			else if(header == 101)
+			{
+				if(receiveBool())
+				{
+					System.out.println(receiveString());
+				}
 			}
 	
 		}catch(IOException e)
@@ -253,45 +269,6 @@ public class testklient1
 		return bool;
 	}
 
-	// Method to receive the perhaps-type according to the protocol, 
-	// should be checked and perhaps fixed before released and tested.
-/*	private List receivePerhaps()
-	{
-		List toReturn = null;
-		boolean read = receiveBool();
-		if(read)
-		{
-			String type = receiveString();
-			if(type.equals("String"))
-			{
-				toReturn = new ArrayList<String>();
-				toReturn.add(receiveString());
-			}
-			else if(type.equals("Integer"))
-			{
-				toReturn = new ArrayList<Integer>();
-				toReturn.add(receiveInt());
-			}	
-			else if(type.equals("List"))
-			{
-				int size = receiveInt();
-				String type2 = receiveString();
-				if(type2.equals("String"))
-				{
-					toReturn = new ArrayList<List>();
-					toReturn.add(receiveListString(size));
-				}
-				else if(type2.equals("Integer"))
-				{
-					toReturn = new ArrayList<List>();
-					toReturn.add(receiveListInteger(size));
-				}
-			}
-		}
-		return toReturn;
-	}
-*/
-
 	// Public method for connecting to the server.
 	public Result connect(String name)
 	{
@@ -301,22 +278,78 @@ public class testklient1
 		send(toSend);
 		return receive();
 	}
-	
-	// Method to test sending and receiving lists.
-	public Result listTest(ArrayList list)
+
+	// Public method for requesting a list of games.
+	public Result listGames()
 	{
-		Packet toSend = new Packet((byte)13);
-		toSend.add(list);
+		send(new Packet((byte)5));
+		return receive();
+	}
+
+	// Public method for requesting to host a game.
+	public Result host(Boolean load)
+	{
+		Packet toSend = new Packet((byte)7);
+		toSend.add(load);
 		send(toSend);
 		return receive();
 	}
 
-	// Method for testing-purposes
-	public Result serverTest()
+	// public method for requesting to join a game.
+	public Result joinGame(String game)
 	{
-		send(new Packet((byte)1));
+		Packet toSend = new Packet((byte)8);
+		toSend.add(game);
+		send(toSend);
 		return receive();
 	}
+
+	// Public method for requesting to change civilization when in a game.
+	public Result changeCiv(String newCiv)
+	{
+		Packet toSend = new Packet((byte)11);
+		toSend.add(newCiv);
+		send(toSend);
+		return receive();
+	}
+
+	// Public method for locking a game, only a host can lock and un-lock a game.
+	public Result lockGame(boolean lock)
+	{
+		Packet toSend = new Packet((byte)12);
+		toSend.add(lock);
+		send(toSend);
+		return receive();
+	}
+
+	// Public method for starting a game, only the host can start a game.
+	public Result startGame()
+	{
+		send(new Packet((byte)13));
+		return receive();
+	}
+
+	// Public method for moving a unit, takes a list of positions
+	// , this list always starts with the position the unit starts at.
+	// The list is of type Integer and should always be of even number,
+	// first the x-value then the y-value.
+	public Result moveUnit(List<Integer> positions)
+	{
+		Packet toSend = new Packet((byte)15);
+		toSend.add(positions);
+		return receive();
+	}
+	
+	// Method to test sending and receiving lists.
+	public Result listTest(int x, int y)
+	{
+		Packet toSend = new Packet((byte)99);
+		toSend.add(x);
+		toSend.add(y);
+		send(toSend);
+		return receive();
+	}
+
 
 /*
 	private void sendInt(int msg)
@@ -340,18 +373,22 @@ public class testklient1
 */
 	public static void main(String [] args)
 	{
-		testklient1 k = new testklient1("localhost", 1234);//130.229.128.72", 1234);
+		testklient1 k = new testklient1("130.237.238.239", 1234);//130.229.128.72", 1234);
 		/*
 		Packet test = new Packet((byte)2);
 		test.add(0);
 		test.add("Kalle");
 		k.send(test, true);
 		*/
-		System.out.println(k.connect("Kalle"));
-		ArrayList<String> skaMed = new ArrayList<String>();
-		skaMed.add("Hej");
-		skaMed.add("Magnus");
-		System.out.println(k.listTest(skaMed));
-		System.out.println(k.serverTest());
+	/*	ArrayList<Integer> skaMed = new ArrayList<Integer>();
+		skaMed.add(1);
+		skaMed.add(3);
+		skaMed.add(1);
+		skaMed.add(4);
+		skaMed.add(2);
+		skaMed.add(5);
+		skaMed.add(3);
+		skaMed.add(5);
+	*/	System.out.println(k.listTest(14,13));
 	}
 }
