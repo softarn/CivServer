@@ -9,7 +9,7 @@
 
 %Startup
 start_link(Port) ->
-    gen_server:spawn({local, ?MODULE}, ?MODULE, [Port, ?MODULE], []).
+    gen_server:start_link({local, ?MODULE}, ?MODULE, [Port, ?MODULE], []).
 
 init([Port, Module]) ->
     spawn_link(con_handler, start, [Port, Module]),
