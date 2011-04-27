@@ -1,6 +1,7 @@
 -module(tcp).
 
--export([init/2, accept/2]).
+-export([init/2]).
+-export([accept/2, recv_pname/1]).
 
 -define(CHARACTER, 	:8/unsigned-big-integer).
 -define(INTEGER, 	:32/signed-big-integer).
@@ -247,7 +248,9 @@ getFailMsg(FailureType) ->
     Msg.
 
 recv_pname(Socket) ->
+	io:format("inni i recvpname"),
     Header = readHeader(Socket),
+    io:format("läst header"),
     case Header of
 	2 -> % Hello World. Glöm ej att göra något med PlayerName!!!!!!
 	    ProtocolVersion = readInteger(Socket),
