@@ -12,7 +12,7 @@ start_link(Port) ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, [Port, ?MODULE], []).
 
 init([Port, Module]) ->
-    spawn_link(con_handler, start, [Port, Module]),
+    spawn(con_handler, start, [Port, Module]),
     {ok, {[], []}}.
 
 %Callbacks
@@ -22,9 +22,20 @@ handle_call(list_games, _From, {Games, Players}) ->
     {reply, [Game#game.name || Game <- Games], {Games,Players}};
 handle_call({add_player, Player}, _From, {Games, Players}) ->
     io:format("Added player ~w~n", [Player]),
-    {reply, ok, {Games, [Player|Players]}}.
+    {reply, ok, {Games, [Player|Players]}};
+handle_call(stop, _From, State) ->
+    {stop, normal, shutdown_ok, State}.
+
+terminate(Reason, State) ->
+    %Kill con_handler?
+    none.
+    
 
 %Server calls and casts
 add_player(Player) -> gen_server:call(?MODULE, {add_player, Player}).
 list_players() -> gen_server:call(?MODULE, list_players).
 list_games() -> gen_server:call(?MODULE, list_games).
+
+stop() ->
+    gen_server:call(?MODULE, stop).
+
