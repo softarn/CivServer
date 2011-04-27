@@ -1,6 +1,6 @@
--module().
+-module(parser).
 
--export([init/0, accept/2]).
+-export([init/2, accept/2]).
 
 %Should be in config.hrl file? 
 -define(CHARACTER, 	:8/unsigned-big-integer).
@@ -262,15 +262,16 @@ recv_pname(Socket) ->
 		    readString(Socket),
 		    sendFailPacket(Socket, 0, Header), %Fail'd
 		    {error, "Bad protocol version"}
-	    end
+	    end;
 	_ -> 
+	    nope
 	    %send fail package
-	    .
+	    
     end.
 
 send_games(Socket, Games) ->
     sendHeader(Socket, 6), %List game answer
-    sendList(Socket, "String", GameNames).
+    sendList(Socket, "String", Games).
 
 %socket close?
 recv(Socket) ->
@@ -278,7 +279,7 @@ recv(Socket) ->
     case Header of 
 	5 ->  % List game request
 	    
-	    ListOfGames = [],% Hämta available games... och skicka tillbaka som List<String>
+	    ListOfGames = [];% Hämta available games... och skicka tillbaka som List<String>
 	7 -> % Host request
 	    case readBoolean(Socket) of
 		0 -> %false
