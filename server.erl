@@ -28,7 +28,7 @@ handle_call(stop, _From, State) ->
 
 terminate(Reason, State) ->
     %Kill con_handler?
-    none.
+    ok.
 
 %Server calls and casts
 add_player(Player) -> gen_server:call(?MODULE, {add_player, Player}).
