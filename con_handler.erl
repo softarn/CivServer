@@ -8,7 +8,7 @@ start(Port, Parent) ->
     loop(Parent).
 
 init(Port) ->
-   spawn(parser, init, [self(), Port]).
+   spawn(tcp, init, [self(), Port]).
 
 loop(Parent) ->
     receive 
