@@ -1,9 +1,11 @@
--define(PARSER, parser).
+-define(TCP, tcp).
 
--record(player,
-    {name,
-    socket}).
+-record(player,{
+	ref,
+	handler,
+	name,
+	socket}).
 
--record(game,
-    {name,
-    game_pid}).
+-record(game,{
+	name,
+	game_pid}).

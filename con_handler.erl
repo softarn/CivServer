@@ -13,9 +13,9 @@ init(Port) ->
 loop(Parent) ->
     receive 
 	Socket ->
-	    case ?PARSER:recv_pname(Socket) of
+	    case ?TCP:recv_pname(Socket) of
 		{ok, PlayerName} -> 
-		    Parent ! Parent:add_player(#player{name = PlayerName,
+		    Parent:add_player(#player{name = PlayerName,
 			    socket = Socket});
 		{error, Reason} ->
 		    io:format("Error accepting new player: ~w~n", [Reason])
