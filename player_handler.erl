@@ -4,8 +4,18 @@
 -export([]).
 -include("config.hrl").
 
-init(Player, Parent) -> 
-    nope.
+init(Socket, Parent) -> 
+	try 
+		recv_player(Socket, Parent)
+	catch
+		error:X ->
+			case X of % Socket closed
+				{badmatch,{error,closed}} ->
+					ok;%Remove playaah
+				_ ->
+					io:format("Fångade fel från player_handler~p\n", [X])
+			end
+	end.
 
 %SOCKET CLOSE? vAD HÄNDER?
 recv_player(Socket, Parent) ->
@@ -29,7 +39,8 @@ recv_player(Socket, Parent) ->
 		    ?TCP:sendFailPacket(Socket, 0, Header) %Send fail packet, wrong protocolversion
 	    end;
 	_ -> 
-	    ?TCP:sendFailPacket(Socket, -1, Header) % failpacket - "Invalid state"
+		?TCP:sendFailPacket(Socket, -1, Header) % failpacket - "Invalid state"
+	    	throwPacket(Header, Socket),
     end.
 
 recv_lobby(Player, Parent) ->
@@ -56,22 +67,11 @@ recv_lobby(Player, Parent) ->
 	    % Annars 9 - joinanswer
 	    GameName = "Hämta gamename",
 	    ?TCP:sendHeader(Socket, 9), % Join answer
-	    ?TCP:sendString(Socket, GameName)
-%	11 ->
-%	    GameLocked = "Hämta info om gameIsLocked()",
-%	    case gameLocked of
-%		true ->
-%		    ?TCP:sendFailPacket(Socket, 11, Header); % Fail'd
-%		false ->
-%		    ?TCP:sendGameSessionInformation
-%	    end
-%
-	    %TheList = readList(Socket, "String"),
-	    %io:format("Listan: "),
-	    %io:format("~p\n", [TheList]),
-	    %sendHeader(Socket, 6),
-	    %sendList(Socket, "Integer", [1, 2, 3, 4, 5, 6, 8]);
-	    %sendList(Socket, "String", ["Maggan", "Fredde", "Simon", "De var ett vackert par"]);
+	    ?TCP:sendString(Socket, GameName);
+    
+    _Other ->
+	?TCP:sendFailPacket(Socket, -1, Header) %Fail packet invalid state
+    
     end,
     recv_lobby(Player, Parent).
 
@@ -79,3 +79,29 @@ recv_lobby(Player, Parent) ->
 %	.
 %recv_game(Socket) ->
 %	.
+
+throwPacket(Header, Socket) ->
+	case Header of
+		2 ->
+			?TCP:readInteger(Socket),
+			?TCP:readString(Socket);
+		4 ->
+			?TCP:readBoolean(Socket);
+		5 ->
+			ok;
+		7 ->
+			?TCP:readBoolean(Socket);
+		8 ->
+			?TCP:readString(Socket);
+		11 ->
+			ok;
+		12 ->
+			?TCP:readBoolean(Socket);
+		13 ->
+			ok;
+		15 ->
+			?TCP:readList(Socket, "Position");
+		17 ->
+			ok;
+		19 -> 	ok %To be defined later...
+	end.

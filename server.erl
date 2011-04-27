@@ -34,7 +34,6 @@ terminate(Reason, State) ->
 add_player(Player) -> gen_server:call(?MODULE, {add_player, Player}).
 list_players() -> gen_server:call(?MODULE, list_players).
 list_games() -> gen_server:call(?MODULE, list_games).
-
-stop() ->
-    gen_server:call(?MODULE, stop).
+create_game(HostPlayer) -> gen_server:call(?MODULE, {create_game, HostPlayer}).
+stop() -> gen_server:call(?MODULE, stop).
 

@@ -13,5 +13,5 @@ init(Port, Parent) ->
 accept(ListenSocket, Parent) ->
     {ok, Socket} = gen_tcp:accept(ListenSocket),
     io:format("Accepted Connection\n"),
-    spawn(?P_HANDLER, recv_player, [Socket, Parent]),
+    spawn(?P_HANDLER, init, [Socket, Parent]),
     accept(ListenSocket, Parent).
