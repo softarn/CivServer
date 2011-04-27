@@ -1,4 +1,4 @@
--define(PARSER, parser).
+-define(TCP, tcp).
 
 -record(player,
     {name,

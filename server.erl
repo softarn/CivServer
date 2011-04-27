@@ -10,10 +10,10 @@
 
 %Startup
 start_link(Port) ->
-    gen_server:start_link({local, server}, server, [Port, server], []).
+    gen_server:spawn({local, ?MODULE}, ?MODULE, [Port, ?MODULE], []).
 
 init([Port, Module]) ->
-    spawn_link(con_handler, init, [Port, Module]),
+    spawn_link(con_handler, start, [Port, Module]),
     {ok, {[], []}}.
 
 %Callbacks
@@ -25,7 +25,7 @@ handle_call({add_player, _From, Player}, {Games, Players}) ->
     {reply, ok, {G, [Player|Players]}}.
 
 %Server calls and casts
-add_player(Player) -> gen_server:cast(server, {add_player, Player}).
-list_players() -> gen_server:call(server, list_players).
+add_player(Player) -> gen_server:cast(?MODULE, {add_player, Player}).
+list_players() -> gen_server:call(?MODULE, list_players).
 
-list_games() -> gen_server:call(server, list_games).
+list_games() -> gen_server:call(?MODULE, list_games).
