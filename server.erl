@@ -21,7 +21,7 @@ handle_call(list_players, _From, {Games, Players}) ->
 handle_call(list_games, _From, {Games, Players}) ->
     {reply, [Game#game.name || Game <- Games], {Games,Players}};
 handle_call({add_player, Player}, _From, {Games, Players}) ->
-    io:format("Added player ~w~n", [Player]),
+    io:format("Added player ~w~n", [Player]), %Glöm ej felkontroll ifall player existerar!
     {reply, ok, {Games, [Player|Players]}}.
 
 %Server calls and casts

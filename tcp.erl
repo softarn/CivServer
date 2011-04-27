@@ -1,23 +1,10 @@
 -module(tcp).
 
--export([init/2]).
--export([accept/2, recv_pname/1]).
-
 -define(CHARACTER, 	:8/unsigned-big-integer).
 -define(INTEGER, 	:32/signed-big-integer).
 -define(BOOLEAN, 	:8/signed-big-integer).
 -define(HEADER, 	:8/signed-big-integer).
--define(PROTOCOLVERSION, 0).
 
-init(Parent, Port) ->
-    {ok, ListenSocket} = gen_tcp:listen(Port, [binary, {active, false}]),
-    accept(ListenSocket, Parent).
-
-accept(ListenSocket, Parent) ->
-    {ok, Socket} = gen_tcp:accept(ListenSocket),
-    io:format("Accepted Connection\n"),
-    Parent ! Socket,
-    accept(ListenSocket, Parent).
 
 readHeader(Socket) -> % Tar ut den första byten och tolkar som Headern utifrån protokollet. 
     {ok, <<Byte?HEADER>>} = gen_tcp:recv(Socket, 1),
@@ -247,71 +234,9 @@ getFailMsg(FailureType) ->
     end,
     Msg.
 
-recv_pname(Socket) ->
-	io:format("inni i recvpname"),
-    Header = readHeader(Socket),
-    io:format("läst header"),
-    case Header of
-	2 -> % Hello World. Glöm ej att göra något med PlayerName!!!!!!
-	    ProtocolVersion = readInteger(Socket),
-
-	    case ProtocolVersion =:= ?PROTOCOLVERSION of
-		true ->
-		    PlayerName = readString(Socket),
-		    sendHeader(Socket, 3), % Welcome to the Real world
-		    {ok, PlayerName};
-		false ->
-		    readString(Socket),
-		    sendFailPacket(Socket, 0, Header), %Fail'd
-		    {error, "Bad protocol version"}
-	    end;
-	_ -> 
-	    sendFailPacket(Socket, -1, Header) % Skicka felmedd "Invalid state"
-    end.
 
 send_games(Socket, Games) ->
     sendHeader(Socket, 6), %List game answer
     sendList(Socket, "String", Games).
 
 %socket close?
-recv(Socket) ->
-    Header = readHeader(Socket),
-    case Header of 
-	5 ->  % List game request
-	    
-	    ListOfGames = [];% Hämta available games... och skicka tillbaka som List<String>
-	7 -> % Host request
-	    case readBoolean(Socket) of
-		0 -> %false
-		    'creategame()', % gör nytt spel
-		    GameName = "Hämta gamename",
-		    sendHeader(Socket, 9), % Join answer
-		    sendString(Socket, GameName);
-		_ ->
-		    'loadgame()' % ladda spel
-
-	    end;
-	8 -> % Join request
-	    HostName = readString(Socket),
-	    % Kolla upp om spelet finns ELLER om det är låst - isf fail'd
-	    % Annars 9 - joinanswer
-	    GameName = "Hämta gamename",
-	    sendHeader(Socket, 9), % Join answer
-	    sendString(Socket, GameName);
-	11 ->
-	    GameLocked = "Hämta info om gameIsLocked()",
-	    case gameLocked of
-		true ->
-		    sendFailPacket(Socket, 11, Header); % Fail'd
-		false ->
-		    sendGameSessionInformation
-	    end
-
-	    %TheList = readList(Socket, "String"),
-	    %io:format("Listan: "),
-	    %io:format("~p\n", [TheList]),
-	    %sendHeader(Socket, 6),
-	    %sendList(Socket, "Integer", [1, 2, 3, 4, 5, 6, 8]);
-	    %sendList(Socket, "String", ["Maggan", "Fredde", "Simon", "De var ett vackert par"]);
-    end,
-    recv(Socket).
