@@ -1,5 +1,7 @@
 -module(tcp).
 
+-compile(export_all).
+
 -define(CHARACTER, 	:8/unsigned-big-integer).
 -define(INTEGER, 	:32/signed-big-integer).
 -define(BOOLEAN, 	:8/signed-big-integer).

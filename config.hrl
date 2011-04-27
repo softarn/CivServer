@@ -10,4 +10,5 @@
 
 -record(game,{
 	name,
-	game_pid}).
+	game_pid,
+	players}).
