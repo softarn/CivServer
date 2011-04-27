@@ -34,13 +34,15 @@ recv_player(Socket, Parent) ->
 		    Parent:add_player(Player),
 		    ?TCP:sendHeader(Socket, 3), % Welcome to the Real world
 		    recv_lobby(Player, Parent);
+
 		false ->
 		    ?TCP:readString(Socket),
 		    ?TCP:sendFailPacket(Socket, 0, Header) %Send fail packet, wrong protocolversion
 	    end;
-	_ -> 
-		?TCP:sendFailPacket(Socket, -1, Header) % failpacket - "Invalid state"
-	    	throwPacket(Header, Socket),
+	
+    _ -> 
+		?TCP:sendFailPacket(Socket, -1, Header), % failpacket - "Invalid state"
+	    	throwPacket(Header, Socket)
     end.
 
 recv_lobby(Player, Parent) ->
@@ -53,10 +55,9 @@ recv_lobby(Player, Parent) ->
 	7 -> % Host request
 		case ?TCP:readBoolean(Socket) of
 		0 -> %false
-		    'creategame()', % gör nytt spel
-		    GameName = "Hämta gamename",
-		    ?TCP:sendHeader(Socket, 9), % Join answer
-		    ?TCP:sendString(Socket, GameName);
+			?SERVER:create_game(Player),
+			?TCP:sendHeader(Socket, 9), % Join answer
+		    	?TCP:sendString(Socket, Player#player.name),
 		_ ->
 		    'loadgame()' % ladda spel
 

@@ -1,17 +1,17 @@
 -define(TCP, tcp).
 -define(P_HANDLER, player_handler).
 -define(P_VERSION, 0).
--define(SERVER, server). 
-
-%Player record
+-define(SERVER, server).
+-define(GAMESRV, gameserver).
 -record(player,{
 	ref,
 	handler,
 	name,
-	socket}).
+	socket,
+	civ}).
 
-%Game record
 -record(game,{
 	name,
 	game_pid,
-	players}).
+	players,
+	locked}).
