@@ -263,9 +263,7 @@ recv_pname(Socket) ->
 		    {error, "Bad protocol version"}
 	    end;
 	_ -> 
-	    nope
-	    %send fail package
-	    
+	    sendFailPacket(Socket, -1, Header) % Skicka felmedd "Invalid state"
     end.
 
 send_games(Socket, Games) ->
