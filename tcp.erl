@@ -1,8 +1,7 @@
--module(parser).
+-module(tcp).
 
 -export([init/2, accept/2]).
 
-%Should be in config.hrl file? 
 -define(CHARACTER, 	:8/unsigned-big-integer).
 -define(INTEGER, 	:32/signed-big-integer).
 -define(BOOLEAN, 	:8/signed-big-integer).
