@@ -108,6 +108,10 @@ class Result{
 		temp.addImprovement(name);
 	}
 
+	public void addUpdatedTile(){
+		updatedTiles.add(temp);
+	}
+
 	// Här slutar setters/tilläggsfunktioner.
 	// --------------------------------------------
 	// Här under är getters!
@@ -182,6 +186,10 @@ class Result{
 
 	// Och sen för den gigantiska Tile-klassen som dessutom då är i en lista.
 
+	public int getNumberTiles(){
+		return updatedTiles.size();
+	}
+
 	// Här slutar getters.
 	// --------------------------------------------
 	// Här under är nestlade klasser för ytterligare containers!
@@ -206,6 +214,10 @@ class Result{
 
 		public int getManPower(){
 			return manPower;
+		}
+
+		public String toString(){
+			return "Unit type: " + type + "\nUnit owner: " + owner + "\nUnit manpower: " + manPower + "\n";
 		}
 	}
 
@@ -236,6 +248,10 @@ class Result{
 		public List<Unit> getUnits(){
 			return units;
 		}
+
+		public String toString(){
+			return "City name: " + name + "\nCity owner: " + owner + "\nBuildings in city: " + buildings + "\nUnits in city: " + units + "\n";
+		}
 	}
 
 	private class Position{
@@ -253,13 +269,17 @@ class Result{
 		public int getY(){
 			return y;
 		}
+
+		public String toString(){
+			return x + "\t" + y + "\n";
+		}
 	}
 
 	private class Tile{
 		private Position placement;
-		private Unit unit;
-		private City city;
-		private String improvement;
+		private Unit unit = null;
+		private City city = null;
+		private String improvement = "";
 
 		public Tile(Position placement){
 			this.placement = placement;
@@ -292,6 +312,10 @@ class Result{
 		public String getImprovement(){
 			return improvement;
 		}
+
+		public String toString(){
+			return "Tile at position: " + placement + "\nUnit on tile: " + unit + "\nCity on tile: " + city + "\nImprovement on tile: " + improvement + "\n";
+		}
 	}
 
 	private class Player{
@@ -311,13 +335,13 @@ class Result{
 		}
 
 		public String toString(){
-			return name + "\t" + civilization;
+			return name + "\t" + civilization + "\n";
 		}
 	}
 
 	// Tänkte lägga en toString här nedan, om man vill se det mesta kommer den bli cp-lång.
 	
 	public String toString(){
-		return "Request accepted: " + ok + "\n" + players;
+		return "Request accepted: " + ok + "\n" + updatedTiles;
 	}
 }
