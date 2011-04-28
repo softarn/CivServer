@@ -4,21 +4,14 @@
 -include("config.hrl").
 
 start(Port, Parent) ->
-    init(Port),
-    loop(Parent).
+    init(Port, Parent).
 
-init(Port) ->
-   spawn(tcp, init, [self(), Port]).
+init(Port, Parent) ->
+    {ok, ListenSocket} = gen_tcp:listen(Port, [binary, {active, false}]),
+    accept(ListenSocket, Parent).
 
-loop(Parent) ->
-    receive 
-	Socket ->
-	    case ?TCP:recv_pname(Socket) of
-		{ok, PlayerName} -> 
-		    Parent:add_player(#player{name = PlayerName,
-			    socket = Socket});
-		{error, Reason} ->
-		    io:format("Error accepting new player: ~w~n", [Reason])
-	    end
-    end,
-    loop(Parent).
+accept(ListenSocket, Parent) ->
+    {ok, Socket} = gen_tcp:accept(ListenSocket),
+    io:format("Accepted Connection\n"),
+    spawn(?P_HANDLER, init, [Socket, Parent]),
+    accept(ListenSocket, Parent).
