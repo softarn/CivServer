@@ -5,7 +5,7 @@
 
 add_player(Name, Socket) ->
     ok = server:add_player(#player{name = Name,
-		socket = Socket}).
+	    socket = Socket}).
 
 list_players() ->
     io:format("players: ~p~n", [server:list_players()]).

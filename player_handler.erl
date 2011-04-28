@@ -13,7 +13,7 @@ init(Socket, Parent) ->
 		{badmatch,{error,closed}} ->
 		    ok;%Remove playaah
 		_ ->
-		    io:format("Fångade fel från player_handler~p\n", [X])
+		    io:format("Fångade fel från player_handler ~p\n", [X])
 	    end
     end.
 
@@ -37,7 +37,8 @@ recv_player(Socket, Parent) ->
 
 		false ->
 		    ?TCP:readString(Socket),
-		    ?TCP:sendFailPacket(Socket, 0, Header) %Send fail packet, wrong protocolversion
+		    ?TCP:sendFailPacket(Socket, 0, Header), %Send fail packet, wrong protocolversion
+		    recv_player(Socket, Parent)
 	    end;
 
 	_ -> 

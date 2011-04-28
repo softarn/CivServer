@@ -16,12 +16,16 @@ init({Port, Module}) ->
     {ok, {[], []}}. %LoopData/State (Games, Players)
 
 %Callbacks
-handle_call({create_game, Player}, _From, {Games, Players}) ->
-    ?GAMESRV:start_link(self(), Player), % gör nytt spel EJ LINK ???
-    {reply, ok, {[Games], Players}};
+handle_call({add_player, Player}, _From, {Games, Players}) ->
+    io:format("Added player ~w~n", [Player]),%Glöm ej felkontroll ifall player existerar!
+    {reply, ok, {Games, [Player|Players]}};
 
 handle_call(list_players, _From, {Games, Players}) ->
     {reply, [Player#player.name || Player <- Players], {Games,Players}};
+
+handle_call({create_game, Player}, _From, {Games, Players}) ->
+    ?GAMESRV:start_link(?MODULE, Player), % gör nytt spel EJ LINK ???
+    {reply, ok, {Games, Players}};
 
 handle_call(list_games, _From, {Games, Players}) ->
     {reply, [Game#game.name || Game <- Games], {Games,Players}};
@@ -45,6 +49,9 @@ handle_call({add_player, Player}, _From, {Games, Players}) -> %Check if playerId
 handle_call(stop, _From, State) ->
     {stop, normal, shutdown_ok, State}.
 
+handle_cast({add_game, Game}, _From, {Games, Players}) ->
+    {noreply, {[Game|Games], Players}}.
+
 terminate(_Reason, _State) ->
     %Kill con_handler?
     ok.
@@ -56,7 +63,8 @@ add_player(Player) ->
 	  	  
 
 list_players() -> gen_server:call(?MODULE, list_players).
-list_games() -> gen_server:call(?MODULE, list_games).
+add_game(Game) -> gen_server:cast(?MODULE, {add_game, Game}).
 create_game(Host) -> gen_server:call(?MODULE, {create_game, Host}).
+list_games() -> gen_server:call(?MODULE, list_games).
 stop() -> gen_server:call(?MODULE, stop).
 
