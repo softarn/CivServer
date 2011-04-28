@@ -9,16 +9,13 @@
 
 %Startup
 start_link(Port) ->
-    gen_server:start_link({local, ?MODULE}, ?MODULE, [Port, ?MODULE], []).
+    gen_server:start_link({local, ?MODULE}, ?MODULE, {Port, ?MODULE}, []). % 1:locally/globally registered servername, 2: Callback module, 3: Arguments, 4: Options
 
-init([Port, Module]) ->
+init({Port, Module}) ->
     spawn(con_handler, start, [Port, Module]),
-    {ok, {[], []}}. %State
+    {ok, {[], []}}. %LoopData/State (Games, Players)
 
 %Callbacks
-%handle_call({add_game, NewGame}, _From, {Games, Players}) ->
-%    {reply, ok, {[NewGame|Games], Players}};
-
 handle_call({create_game, Player}, _From, {Games, Players}) ->
     ?GAMESRV:start_link(self(), Player), % gör nytt spel EJ LINK ???
     {reply, ok, {[NewGame|Games], Players}};
@@ -42,7 +39,6 @@ terminate(Reason, State) ->
 
 %Server calls and casts
 add_player(Player) -> gen_server:call(?MODULE, {add_player, Player}).
-add_game(Game) -> gen_server:call(?MODULE, {add_game, Game}).
 list_players() -> gen_server:call(?MODULE, list_players).
 list_games() -> gen_server:call(?MODULE, list_games).
 create_game(Host) -> gen_server:call(?MODULE, {create_game, Host}).
