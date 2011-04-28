@@ -2,18 +2,18 @@
 -behaviour(gen_server).
 
 -compile(export_all).
--export([start/2, init/1]).
+-export([start/1, init/1]).
 -export([player_join/1]).
 
 -include("config.hrl").
 
 %Startup
 start(Host) ->
-	gen_server:start_link({local, ?MODULE}, ?MODULE, Host, []).
+    Game = #game{name = Host#player.name, game_pid = self(), players = [Host]},
+    gen_server:start_link({local, list_to_atom(Host#player.name)}, ?MODULE, Game, []),
+    Game.
 
-init(Host}) ->
-    Game = #game{name=Host#player.name, game_pid=self(), players=[Host]},
-    ?SERVER:add_game(Game),
+init(Game) ->
     {ok, Game}.
 
 %Callbacks
@@ -45,3 +45,4 @@ list_players() -> gen_server:call(?MODULE, list_players).
 toggle_lock() -> gen_server:call(?MODULE, toggle_lock).
 player_join(Player) -> gen_server:call(?MODULE, {player_join, Player}).
 stop() -> gen_server:call(?MODULE, stop).
+

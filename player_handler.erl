@@ -11,9 +11,10 @@ init(Socket) ->
 	error:X ->
 	    case X of % Socket closed
 		{badmatch,{error,closed}} ->
-		    ok;%Remove playaah
+		    ?SERVER:rm_player({socket, Socket}),
+		    ok; %Remove playaah
 		_ ->
-		    io:format("Fångade fel från player_handler~p\n", [X])
+		    io:format("Caught error in player_handler: ~p\n", [X])
 	    end
     end.
 
@@ -30,7 +31,7 @@ recv_player(Socket) ->
 		    	Player = #player{name = PlayerName, %Create player
 	        	ref = make_ref(),
 			socket = Socket,
-			handler= self()},
+			handler = self()},
 		    
 			case ?SERVER:add_player(Player) of
 				true ->
@@ -57,15 +58,18 @@ recv_lobby(Player) ->
     Header = ?TCP:readHeader(Socket),
     case Header of 
 	5 ->  % List game request
+            Games = ?SERVER:list_games(),
+	    ?TCP:sendHeader(Socket, 6), %List game answer
+	    ?TCP:sendList(Socket, "String", Games),
+            recv_lobby(Player);
 
-	    ListOfGames = [];% Hämta available games... och skicka tillbaka som List<String>
 	7 -> % Host request
 	    case ?TCP:readBoolean(Socket) of
 		0 -> %false
-		    ?SERVER:create_game(Player),
+		    Game = ?SERVER:create_game(Player),
 		    ?TCP:sendHeader(Socket, 9), % Join answer
 		    ?TCP:sendString(Socket, Player#player.name),
-	    	    recv_gamelobby(Player);
+	    	    recv_gamelobby(Player, Game);
 		_ ->
 		    'loadgame()' % ladda spel
 
@@ -79,27 +83,28 @@ recv_lobby(Player) ->
 	    ?TCP:sendString(Socket, GameName);
 
 	_Other ->
-	    ?TCP:sendFailPacket(Socket, -1, Header) %Fail packet invalid state
-	    throwPacket(Header, Socket),
+	    ?TCP:sendFailPacket(Socket, -1, Header), %Fail packet invalid state
+	    throwPacket(Header, Socket)
 
     end.
     %recv_lobby(Player).
 
-recv_gamelobby(Player) ->
+
+recv_gamelobby(Player, Game) ->
 	Socket = Player#player.socket,
 	Header = ?TCP:readHeader(Socket),
 
 	case Header of
 		11 -> % Change civilization request
-		NewCiv = readString(Socket),
+			NewCiv = ?TCP:readString(Socket);
+		_Other ->
+			?TCP:sendFailPacket(Socket, -1, Header), %Fail packet invalid state
+			throwPacket(Header, Socket)
 
-
-
-
+	end.
 %	.
 %recv_game(Socket) ->
 %	.
-
 throwPacket(Header, Socket) ->
     case Header of
 	2 ->
