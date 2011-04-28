@@ -120,7 +120,12 @@ public class testklient1
 			// Header 16, Tile Update, this one needs more work.
 			else if(header == 16)
 			{
-				
+				toReturn.setupTiles();
+				int size = receiveInt();
+				for(int i=0; i<size; i++)
+				{
+					receiveTile(toReturn);
+				}
 			}
 
 			// Test
@@ -267,6 +272,33 @@ public class testklient1
 			bool = true;
 		}
 		return bool;
+	}
+
+	// Method to receive a tile from the server.
+	private void receiveTile(Result toAddTo)
+	{
+		toAddTo.setUpdatedTile(receiveInt(), receiveInt());
+		if(receiveBool())
+		{
+			toAddTo.setUnit(receiveString(), receiveString(), receiveInt());
+		}
+		if(receiveBool())
+		{
+			String owner = receiveString();
+			int size = receiveInt();
+			for(int i=0; i<size; i++)
+			{
+				toAddTo.addCityUnit(receiveString(), receiveString(), receiveInt());
+			}
+			size = receiveInt();
+			ArrayList<String> buildings = receiveListString(size);
+			toAddTo.setCity(owner, receiveString(), buildings);
+		}
+		if(receiveBool())
+		{
+			toAddTo.setImprovement(receiveString());
+		}
+		toAddTo.addUpdatedTile();
 	}
 
 	// Public method for connecting to the server.
