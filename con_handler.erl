@@ -1,17 +1,17 @@
 -module(con_handler).
 
--export([start/2]).
+-export([start/1]).
 -include("config.hrl").
 
-start(Port, Parent) ->
-    init(Port, Parent).
+start(Port) ->
+    init(Port).
 
-init(Port, Parent) ->
+init(Port) ->
     {ok, ListenSocket} = gen_tcp:listen(Port, [binary, {active, false}]),
-    accept(ListenSocket, Parent).
+    accept(ListenSocket).
 
-accept(ListenSocket, Parent) ->
+accept(ListenSocket) ->
     {ok, Socket} = gen_tcp:accept(ListenSocket),
     io:format("Accepted Connection\n"),
-    spawn(?P_HANDLER, init, [Socket, Parent]),
-    accept(ListenSocket, Parent).
+    spawn(?P_HANDLER, init, [Socket]),
+    accept(ListenSocket).

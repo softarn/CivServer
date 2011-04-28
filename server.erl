@@ -9,27 +9,23 @@
 
 %Startup
 start_link(Port) ->
-    gen_server:start_link({local, ?MODULE}, ?MODULE, {Port, ?MODULE}, []). % 1:locally/globally registered servername, 2: Callback module, 3: Arguments, 4: Options
+    gen_server:start_link({local, ?MODULE}, ?MODULE, Port, []). % 1:locally/globally registered servername, 2: Callback module, 3: Arguments, 4: Options
 
-init({Port, Module}) ->
-    spawn(con_handler, start, [Port, Module]),
+init(Port) ->
+    spawn(con_handler, start, [Port]),
     {ok, {[], []}}. %LoopData/State (Games, Players)
 
 %Callbacks
-handle_call({create_game, Player}, _From, {Games, Players}) ->
-    ?GAMESRV:start(self(), Player), % gör nytt spel EJ LINK ???
-    {reply, ok, {[Games], Players}};
-
 handle_call({add_player, Player}, _From, {Games, Players}) ->
-    io:format("Added player ~w~n", [Player]),%Glöm ej felkontroll ifall player existerar!
+    io:format("Added player ~w~n", [Player]), %Glöm ej felkontroll ifall player existerar!
     {reply, ok, {Games, [Player|Players]}};
 
 handle_call(list_players, _From, {Games, Players}) ->
     {reply, [Player#player.name || Player <- Players], {Games,Players}};
 
 handle_call({create_game, Player}, _From, {Games, Players}) ->
-    ?GAMESRV:start_link(?MODULE, Player), % gör nytt spel EJ LINK ???
-    {reply, ok, {Games, Players}};
+    ?GAMESRV:start(self(), Player), % gör nytt spel EJ LINK ???
+    {reply, ok, {[Games], Players}};
 
 handle_call(list_games, _From, {Games, Players}) ->
     {reply, [Game#game.name || Game <- Games], {Games,Players}};
@@ -47,8 +43,9 @@ terminate(_Reason, _State) ->
 %Server calls and casts
 add_player(Player) -> gen_server:call(?MODULE, {add_player, Player}).
 list_players() -> gen_server:call(?MODULE, list_players).
-add_game(Game) -> gen_server:cast(?MODULE, {add_game, Game}).
 create_game(Host) -> gen_server:call(?MODULE, {create_game, Host}).
 list_games() -> gen_server:call(?MODULE, list_games).
 stop() -> gen_server:call(?MODULE, stop).
+
+add_game(Game) -> gen_server:cast(?MODULE, {add_game, Game}).
 

@@ -8,12 +8,12 @@
 -include("config.hrl").
 
 %Startup
-start(Parent, Host) ->
-	gen_server:start_link({local, ?MODULE}, ?MODULE, {Parent, Host}, []).
+start(Host) ->
+	gen_server:start_link({local, ?MODULE}, ?MODULE, Host, []).
 
-init({Parent, Host}) ->
+init(Host}) ->
     Game = #game{name=Host#player.name, game_pid=self(), players=[Host]},
-    Parent:add_game(Game), %add handle_info/2 i server... eller lös på annat sätt
+    ?SERVER:add_game(Game),
     {ok, Game}.
 
 %Callbacks

@@ -189,11 +189,6 @@ sendPerhaps(Socket, true, Type, Elem) ->
 	"Boolean" ->
 	    sendBoolean(Socket, Elem)
     end.
-%	player = string namn, string civ, 	1 list = player, string, column, position, unit
-%	column = list<String>			2 perhaps = unit, city, string, 
-%	position = integer x, integer y		3
-%	unit = ägare STring, type String, manpower Integer 3
-%	city = ägare String, list<Unit>, list<String>, name String 4
 
 sendFailPacket(Socket, FailureID, ReqHeader) -> % 2:Number to identify failure. 3:Head of failed package. NEGATIVT FAILUREID FUNGERAR EJ MED LIST2BINARY 
     io:format("Created the following failmsg: "),
