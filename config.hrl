@@ -3,6 +3,7 @@
 -define(P_VERSION, 0).
 -define(SERVER, server).
 -define(GAMESRV, gameserver).
+
 -record(player,{
 	ref,
 	handler,

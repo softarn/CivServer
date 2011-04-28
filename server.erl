@@ -18,7 +18,7 @@ init({Port, Module}) ->
 %Callbacks
 handle_call({create_game, Player}, _From, {Games, Players}) ->
     ?GAMESRV:start_link(self(), Player), % gör nytt spel EJ LINK ???
-    {reply, ok, {[NewGame|Games], Players}};
+    {reply, ok, {[Games], Players}};
 
 handle_call(list_players, _From, {Games, Players}) ->
     {reply, [Player#player.name || Player <- Players], {Games,Players}};
@@ -33,7 +33,7 @@ handle_call({add_player, Player}, _From, {Games, Players}) ->
 handle_call(stop, _From, State) ->
     {stop, normal, shutdown_ok, State}.
 
-terminate(Reason, State) ->
+terminate(_Reason, _State) ->
     %Kill con_handler?
     ok.
 
