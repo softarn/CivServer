@@ -2,13 +2,13 @@
 -behaviour(gen_server).
 
 -compile(export_all).
--export([start_link/2, init/2]).
+-export([start/2, init/1]).
 -export([player_join/1]).
 
 -include("config.hrl").
 
 %Startup
-start_link(Parent, Host) ->
+start(Parent, Host) ->
 	gen_server:start_link({local, ?MODULE}, ?MODULE, {Parent, Host}, []).
 
 init({Parent, Host}) ->
@@ -30,7 +30,7 @@ handle_call(toggle_lock, _From, Game) ->
 	{reply, UpdatedGame#game.locked, UpdatedGame};
 
 handle_call({player_join, Player}, _From, Game) ->
-	UpdatedGame = Game#game{players = lists:flatten([Player | Game#game.players])}, %Behövs lists:flatten? players = lista av players. 
+	UpdatedGame = Game#game{players = [Player | Game#game.players]}, %
     	io:format("Added player ~w~n", [Player]), %Glöm ej felkontroll ifall player existerar!
     	{reply, UpdatedGame#game.players, UpdatedGame};
 

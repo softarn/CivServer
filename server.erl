@@ -17,7 +17,7 @@ init({Port, Module}) ->
 
 %Callbacks
 handle_call({create_game, Player}, _From, {Games, Players}) ->
-    ?GAMESRV:start_link(self(), Player), % gör nytt spel EJ LINK ???
+    ?GAMESRV:start(self(), Player), % gör nytt spel EJ LINK ???
     {reply, ok, {[Games], Players}};
 
 handle_call(list_players, _From, {Games, Players}) ->
