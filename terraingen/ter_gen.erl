@@ -1,17 +1,31 @@
 -module(ter_gen).
 -export([generate/2]).
 
+%	Terrain-Generator
+% =============================
+% The method generate takes width and height
+% and returns a matrix represented of Lists
+% lists.
+% Terraintypes specified from 1-12
+% 
+% Ocean tiles are just generated when all neighbours is water-tiles.
+% Note: the generate_ocean function removes islands (lone land tiles in water)
+% as it is right now.
+% 
+% If you have any questions please feel free to contact Arian or Rasmus.
+
+
 
 generate(Width,Height) when is_number(Width), is_number(Height)->
-	TheMap = create_map(Width, Height),
-	Water = check_map(Width, Height, TheMap, Width, Height, 0),
+	TheMap = generate_ocean(create_map(Width, Height)),
+	%Water = check_map(Width, Height, TheMap, Width, Height, 0),
 	%case Water > ______ of
 	%	true ->
 	%		create_map(Width, Height);
 	%	false ->
 	%		ok
 	%end
-	
+	%generate_ocean(TheMap),	
 	[tuple_to_list(Column)|| Column <- tuple_to_list(TheMap)].
 
 create_map(Width,Height)->
@@ -57,6 +71,7 @@ get_neighbours(Row,Column,List,[{Y,X}|Tail],Matrix) ->
 				true -> get_neighbours(Row,Column,[{NeighY,NeighX}|List],Tail,Matrix)
 			end
 	end.
+
 count_terrain([],_,_,Acc)->
 	Acc;
 count_terrain([{Y,X}|Tail],Matrix,Terrain,Acc)->
@@ -65,7 +80,7 @@ count_terrain([{Y,X}|Tail],Matrix,Terrain,Acc)->
 		_->	count_terrain(Tail,Matrix,Terrain,Acc)
 	end. 	
 
-det_type(Row,Column,Matrix,_,1,Terrain,_)->
+det_type(Row,Column,Matrix,_,2,Terrain,_)->
 		change_terrain(Row, Column, Terrain, Matrix);
 det_type(Row,Column,Matrix,Neigh,Count,Terrain,Max)->
 		TerrainCount = count_terrain(Neigh,Matrix,Count,0) + random:uniform(5),
@@ -74,28 +89,47 @@ det_type(Row,Column,Matrix,Neigh,Count,Terrain,Max)->
 			false->det_type(Row,Column,Matrix,Neigh,Count-1,Terrain,Max)
 		end.
 
+type_of_water(Row,Column,Matrix, [])->
+	change_terrain(Row, Column, 2, Matrix);	
+type_of_water(Row,Column,Matrix, [{Y,X}|Tail])->
+	case get_terrain(Y,X,Matrix) <3 of
+			true -> type_of_water(Row,Column,Matrix,Tail);
+			false -> Matrix	end.
+
+
 choose_tile(Row,Column,Matrix)->
 	Neigh = get_neighbours(Row,Column,[],build_directions(),Matrix),	
 	Water = count_terrain(Neigh,Matrix,1,0),
 	Weight = Water - (length(Neigh) - Water),
-	WaterOrLand = (random:uniform(6) - 1) - Weight,
+	WaterOrLand = (random:uniform(5) - 1) - Weight,
 	case WaterOrLand < 0 of
 		false ->
-			det_type(Row,Column,Matrix,Neigh,10,2,0);
+			det_type(Row,Column,Matrix,Neigh,12,3,0);
 		true->
 			Matrix
 	end.
 
-check_map(1, 1, _, _, _, Acc) ->
-	Acc;
-check_map(Row, 1, Matrix, Width, Height, Acc) ->
-	check_map(Row-1, Height, Matrix, Width, Height, Acc);
-check_map(Row, Column, Matrix, Width, Height, Acc) ->
-	case get_terrain(Row, Column, Matrix) of
-		1 ->
-			NewAcc = Acc+1;
-		_ ->
-			NewAcc = Acc
-	end
-	check_map(Row, Column-1, Matrix, Width, Height, NewAcc).
-	
+
+generate_ocean(Matrix)->
+	generate_ocean(Matrix,tuple_size(Matrix),tuple_size(element(1,Matrix))).
+
+
+generate_ocean(Matrix,1,1)->
+	type_of_water(1,1,Matrix,get_neighbours(1,1,[],build_directions(),Matrix));	
+generate_ocean(Matrix,Row,1)->
+	generate_ocean(type_of_water(Row,1,Matrix,get_neighbours(1,1,[],build_directions(),Matrix)),Row-1,tuple_size(element(Row-1,Matrix)));
+generate_ocean(Matrix,Row,Column)->
+	generate_ocean(type_of_water(Row,Column,Matrix,get_neighbours(Row,Column,[],build_directions(),Matrix)),Row,Column-1).
+
+%check_map(1, 1, _, _, _, Acc) ->
+%	Acc;
+%check_map(Row, 1, Matrix, Width, Height, Acc) ->
+%	check_map(Row-1, Height, Matrix, Width, Height, Acc);
+%check_map(Row, Column, Matrix, Width, Height, Acc) ->
+%	case get_terrain(Row, Column, Matrix) of
+%		1 ->
+%			NewAcc = Acc+1;
+%		_ ->
+%			NewAcc = Acc
+%	end,
+%	check_map(Row, Column-1, Matrix, Width, Height, NewAcc).
