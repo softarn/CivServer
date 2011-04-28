@@ -57,7 +57,7 @@ recv_lobby(Player, Parent) ->
 		0 -> %false
 			?SERVER:create_game(Player),
 			?TCP:sendHeader(Socket, 9), % Join answer
-		    	?TCP:sendString(Socket, Player#player.name),
+		    	?TCP:sendString(Socket, Player#player.name);
 		_ ->
 		    'loadgame()' % ladda spel
 
