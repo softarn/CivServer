@@ -9,6 +9,7 @@ start(Player) ->
 	gen_fsm:start({local, list_to_atom(erlang:ref_to_list(Player#player.ref))}, ?MODULE, Player, []).
 
 init(Player) ->
-	{ok, connect, {Player, Game}}. % 2. first state, 3: fsm-data
+	{ok, connect, Player}. % 2. first state, 3: fsm-data
 
-connect()
+connect() ->
+	k.
