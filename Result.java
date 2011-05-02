@@ -190,6 +190,14 @@ class Result{
 		return updatedTiles.size();
 	}
 
+	public int getTileX(int n){
+		return ((Tile)updatedTiles.get(n)).getPosition().getX();
+	}
+
+	public int getTileY(int n){
+		return ((Tile)updatedTiles.get(n)).getPosition().getY();
+	}
+
 	// Här slutar getters.
 	// --------------------------------------------
 	// Här under är nestlade klasser för ytterligare containers!
