@@ -1,0 +1,9 @@
+_Done_
+Player can connect
+Player can get a list of games
+Player can start a game
+
+_Todo_
+Player can join a game
+Make a random map on game creation
+

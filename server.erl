@@ -9,7 +9,7 @@
 
 %Startup
 start_link(Port) ->
-    % 1:locally/globally registered servername, 2: Callback module, 3: Arguments, 4: Options
+    % 1: Locally registered servername, 2: Callback module, 3: Arguments, 4: Options
     gen_server:start_link({local, ?MODULE}, ?MODULE, Port, []). 
 init(Port) ->
     spawn(con_handler, start, [Port]),

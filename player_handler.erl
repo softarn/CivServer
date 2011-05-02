@@ -18,7 +18,6 @@ init(Socket) ->
 	    end
     end.
 
-%SOCKET CLOSE? vAD HÄNDER?
 recv_player(Socket) ->
     Header = ?TCP:readHeader(Socket),
     case Header of
