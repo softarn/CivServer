@@ -30,9 +30,9 @@ handle_call(toggle_lock, _From, Game) ->
     {reply, UpdatedGame#game.locked, UpdatedGame};
 
 handle_call({player_join, Player}, _From, Game) ->
-	UpdatedGame = Game#game{players = [Player | Game#game.players]}, %
-    	io:format("Added player ~w~n", [Player]), %Glöm ej felkontroll ifall player existerar!
-    	{reply, UpdatedGame#game.players, UpdatedGame};
+    UpdatedGame = Game#game{players = [Player | Game#game.players]}, %
+    io:format("Added player ~w~n", [Player]), %Glöm ej felkontroll ifall player existerar!
+    {reply, UpdatedGame#game.players, UpdatedGame};
 
 handle_call(stop, _From, State) ->
     {stop, normal, shutdown_ok, State}.

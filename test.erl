@@ -14,5 +14,5 @@ list_games() ->
     io:format("games: ~p~n", [server:list_games()]).
 
 add_game(Game) ->
-	server:add_game(Game).
+    server:add_game(Game).
 

@@ -27,20 +27,20 @@ recv_player(Socket) ->
 
 	    case ProtocolVersion =:= ?P_VERSION of
 		true ->
-		    	PlayerName = ?TCP:readString(Socket),
-		    	Player = #player{name = PlayerName, %Create player
-	        	ref = make_ref(),
+		    PlayerName = ?TCP:readString(Socket),
+		    Player = #player{name = PlayerName, %Create player
+			ref = make_ref(),
 			socket = Socket,
 			handler = self()},
-		    
-			case ?SERVER:add_player(Player) of
-				true ->
-		    			?TCP:sendHeader(Socket, 3), % Welcome to the Real world
-		    			recv_lobby(Player);
-			    	false ->
-					?TCP:sendFailPacket(Socket, 1, Header), %Fail packet name already exists
-					recv_player(Socket)
-			end;
+
+		    case ?SERVER:add_player(Player) of
+			true ->
+			    ?TCP:sendHeader(Socket, 3), % Welcome to the Real world
+			    recv_lobby(Player);
+			false ->
+			    ?TCP:sendFailPacket(Socket, 1, Header), %Fail packet name already exists
+			    recv_player(Socket)
+		    end;
 
 		false ->
 		    ?TCP:readString(Socket),
@@ -58,10 +58,10 @@ recv_lobby(Player) ->
     Header = ?TCP:readHeader(Socket),
     case Header of 
 	5 ->  % List game request
-            Games = ?SERVER:list_games(),
+	    Games = ?SERVER:list_games(),
 	    ?TCP:sendHeader(Socket, 6), %List game answer
 	    ?TCP:sendList(Socket, "String", Games),
-            recv_lobby(Player);
+	    recv_lobby(Player);
 
 	7 -> % Host request
 	    case ?TCP:readBoolean(Socket) of
@@ -69,7 +69,7 @@ recv_lobby(Player) ->
 		    Game = ?SERVER:create_game(Player),
 		    ?TCP:sendHeader(Socket, 9), % Join answer
 		    ?TCP:sendString(Socket, Player#player.name),
-	    	    recv_gamelobby(Player, Game);
+		    recv_gamelobby(Player, Game);
 		_ ->
 		    'loadgame()' % ladda spel
 
@@ -87,21 +87,21 @@ recv_lobby(Player) ->
 	    throwPacket(Header, Socket)
 
     end.
-    %recv_lobby(Player).
+%recv_lobby(Player).
 
 
 recv_gamelobby(Player, Game) ->
-	Socket = Player#player.socket,
-	Header = ?TCP:readHeader(Socket),
+    Socket = Player#player.socket,
+    Header = ?TCP:readHeader(Socket),
 
-	case Header of
-		11 -> % Change civilization request
-			NewCiv = ?TCP:readString(Socket);
-		_Other ->
-			?TCP:sendFailPacket(Socket, -1, Header), %Fail packet invalid state
-			throwPacket(Header, Socket)
+    case Header of
+	11 -> % Change civilization request
+	    NewCiv = ?TCP:readString(Socket);
+	_Other ->
+	    ?TCP:sendFailPacket(Socket, -1, Header), %Fail packet invalid state
+	    throwPacket(Header, Socket)
 
-	end.
+    end.
 %	.
 %recv_game(Socket) ->
 %	.
