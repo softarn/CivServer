@@ -405,21 +405,18 @@ public class testklient1
 */
 	public static void main(String [] args)
 	{
-		testklient1 k = new testklient1("localhost", 1231);//130.229.128.72", 1234);
+		testklient1 k = new testklient1("130.237.238.233", 1231);//130.229.128.72", 1234);
 		Packet login = new Packet((byte)2);
 		login.add(0);
-		login.add("Kalle");
+		login.add("Torsten");
 		k.send(login);
 
-        Packet list = new Packet((byte)5);
+        Packet list = new Packet((byte)8);
+		list.add("Kalle");
 		k.send(list);
 
-        Packet host = new Packet((byte)7);
-        host.add(false);
-        k.send(host);
-
         try{
-            Thread.sleep(20000);
+            Thread.sleep(10000);
         }catch(Throwable t){}
 
 	/*	ArrayList<Integer> skaMed = new ArrayList<Integer>();
