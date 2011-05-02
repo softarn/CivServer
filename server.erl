@@ -63,7 +63,7 @@ handle_cast({rm_player, {socket, Socket}}, {Games, Players}) ->
     end,
 
     NewPlayers = lists:filter(Fun, Players),
-    io:format("Deleted a player"),
+    io:format("Deleted a player~n"),
     {noreply, {Games, NewPlayers}}.
 
 terminate(_Reason, _State) ->
