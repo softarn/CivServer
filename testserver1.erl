@@ -68,37 +68,9 @@ readList(Socket, ElemType) ->
 readList(_, 0, _, List) ->
 	lists:reverse(List);
 
-readList(Socket, NumberOfElements, "Integer", List) -> % Lista av Integers
-	Element = readInteger(Socket),
-	readList(Socket, NumberOfElements-1, "Integer", [Element|List]);
-
-readList(Socket, NumberOfElements, "Boolean", List) -> % Lista av Booleans
-	Element = readBoolean(Socket),
-	readList(Socket, NumberOfElements-1, "Boolean", [Element|List]);
-
-readList(Socket, NumberOfElements, "String", List) -> % Lista av Strings
-	Element = readString(Socket),
-	readList(Socket, NumberOfElements-1, "String", [Element|List]);
-
-readList(Socket, NumberOfElements, "Player", List) -> % Lista av Player
-	Name = readString(Socket),
-	Civ = readString(Socket),
-	readList(Socket, NumberOfElements-1, "Player", [Name, Civ | List]);
-
-readList(Socket, NumberOfElements, "Unit", List) -> % Lista av Unit
-	Owner = readString(Socket),
-	UnitType = readString(Socket),
-	ManPower = readInteger(Socket),
-	readList(Socket, NumberOfElements-1, "Unit", [Owner, UnitType, ManPower | List]);
-
-readList(Socket, NumberOfElements, "Position", List) -> % Lista av Position
-	X = readInteger(Socket),
-	Y = readInteger(Socket),
-	readList(Socket, NumberOfElements-1, "Position", [X, Y | List]);
-
-readList(Socket, NumberOfElements, "Column", List) -> % Lista av Column
-	Column = readList(Socket, "String"),  
-	readList(Socket, NumberOfElements-1, "Column", [Column | List]).
+readList(Socket, NumberOfElements, ElemType, List) ->
+	Element = readElement(Socket, ElemType),
+	readList(Socket, NumberOfElements-1, ElemType, [Element|List]).
 
 readPerhaps(Socket, ElemType) ->
 	Perhaps = readBoolean(Socket),
@@ -106,33 +78,48 @@ readPerhaps(Socket, ElemType) ->
 		0 ->
 			none;
 		_ ->
-			helpReadPerhaps(Socket, ElemType)
+			readElement(Socket, ElemType)
 	end.
 
-helpReadPerhaps(Socket, "Integer") ->
+readElement(Socket, "Integer") ->
 	readInteger(Socket);
 
-helpReadPerhaps(Socket, "String") ->
+readElement(Socket, "String") ->
 	readString(Socket);
 
-helpReadPerhaps(Socket, "List") ->
+readElement(Socket, "Boolean") ->
+	readBoolean(Socket);
+
+readElement(Socket, "List") ->
 	readList(Socket, "List");
 
-helpReadPerhaps(Socket, "Unit") ->
+readElement(Socket, "Unit") ->
 	Owner = readString(Socket),
 	UnitType = readString(Socket),
 	ManPower = readInteger(Socket),
 	{unit, Owner, UnitType, ManPower};
 
-helpReadPerhaps(Socket, "City") ->
+readElement(Socket, "City") ->
 	Owner = readString(Socket),
 	UnitList = readList(Socket, "String"),
 	Buildings = readList(Socket, "String"),
 	Name = readString(Socket),
 	{city, Owner, UnitList, Buildings, Name};
 
-helpReadPerhaps(Socket, "Boolean") ->
-	readBoolean(Socket).
+readElement(Socket, "Player") -> % Lista av Player
+	Name = readString(Socket),
+	Civ = readString(Socket),
+	{player, Name, Civ};
+
+readElement(Socket, "Position") -> % Lista av Position
+	X = readInteger(Socket),
+	Y = readInteger(Socket),
+	{position, X, Y};
+
+readElement(Socket, "Column") -> % Lista av Column
+	Column = readList(Socket, "String"),  
+	{column, Column}.
+
 
 sendHeader(Socket, Header) ->
 	gen_tcp:send(Socket, <<Header?HEADER>>),
@@ -157,29 +144,34 @@ sendBoolean(Socket, Bool) ->
 
 
 sendList(Socket, ElemType, List) ->
-	NumberOfElements = length(List),
 
 	case ElemType of 
 		"String" ->
+			NumberOfElements = length(List),
 			NewList = [X ++ "\0"|| X <- List], % Lägger till nullterminering på alla strängar i listan
 			Packet = [<<NumberOfElements?INTEGER>>, NewList],
 			gen_tcp:send(Socket, Packet);
 		"Player" ->
+			NumberOfElements = length(List) div 2,
 			NewList = [X ++ "\0"|| X <- List], % Lägger till nullterminering på alla strängar i listan
 			Packet = [<<NumberOfElements?INTEGER>>, NewList],
 			gen_tcp:send(Socket, Packet);
 		"Position" ->
+			NumberOfElements = length(List) div 2,
 			NewList = [<<X?INTEGER>> || X <- List], % Tolkar alla intar i listan som ?INTEGER
 			Packet = [<<NumberOfElements?INTEGER>>, NewList],
 			gen_tcp:send(Socket, Packet);
 		"Integer" ->
+			NumberOfElements = length(List),
 			NewList = [<<X?INTEGER>> || X <- List], % Tolkar alla intar i listan som ?INTEGER
 			Packet = [<<NumberOfElements?INTEGER>>, NewList],
 			gen_tcp:send(Socket, Packet);
 		"Column" ->
+			NumberOfElements = length(List),
 			sendInteger(Socket, NumberOfElements), % Skicka antalet listor
 			[sendList(Socket, "String", X) || X <- List]; % Skicka alla listor
 		"Unit" ->
+			NumberOfElements = length(List) div 3,
 			Fun = fun(X) ->
 					case is_integer(X) of
 						true ->
@@ -188,6 +180,7 @@ sendList(Socket, ElemType, List) ->
 							sendString(Socket, X ++ "\0")
 					end
 			end,
+			sendInteger(Socket, NumberOfElements),
 			lists:foreach(Fun, List);
 
 		Other ->
@@ -195,7 +188,6 @@ sendList(Socket, ElemType, List) ->
 	end,       
 	io:format("SendList sent: "),
 	io:format("~p\n", [List]).
-
 
 sendPerhaps(Socket, false) ->
 	sendBoolean(Socket, 0).
@@ -210,12 +202,12 @@ sendPerhaps(Socket, true, Type, Elem) ->
 		"List" ->
 			sendList(Socket, Type, Elem);
 		"Unit" ->
-			{Owner, Type, ManPower} = Elem,
+			{unit, Owner, Type, ManPower} = Elem,
 			sendString(Socket, Owner),
 			sendString(Socket, Type),
 			sendInteger(Socket, ManPower);
 		"City" ->
-			{Owner, Units, Buildings, Name} = Elem,
+			{city, Owner, Units, Buildings, Name} = Elem,
 			sendString(Socket, Owner),
 			sendList(Socket, "Unit", Units),
 			sendList(Socket, "String", Buildings),
@@ -285,6 +277,12 @@ recv(Socket) ->
 					readString(Socket),
 					sendFailPacket(Socket, 0, Header) %Fail'd
 			end;
+		99 ->
+			readInteger(Socket),
+			readInteger(Socket),
+			sendHeader(Socket, 10),
+			sendList(Socket, "Player", ["Player1", "Barbar", "Player2", "Viking", "Player3", "Marockan", "Player4", "Aussie"]),
+			sendBoolean(Socket, 1);
 		5 ->  % List game request
 			ListOfGames = [],% Hämta available games... och skicka tillbaka som List<String>
 			sendHeader(Socket, 6), %List game answer
@@ -315,12 +313,5 @@ recv(Socket) ->
 				false ->
 					sendGameSessionInformation
 			end
-
-			%TheList = readList(Socket, "String"),
-			%io:format("Listan: "),
-			%io:format("~p\n", [TheList]),
-			%sendHeader(Socket, 6),
-			%sendList(Socket, "Integer", [1, 2, 3, 4, 5, 6, 8]);
-			%sendList(Socket, "String", ["Maggan", "Fredde", "Simon", "De var ett vackert par"]);
 	end,
 	recv(Socket).
