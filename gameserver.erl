@@ -41,7 +41,7 @@ handle_call({start_game, MapSize}, _From, Game) ->
 	Map = ?TERGEN:generate(MapSize, MapSize), % Fixa storleken senare
 	broadcastMsg(Game, Map, start_game),
 	UpdatedGame = Game#game{locked = true, map = Map},
-	{reply, ok, UpdatedGame};
+	{reply, UpdatedGame, UpdatedGame};
 
 handle_call(stop, _From, State) ->
     {stop, normal, shutdown_ok, State}.

@@ -4,10 +4,12 @@
 -define(SERVER, server).
 -define(GAMESRV, gameserver).
 -define(TERGEN, ter_gen).
+-define(P_FSM, player_fsm).
 
 -record(player,{
 	ref,
 	handler,
+	fsm,
 	name,
 	socket,
 	civ}).

@@ -109,10 +109,10 @@ recv_gamelobby(Player, Game) ->
 			false ->
 				?TCP:sendFailPacket(Socket, 13, Header); % FailPacket "Permission denied"
 			true ->
-				?GAMESRV:start_game(Game#game.name, 30) % param: Gamename, mapsize
+				UpdatedGame = ?GAMESRV:start_game(Game#game.name, 30), % param: Gamename, mapsize
+				recv_game(Player, UpdatedGame)
 		end;
     		
-
 	_Other ->
 	    ?TCP:sendFailPacket(Socket, -1, Header), %Fail packet invalid state
 	    throwPacket(Header, Socket)
@@ -121,6 +121,7 @@ recv_gamelobby(Player, Game) ->
 
 recv_game(Player, Game) ->
 
+	k.
 
 throwPacket(Header, Socket) ->
     case Header of
