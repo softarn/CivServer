@@ -80,7 +80,7 @@ recv_lobby(Player) ->
 		   [] ->
 			  ?TCP:sendFailPacket(Socket, 2, Header); % FailPacket "Game does not exist" 
 
-		  Game when is_list(Game) ->
+		  Game when is_record(Game, game) ->
 			case ?GAMESRV:is_locked(Game#game.name) of
 				true ->
 					?TCP:sendFailPacket(Socket, 3, Header); % FailPacket "Game is locked"
@@ -96,8 +96,6 @@ recv_lobby(Player) ->
 	    ?TCP:sendFailPacket(Socket, -1, Header), %Fail packet invalid state
 	    throwPacket(Header, Socket)
     end.
-%recv_lobby(Player).
-
 
 recv_gamelobby(Player, Game) ->
     Socket = Player#player.socket,
@@ -106,14 +104,25 @@ recv_gamelobby(Player, Game) ->
     case Header of
 	11 -> % Change civilization request
 	    NewCiv = ?TCP:readString(Socket);
+	
+    	13 -> % Start game request
+		case Player#player.name =:= Game#game.name of % Is player host?
+			false ->
+				?TCP:sendFailPacket(Socket, 13, Header); % FailPacket "Permission denied"
+			true ->
+				?GAMESRV:start_game(Game#game.name, 30) % param: Gamename, mapsize
+		end;
+    		
+
 	_Other ->
 	    ?TCP:sendFailPacket(Socket, -1, Header), %Fail packet invalid state
 	    throwPacket(Header, Socket)
 
     end.
-%	.
-%recv_game(Socket) ->
-%	.
+
+recv_game(Player, Game) ->
+
+
 throwPacket(Header, Socket) ->
     case Header of
 	2 ->

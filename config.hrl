@@ -3,6 +3,7 @@
 -define(P_VERSION, 0).
 -define(SERVER, server).
 -define(GAMESRV, gameserver).
+-define(TERGEN, ter_gen).
 
 -record(player,{
 	ref,
@@ -15,4 +16,5 @@
 	name,
 	game_pid,
 	players,
-	locked}).
+	locked,
+	map}).

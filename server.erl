@@ -21,7 +21,7 @@ handle_call(list_players, _From, {Games, Players}) ->
 
 handle_call({create_game, Player}, _From, {Games, Players}) ->
     Game = ?GAMESRV:start(Player), 
-    io:format("Created new game"),
+    io:format("Created new game\n"),
     {reply, Game, {[Game|Games], Players}};
 
 handle_call(list_games, _From, {Games, Players}) ->

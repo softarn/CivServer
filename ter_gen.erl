@@ -1,5 +1,6 @@
 %	Random terrain generator
 % 	Authors: Arian Jafari & Rasmus Ivö
+%	aria-jaf@dsv.su.se, rasm-ivo@dsv.su.se
 % =============================
 % The method "generate" takes width and height
 % and returns a matrix represented of Lists
