@@ -21,7 +21,7 @@ handle_call(list_players, _From, {Games, Players}) ->
 
 handle_call({create_game, Player}, _From, {Games, Players}) ->
     Game = ?GAMESRV:start(Player), 
-    io:format("Created new game"),
+    io:format("Created new game\n"),
     {reply, Game, {[Game|Games], Players}};
 
 handle_call(list_games, _From, {Games, Players}) ->
@@ -74,7 +74,7 @@ terminate(_Reason, _State) ->
 %Player
 add_player(Player) -> gen_server:call(?SERVER, {add_player, Player}).
 list_players() -> gen_server:call(?SERVER, list_players).
-rm_player({socket, Socket}) -> gen_server:call(?SERVER, {rm_player, {socket, Socket}}).
+rm_player({socket, Socket}) -> gen_server:cast(?SERVER, {rm_player, {socket, Socket}}).
 %Game
 add_game(Game) -> gen_server:call(?SERVER, {add_game, Game}).
 create_game(Host) -> gen_server:call(?SERVER, {create_game, Host}).
