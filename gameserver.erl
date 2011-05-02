@@ -34,6 +34,9 @@ handle_call({player_join, Player}, _From, Game) ->
     io:format("Added player ~w~n", [Player]), %Glöm ej felkontroll ifall player existerar!
     {reply, UpdatedGame#game.players, UpdatedGame};
 
+handle_call(is_locked, _From, Game) ->
+	Game#game.locked;
+
 handle_call(stop, _From, State) ->
     {stop, normal, shutdown_ok, State}.
 
@@ -41,8 +44,8 @@ terminate(Reason, State) ->
     ok.
 
 %Server calls and casts
-list_players() -> gen_server:call(?MODULE, list_players).
-toggle_lock() -> gen_server:call(?MODULE, toggle_lock).
-player_join(Player) -> gen_server:call(?MODULE, {player_join, Player}).
-stop() -> gen_server:call(?MODULE, stop).
-
+list_players(GN) -> gen_server:call(GN, list_players).
+toggle_lock(GN) -> gen_server:call(GN, toggle_lock).
+is_locked(GN) -> gen_server:call(GN, is_locked).
+player_join({GN, Player}) -> gen_server:call(GN, {player_join, Player}).
+stop(GN) -> gen_server:call(GN, stop).

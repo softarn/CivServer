@@ -1,7 +1,7 @@
 _Done_
-Player can connect
+Player can connect to server
+Player can create a game
 Player can get a list of games
-Player can start a game
 
 _Todo_
 Player can join a game
