@@ -74,17 +74,26 @@ recv_lobby(Player) ->
 
 	    end;
 	8 -> % Join request
-	    HostName = ?TCP:readString(Socket),
-	    % Kolla upp om spelet finns ELLER om det är låst - isf fail'd
-	    % Annars 9 - joinanswer
-	    GameName = "Hämta gamename",
-	    ?TCP:sendHeader(Socket, 9), % Join answer
-	    ?TCP:sendString(Socket, GameName);
+	   GameName = ?TCP:readString(Socket),
+	   case ?SERVER:get_game(GameName) of
+		   [] ->
+			  ?TCP:sendFailPacket(Socket, 2, Header); % FailPacket "Game does not exist" 
 
+		  Game when is_list(Game) ->
+			case ?GAMESRV:is_locked(Game#game.name) of
+				true ->
+					?TCP:sendFailPacket(Socket, 3, Header); % FailPacket "Game is locked"
+				false ->
+					?TCP:sendHeader(Socket, 9), % Join answer
+	    				?TCP:sendString(Socket, GameName),
+					?GAMESRV:player_join(GameName, Player),
+					recv_gamelobby(Player, Game)
+			end
+	end;
+	
 	_Other ->
 	    ?TCP:sendFailPacket(Socket, -1, Header), %Fail packet invalid state
 	    throwPacket(Header, Socket)
-
     end.
 %recv_lobby(Player).
 

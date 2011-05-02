@@ -10,7 +10,7 @@
 %Startup
 start_link(Port) ->
     % 1: Locally registered servername, 2: Callback module, 3: Arguments, 4: Options
-    gen_server:start_link({local, ?MODULE}, ?MODULE, Port, []). 
+    gen_server:start_link({local, ?SERVER}, ?MODULE, Port, []). 
 init(Port) ->
     spawn(con_handler, start, [Port]),
     {ok, {[], []}}. %LoopData/State (Games, Players)
@@ -50,11 +50,11 @@ handle_call({add_game, Game}, _From, {Games, Players}) ->
     io:format("adding game"),
     {reply, ok, {[Game|Games], Players}};
 
-handle_call({get_game, Pid}, _From, {Games, Players}) ->
+handle_call({get_game, GameName}, _From, {Games, Players}) ->
     Fun = fun(X) ->
-	    X#game.game_pid =:= Pid
+	    X#game.name =:= GameName 
     end,
-    [Game] = lists:filter(Fun, Games), 
+    [Game] = lists:filter(Fun, Games), %Kan orsaka fel om inga gamename hittas
     {reply, Game, {Games, Players}}.
 
 handle_cast({rm_player, {socket, Socket}}, {Games, Players}) ->
@@ -72,15 +72,14 @@ terminate(_Reason, _State) ->
 
 %Server calls and casts
 %Player
-add_player(Player) -> gen_server:call(?MODULE, {add_player, Player}).
-list_players() -> gen_server:call(?MODULE, list_players).
-rm_player({socket, Socket}) -> gen_server:cast(?MODULE, {rm_player, {socket, Socket}}).
-
+add_player(Player) -> gen_server:call(?SERVER, {add_player, Player}).
+list_players() -> gen_server:call(?SERVER, list_players).
+rm_player({socket, Socket}) -> gen_server:call(?SERVER, {rm_player, {socket, Socket}}).
 %Game
-add_game(Game) -> gen_server:call(?MODULE, {add_game, Game}).
-create_game(Host) -> gen_server:call(?MODULE, {create_game, Host}).
-list_games() -> gen_server:call(?MODULE, list_games).
-get_game(Pid) -> gen_server:call(?MODULE, {get_game, Pid}).
+add_game(Game) -> gen_server:call(?SERVER, {add_game, Game}).
+create_game(Host) -> gen_server:call(?SERVER, {create_game, Host}).
+list_games() -> gen_server:call(?SERVER, list_games).
+get_game(GameName) -> gen_server:call(?SERVER, {get_game, GameName}).
 
 %Server
-stop() -> gen_server:call(?MODULE, stop).
+stop() -> gen_server:call(?SERVER, stop).
