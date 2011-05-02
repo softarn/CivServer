@@ -5,7 +5,7 @@ import java.net.*;
 public class Receiver implements Runnable
 {
 
-	public Result packet = null;
+	private Result packet = null;
 	private InputStream m_inStream;
 	private OutputStream m_outStream;
 	private PacketListener pl;
@@ -72,7 +72,7 @@ public class Receiver implements Runnable
 				toReturn.addFailNumber(receiveInt());
 				toReturn.addRequestFail(m_inStream.read());
 				toReturn.addFailMsg(receiveString());
-			packet = toReturn;
+				packet = toReturn;
 			}
 
 			// Header 1, the confirm'd, but right now we receive a string for testing purposes.
@@ -80,7 +80,7 @@ public class Receiver implements Runnable
 			{
 				toReturn.addRequestOk(m_inStream.read());
 				toReturn.addOk(true);
-			packet = toReturn;
+				packet = toReturn;
 			}
 		
 			// Header 4, a ping and answers directly with a pong.
@@ -97,7 +97,7 @@ public class Receiver implements Runnable
 			{
 				int size = receiveInt();
 				toReturn.addSessions(receiveListString(size));
-			packet = toReturn;
+				pl.newTurn(toReturn);
 			}
 
 			// Header 9, Join answer, returns what game you are connected to.
@@ -105,7 +105,7 @@ public class Receiver implements Runnable
 			{
 				toReturn.addOk(true);
 				toReturn.addName(receiveString());
-			packet = toReturn;
+				packet = toReturn;
 			}
 
 			// Header 10, Game session info, returns all the other players and if the game is locked.
