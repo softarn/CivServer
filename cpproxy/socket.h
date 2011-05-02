@@ -14,14 +14,21 @@ private:
 	int m_socket;
 	SocketStream m_stream;
 
-	Socket(const Socket &);
-	Socket &operator=(const Socket &);
+	// Disable copying
+	Socket(Socket &);
+	Socket &operator=(Socket &);
+
+	// Private constructor for creating a Socket object from a handle
+	Socket(int socketHandle);
 
 public:
 	Socket();
 	~Socket();
 
 	void connect(const std::string &address, unsigned short port);
+	void listen(unsigned short port);
+	std::auto_ptr<Socket> accept();
+
 	unsigned int send(const char *data, unsigned int size);
 	unsigned int recv(char *data, unsigned int size);
 
