@@ -4,19 +4,18 @@
 -include("config.hrl").
 
 -compile(export_all).
--export([init/1, connecting/2]). %handle_event/3, handle_sync_event/4, handle_info/3 terminate/3, code_change/4,
 start() ->
-    gen_fsm:start_link(?MODULE, [], []).
+    gen_fsm:start(?MODULE, [], []).
 
 init([]) ->
     io:format("Inne i init"),
     {ok, connecting, []}. % 2. first state, 3: fsm-data
 
-connecting(Player, _StateData) ->
+connecting(Player, _From, _StateData) ->
     io:format("Inne i connecting"),
     {ok, Pid} = spawn_link(?P_HANDLER, init, [Player#player.socket, self()]), %skicka med pid
     NewPlayer = Player#player{handler_pid = Pid},
-    {ok, getting_p_info, NewPlayer}. %2: new state, 3: state-data
+    {next_state, getting_p_info, NewPlayer}. %2: new state, 3: state-data
 
 getting_p_info({Header, List}, Player) ->
     case Header of
