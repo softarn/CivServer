@@ -9,7 +9,7 @@
 
 %Startup
 start(Host) ->
-    Game = #game{name = Host#player.name, game_pid = self(), players = [Host], locked = false},
+    Game = #game{name = Host#player.name, game_pid = self(), players = [Host], locked = 0},
     gen_server:start_link({local, list_to_atom(Host#player.name)}, ?MODULE, Game, []),
     Game.
 
@@ -22,16 +22,18 @@ handle_call(list_players, _From, Game) ->
 
 handle_call(toggle_lock, _From, Game) ->
     case Game#game.locked of
-	true ->
-	    UpdatedGame = Game#game{locked = false};
-	false ->
-	    UpdatedGame = Game#game{locked = true}
+	0 ->
+	    UpdatedGame = Game#game{locked = 1};
+	_ ->
+	    UpdatedGame = Game#game{locked = 0}
     end,
+    broadcastMsg(UpdatedGame, UpdatedGame#game.players, game_info), 
     {reply, UpdatedGame#game.locked, UpdatedGame};
 
 handle_call({player_join, Player}, _From, Game) ->
     UpdatedGame = Game#game{players = [Player | Game#game.players]}, %
     io:format("Added player ~w~n", [Player]), %Glöm ej felkontroll ifall player existerar!
+    broadcastMsg(Game, UpdatedGame#game.players, game_info),
     {reply, UpdatedGame#game.players, UpdatedGame};
 
 handle_call(is_locked, _From, Game) ->
@@ -40,7 +42,7 @@ handle_call(is_locked, _From, Game) ->
 handle_call({start_game, MapSize}, _From, Game) ->
     Map = ?TERGEN:generate(MapSize, MapSize), % Fixa storleken senare
     broadcastMsg(Game, Map, start_game),
-    UpdatedGame = Game#game{locked = true, map = Map},
+    UpdatedGame = Game#game{locked = 1, map = Map},
     {reply, UpdatedGame, UpdatedGame};
 
 handle_call(stop, _From, State) ->
@@ -71,8 +73,8 @@ broadcastMsg(Game, Msg, Type) ->
 	game_info ->
 	    Fun = fun(X) ->
 		    Socket = X#player.socket,
-		    ?TCP:sendHeader(Socket, 10),
-		    ?TCP:sendList(Socket, Msg),
+		    ?TCP:sendHeader(Socket, 10), %Game session information
+		    ?TCP:sendList(Socket, "Player", Msg),
 		    ?TCP:sendBoolean(Socket, Game#game.locked)				
 	    end,
 	    lists:foreach(Fun, Players)
