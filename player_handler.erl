@@ -6,9 +6,9 @@
 
 %send som ej ligger i loopen och tar emot en socket, skicka till
 
-init(Socket) -> 
+init(Socket, FSM_Pid) -> 
     try 
-	recv(Socket)
+	recv(Socket, FSM_Pid)
     catch
 	error:X ->
 	    case X of % Socket closed
@@ -21,7 +21,7 @@ init(Socket) ->
 	    end
     end.
 
-recv(Socket) ->
+recv(Socket, FSM) ->
     Header = ?TCP:readHeader(Socket),
 
     RestOfMsg = case Header of
@@ -55,16 +55,13 @@ recv(Socket) ->
     end,
 
     Packet = {Header, RestOfMsg},
-    send_to_fsm(Packet).
-    recv(Socket).
+    send_to_fsm(FSM, Packet),
+    recv(Socket, FSM).
 
-sendFailMsg(Player, ID, Header) ->
-    Socket = Player#player.socket,
+sendFailMsg(Socket, ID, Header) ->
     ?TCP:sendFailPacket(Socket, ID, Header).
 
-sendMsg(Player, {Header, List}) ->
-    Socket = Player#player.socket,
-
+sendMsg(Socket, {Header, List}) ->
     case Header of
 	
 	1 -> %Confirm'd
@@ -91,7 +88,7 @@ sendMsg(Player, {Header, List}) ->
 	    ok;
 
 	14 -> %Start game answer, implement later
-	    ok;
+	    ok
     end.
 
 %throwPacket(Header, Socket) ->
@@ -120,5 +117,5 @@ sendMsg(Player, {Header, List}) ->
 %	19 -> 	ok %To be defined later...
 %    end.
 
-send_to_fsm(Pid) ->
-k.
+send_to_fsm(To, Packet) ->
+?P_FSM:send_packet(To, Packet). 
