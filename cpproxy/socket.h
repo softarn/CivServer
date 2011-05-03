@@ -13,7 +13,9 @@ private:
 
 public:
 	Socket();
+	~Socket();
 
+	void close();
 	void connect(const std::string &address, unsigned short port);
 	unsigned int send(const char *data, unsigned int size);
 	unsigned int recv(char *data, unsigned int size);

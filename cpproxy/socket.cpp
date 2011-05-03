@@ -19,6 +19,21 @@ Socket::Socket()
 		throw std::runtime_error("Unable to open socket");
 }
 
+Socket::~Socket()
+{
+	close();
+}
+
+void Socket::close()
+{
+	if(m_socket >= 0)
+	{
+		std::cout << "Shutdown: " << ::shutdown(m_socket, 2) << std::endl;
+		std::cout << "Close: " << ::close(m_socket) << std::endl;
+	}
+	m_socket = -1;
+}
+
 void Socket::connect(const std::string &address, unsigned short port)
 {
 	hostent *host = gethostbyname(address.c_str());
@@ -51,6 +66,7 @@ unsigned int Socket::send(const char *data, unsigned int size)
 unsigned int Socket::recv(char *data, unsigned int size)
 {
 	int recvSize = ::recv(m_socket, data, size, 0);
+
 	if(recvSize < 0)
 		throw std::runtime_error("Unable to receive");
 
