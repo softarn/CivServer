@@ -4,8 +4,6 @@
 -export([]).
 -include("config.hrl").
 
-%send som ej ligger i loopen och tar emot en socket, skicka till
-
 init(Socket, FSM_Pid) -> 
     try 
 	recv(Socket, FSM_Pid)
@@ -46,7 +44,7 @@ recv(Socket, FSM) ->
 	    NewCiv = ?TCP:readString(Socket),
 	    [NewCiv];
 
-	12 ->
+	12 -> % Lock game request
 	    LockFlag = ?TCP:readBoolean(Socket),
 	    [LockFlag];
 
@@ -63,7 +61,7 @@ sendFailMsg(Socket, ID, Header) ->
 
 sendMsg(Socket, {Header, List}) ->
     case Header of
-	
+
 	1 -> %Confirm'd
 	    ?TCP:sendHeader(Socket, Header),
 	    ?TCP:sendInteger(Socket, Header);
@@ -73,7 +71,7 @@ sendMsg(Socket, {Header, List}) ->
 
 	4 -> %Ping, implement later
 	    ok;
-	
+
 	6 -> %List game answer
 	    [Games] = List,
 	    ?TCP:sendHeader(Socket, Header),
@@ -83,7 +81,7 @@ sendMsg(Socket, {Header, List}) ->
 	    [HostName] = List,
 	    ?TCP:sendHeader(Socket, Header),
 	    ?TCP:sendString(Socket, HostName);
-	
+
 	10 -> %Game session information implement later
 	    ok;
 
@@ -91,31 +89,5 @@ sendMsg(Socket, {Header, List}) ->
 	    ok
     end.
 
-%throwPacket(Header, Socket) ->
-%    case Header of
-%	2 ->
-%	    ?TCP:readInteger(Socket),
-%	    ?TCP:readString(Socket);
-%	4 ->
-%	    ?TCP:readBoolean(Socket);
-%	5 ->
-%	    ok;
-%	7 ->
-%	    ?TCP:readBoolean(Socket);
-%	8 ->
-%	    ?TCP:readString(Socket);
-%	11 ->
-%	    ok;
-%	12 ->
-%	    ?TCP:readBoolean(Socket);
-%	13 ->
-%	    ok;
-%	15 ->
-%	    ?TCP:readList(Socket, "Position");
-%	17 ->
-%	    ok;
-%	19 -> 	ok %To be defined later...
-%    end.
-
 send_to_fsm(To, Packet) ->
-?P_FSM:send_packet(To, Packet). 
+    ?P_FSM:send_packet(To, Packet). 

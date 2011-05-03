@@ -59,7 +59,8 @@ server_lobby({Header, List}, Player) ->
 		    Game = ?SERVER:create_game(Player),
 		    HostName = Player#player.name,
 		    ?P_HANDLER:sendMsg(Player#player.socket, {9, [HostName]}), %Join answer
-		    {next_state, game_lobby, Player};
+		    {next_state, game_lobby, {Player, Game}};
+
 		_ ->    %Load game, implement later
 		    'loadgame()' % Ladda spel
 
@@ -91,13 +92,17 @@ server_lobby({Header, List}, Player) ->
 
 game_lobby({Header, List}, {Player, Game}) ->
     case Header of
+
+	12 -> %Lock game request
+	    [LockFlag] = List; %FIXA!!!
+
 	13 -> %Start game request
 	    case Player#player.name =:= Game#game.name of % Is player host?
 		false ->
 		    ?P_HANDLER:sendFailMsg(Player#player.socket, 13, Header); % FailPacket "Permission denied"
 		true ->
 		    UpdatedGame = ?GAMESRV:start_game(Game#game.name, 30), % param: Gamename, mapsize
-		    in_game(Player, UpdatedGame)
+		    {next_state, in_game, {Player, UpdatedGame}}
 
 	    end % player = host
 
@@ -105,7 +110,6 @@ game_lobby({Header, List}, {Player, Game}) ->
 
 in_game({Header, List}, {Player, Game}) ->
     ok.
-
 
 %Event sending functions
 connect(Pid, Player) ->
