@@ -1,4 +1,4 @@
-%	Random terrain generator
+%% 	Random terrain generator
 % 	Authors: 	Arian Jafari & Rasmus Ivö
 %	aria-jaf@dsv.su.se
 %	rasm-ivo@dsv.su.se
