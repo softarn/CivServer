@@ -35,13 +35,13 @@ handle_call({player_join, Player}, _From, Game) ->
     {reply, UpdatedGame#game.players, UpdatedGame};
 
 handle_call(is_locked, _From, Game) ->
-	{reply, Game#game.locked, Game};
+    {reply, Game#game.locked, Game};
 
 handle_call({start_game, MapSize}, _From, Game) ->
-	Map = ?TERGEN:generate(MapSize, MapSize), % Fixa storleken senare
-	broadcastMsg(Game, Map, start_game),
-	UpdatedGame = Game#game{locked = true, map = Map},
-	{reply, UpdatedGame, UpdatedGame};
+    Map = ?TERGEN:generate(MapSize, MapSize), % Fixa storleken senare
+    broadcastMsg(Game, Map, start_game),
+    UpdatedGame = Game#game{locked = true, map = Map},
+    {reply, UpdatedGame, UpdatedGame};
 
 handle_call(stop, _From, State) ->
     {stop, normal, shutdown_ok, State}.
@@ -58,22 +58,22 @@ player_join({GN, Player}) -> gen_server:call(list_to_atom(GN), {player_join, Pla
 stop(GN) -> gen_server:call(list_to_atom(GN), stop).
 
 broadcastMsg(Game, Msg, Type) ->
-	Players = Game#game.players,	
-	case Type of
-		start_game ->
-			Fun = fun(X) -> 
-				Socket = X#player.socket,
-				?TCP:sendHeader(Socket, 14), % Start game answer
-				?TCP:sendList(Socket, "Column", Msg)
-			end,
-			lists:foreach(Fun, Players);
+    Players = Game#game.players,	
+    case Type of
+	start_game ->
+	    Fun = fun(X) -> 
+		    Socket = X#player.socket,
+		    ?TCP:sendHeader(Socket, 14), % Start game answer
+		    ?TCP:sendList(Socket, "Column", Msg)
+	    end,
+	    lists:foreach(Fun, Players);
 
-		game_info ->
-			Fun = fun(X) ->
-				Socket = X#player.socket,
-				?TCP:sendHeader(Socket, 10),
-				?TCP:sendList(Socket, Msg),
-				?TCP:sendBoolean(Socket, Game#game.locked)				
-			end,
-			lists:foreach(Fun, Players)
-	end.
+	game_info ->
+	    Fun = fun(X) ->
+		    Socket = X#player.socket,
+		    ?TCP:sendHeader(Socket, 10),
+		    ?TCP:sendList(Socket, Msg),
+		    ?TCP:sendBoolean(Socket, Game#game.locked)				
+	    end,
+	    lists:foreach(Fun, Players)
+    end.
