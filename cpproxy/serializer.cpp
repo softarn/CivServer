@@ -2,8 +2,12 @@
 #include "serializer.h"
 #include "buffer.h"
 
-
-#include <arpa/inet.h>
+// Includes for byte order conversion (eg. htonl, ntohl)
+#ifdef _WIN32
+	#include <winsock2.h>
+#else
+	#include <arpa/inet.h>
+#endif
 
 
 
