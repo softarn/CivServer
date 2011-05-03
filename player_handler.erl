@@ -4,9 +4,11 @@
 -export([]).
 -include("config.hrl").
 
+%send som ej ligger i loopen och tar emot en socket, skicka till
+
 init(Socket) -> 
     try 
-	recv_player(Socket)
+	recv(Socket)
     catch
 	error:X ->
 	    case X of % Socket closed
@@ -19,133 +21,104 @@ init(Socket) ->
 	    end
     end.
 
-recv_player(Socket) ->
+recv(Socket) ->
     Header = ?TCP:readHeader(Socket),
-    case Header of
-	2 -> % Hello World. Glöm ej att göra något med PlayerName!!!!!!
-	    ProtocolVersion = ?TCP:readInteger(Socket),
 
-	    case ProtocolVersion =:= ?P_VERSION of
-		true ->
-		    PlayerName = ?TCP:readString(Socket),
-		    Player = #player{name = PlayerName, %Create player
-			ref = make_ref(),
-			socket = Socket,
-			handler = self()},
+    RestOfMsg = case Header of
 
-		    case ?SERVER:add_player(Player) of
-			true ->
-			    ?TCP:sendHeader(Socket, 3), % Welcome to the Real world
-			    recv_lobby(Player);
-			false ->
-			    ?TCP:sendFailPacket(Socket, 1, Header), %Fail packet name already exists
-			    recv_player(Socket)
-		    end;
+	2 -> % Hello World
+	    PV = ?TCP:readInteger(Socket),
+	    PN = ?TCP:readString(Socket),
+	    [PV,PN];
 
-		false ->
-		    ?TCP:readString(Socket),
-		    ?TCP:sendFailPacket(Socket, 0, Header) %Send fail packet, wrong protocolversion
-	    end;
-
-	_ -> 
-	    ?TCP:sendFailPacket(Socket, -1, Header), % failpacket - "Invalid state"
-	    throwPacket(Header, Socket),
-	    recv_player(Socket)
-    end.
-
-recv_lobby(Player) ->
-    Socket = Player#player.socket,
-    Header = ?TCP:readHeader(Socket),
-    case Header of 
 	5 ->  % List game request
-	    Games = ?SERVER:list_games(),
-	    ?TCP:sendHeader(Socket, 6), %List game answer
-	    ?TCP:sendList(Socket, "String", Games),
-	    recv_lobby(Player);
+	    [];
 
 	7 -> % Host request
-	    case ?TCP:readBoolean(Socket) of
-		0 -> %false
-		    Game = ?SERVER:create_game(Player),
-		    ?TCP:sendHeader(Socket, 9), % Join answer
-		    ?TCP:sendString(Socket, Player#player.name),
-		    recv_gamelobby(Player, Game);
-		_ ->
-		    'loadgame()' % ladda spel
+	    LoadFlag = ?TCP:readBoolean(Socket),
+	    [LoadFlag];
 
-	    end;
 	8 -> % Join request
 	    GameName = ?TCP:readString(Socket),
-	    case ?SERVER:get_game(GameName) of
-		[] ->
-		    ?TCP:sendFailPacket(Socket, 2, Header); % FailPacket "Game does not exist" 
+	    [GameName];
 
-		Game when is_record(Game, game) ->
-		    case ?GAMESRV:is_locked(Game#game.name) of
-			true ->
-			    ?TCP:sendFailPacket(Socket, 3, Header); % FailPacket "Game is locked"
-			false ->
-			    ?TCP:sendHeader(Socket, 9), % Join answer
-			    ?TCP:sendString(Socket, GameName),
-			    ?GAMESRV:player_join(GameName, Player),
-			    recv_gamelobby(Player, Game)
-		    end
-	    end;
-
-	_Other ->
-	    ?TCP:sendFailPacket(Socket, -1, Header), %Fail packet invalid state
-	    throwPacket(Header, Socket)
-    end.
-
-recv_gamelobby(Player, Game) ->
-    Socket = Player#player.socket,
-    Header = ?TCP:readHeader(Socket),
-
-    case Header of
 	11 -> % Change civilization request
-	    NewCiv = ?TCP:readString(Socket);
+	    NewCiv = ?TCP:readString(Socket),
+	    [NewCiv];
+
+	12 ->
+	    LockFlag = ?TCP:readBoolean(Socket),
+	    [LockFlag];
 
 	13 -> % Start game request
-	    case Player#player.name =:= Game#game.name of % Is player host?
-		false ->
-		    ?TCP:sendFailPacket(Socket, 13, Header); % FailPacket "Permission denied"
-		true ->
-		    UpdatedGame = ?GAMESRV:start_game(Game#game.name, 30), % param: Gamename, mapsize
-		    recv_game(Player, UpdatedGame)
-	    end;
+	    []
+    end,
 
-	_Other ->
-	    ?TCP:sendFailPacket(Socket, -1, Header), %Fail packet invalid state
-	    throwPacket(Header, Socket)
+    Packet = {Header, RestOfMsg},
+    send_to_fsm(Packet).
+    recv(Socket).
 
-    end.
+sendFailMsg(Player, ID, Header) ->
+    Socket = Player#player.socket,
+    ?TCP:sendFailPacket(Socket, ID, Header).
 
-recv_game(Player, Game) ->
+sendMsg(Player, {Header, List}) ->
+    Socket = Player#player.socket,
 
-    k.
-
-throwPacket(Header, Socket) ->
     case Header of
-	2 ->
-	    ?TCP:readInteger(Socket),
-	    ?TCP:readString(Socket);
-	4 ->
-	    ?TCP:readBoolean(Socket);
-	5 ->
+	
+	1 -> %Confirm'd
+	    ?TCP:sendHeader(Socket, Header),
+	    ?TCP:sendInteger(Socket, Header);
+
+	3 -> %Welcome to the Real world
+	    ?TCP:sendHeader(Socket, Header);
+
+	4 -> %Ping, implement later
 	    ok;
-	7 ->
-	    ?TCP:readBoolean(Socket);
-	8 ->
-	    ?TCP:readString(Socket);
-	11 ->
+	
+	6 -> %List game answer
+	    [Games] = List,
+	    ?TCP:sendHeader(Socket, Header),
+	    ?TCP:sendList(Socket, "String", Games);
+
+	9 -> %Join answer
+	    [HostName] = List,
+	    ?TCP:sendHeader(Socket, Header),
+	    ?TCP:sendString(Socket, HostName);
+	
+	10 -> %Game session information implement later
 	    ok;
-	12 ->
-	    ?TCP:readBoolean(Socket);
-	13 ->
+
+	14 -> %Start game answer, implement later
 	    ok;
-	15 ->
-	    ?TCP:readList(Socket, "Position");
-	17 ->
-	    ok;
-	19 -> 	ok %To be defined later...
     end.
+
+%throwPacket(Header, Socket) ->
+%    case Header of
+%	2 ->
+%	    ?TCP:readInteger(Socket),
+%	    ?TCP:readString(Socket);
+%	4 ->
+%	    ?TCP:readBoolean(Socket);
+%	5 ->
+%	    ok;
+%	7 ->
+%	    ?TCP:readBoolean(Socket);
+%	8 ->
+%	    ?TCP:readString(Socket);
+%	11 ->
+%	    ok;
+%	12 ->
+%	    ?TCP:readBoolean(Socket);
+%	13 ->
+%	    ok;
+%	15 ->
+%	    ?TCP:readList(Socket, "Position");
+%	17 ->
+%	    ok;
+%	19 -> 	ok %To be defined later...
+%    end.
+
+send_to_fsm(Pid) ->
+k.
