@@ -12,7 +12,6 @@ init(Socket) ->
 	    case X of % Socket closed
 		{badmatch,{error,closed}} ->
 		    ?SERVER:rm_player({socket, Socket}),
-		    gen_tcp:close(Socket),
 		    ok; %Remove playaah
 		_ ->
 		    io:format("Caught error in player_handler: ~p\n", [X])
