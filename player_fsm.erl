@@ -4,17 +4,19 @@
 -include("config.hrl").
 
 -compile(export_all).
-
+-export([init/1, connecting/2]). %handle_event/3, handle_sync_event/4, handle_info/3 terminate/3, code_change/4,
 start() ->
-    gen_fsm:start(?MODULE, [], []).
+    gen_fsm:start_link(?MODULE, [], []).
 
 init([]) ->
+    io:format("Inne i init"),
     {ok, connecting, []}. % 2. first state, 3: fsm-data
 
 connecting(Player, _StateData) ->
+    io:format("Inne i connecting"),
     {ok, Pid} = spawn_link(?P_HANDLER, init, [Player#player.socket, self()]), %skicka med pid
     NewPlayer = Player#player{handler_pid = Pid},
-    {next_state, getting_p_info, NewPlayer}. %2: new state, 3: state-data
+    {ok, getting_p_info, NewPlayer}. %2: new state, 3: state-data
 
 getting_p_info({Header, List}, Player) ->
     case Header of
@@ -92,6 +94,11 @@ server_lobby({Header, List}, Player) ->
 
 game_lobby({Header, List}, {Player, Game}) ->
     case Header of
+
+	11 -> %Change civilization request
+	    [NewCiv] = List,
+	    UpdatedPlayer = Player#player{civ = NewCiv};
+	    %Broadcasta till samtliga spelare i gamet om den nya civilizationen
 
 	12 -> %Lock game request
 	    [LockFlag] = List; %FIXA!!!
