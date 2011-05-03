@@ -5,13 +5,18 @@
 
 -compile(export_all).
 
-start(Player) ->
-    gen_fsm:start({local, list_to_atom(erlang:ref_to_list(Player#player.ref))}, ?MODULE, Player, []).
+start() ->
+    gen_fsm:start(?MODULE, [], []).
 
-init(Player) ->
-    {ok, connecting, Player}. % 2. first state, 3: fsm-data
+init([]) ->
+    {ok, connecting, []}. % 2. first state, 3: fsm-data
 
-connecting(Player, {Header, List}) ->
+connecting(Player, _State) ->
+    {ok, Pid} = spawn_link(?P_HANDLER, init, [Player#player.socket]), %skicka med pid
+    NewPlayer = Player#player{handler_pid = Pid},
+    {new_state, getting_p_info, NewPlayer}. %2: new state, 3: state-data
+
+getting_p_info(Player, {Header, List}) ->
     case Header of
 	2 -> % Hello World
 	    [ProtocolVersion, PlayerName] = List,
@@ -101,3 +106,6 @@ game_lobby(Player, {Header, List}) ->
 in_game(Player, Game) ->
 
     ok.
+%Event sending functions
+connect(Pid, Player) ->
+    gen_fsm:sync_send_event(Pid, Player).

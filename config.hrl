@@ -8,8 +8,8 @@
 
 -record(player,{
 	ref,
-	handler,
-	fsm,
+	handler_pid,
+	fsm_pid,
 	name,
 	socket,
 	civ}).
