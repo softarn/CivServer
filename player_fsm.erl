@@ -10,13 +10,13 @@ start() ->
 init([]) ->
     {ok, connecting, []}. % 2. first state, 3: fsm-data
 
-connecting(Player, _From, _StateData) ->
+connecting(Player, _StateData) ->
     Pid = spawn_link(?P_HANDLER, init, [Player#player.socket, self()]), %skicka med pid
     NewPlayer = Player#player{handler_pid = Pid},
     {next_state, getting_p_info, NewPlayer}. %2: new state, 3: state-data
 
 getting_p_info({Header, List}, Player) -> 
-    io:format("INNE I GETTING P INFO!!!"),
+    io:format("INNE I GETTING P INFO!!!~n"),
     case Header of
 
 	2 -> % Hello World
@@ -32,28 +32,30 @@ getting_p_info({Header, List}, Player) ->
 			    ?P_HANDLER:sendMsg(UpdatedPlayer#player.socket, {3, []}), %Welcome the the Real world
 			    {next_state, server_lobby, UpdatedPlayer}; 
 			false ->
-			    ?P_HANDLER:sendFailMsg(UpdatedPlayer#player.socket, 1, Header) %Fail packet name already exists
+			    ?P_HANDLER:sendFailMsg(UpdatedPlayer#player.socket, 1, Header), %Fail packet name already exists
+			    {next_state, getting_p_info, Player}
 
 		    end; %end add player
 
 		false ->
-		    ?P_HANDLER:sendFailMsg(Player#player.socket, 0, Header) %Send fail packet, wrong protocolversion
+		    ?P_HANDLER:sendFailMsg(Player#player.socket, 0, Header), %Send fail packet, wrong protocolversion
+		    {next_state, getting_p_info, Player}
 
 	    end; %end protocolversion
 
 	_ ->
-	    ?P_HANDLER:sendFailMsg(Player#player.socket, -1, Header)%Send fail packet, invalid state
+	    ?P_HANDLER:sendFailMsg(Player#player.socket, -1, Header), %Send fail packet, invalid state
+	    {next_state, getting_p_info, Player}
 
-    end, %end header
-    {next_state, getting_p_info, Player}.
+    end. %end header
 
-   
 server_lobby({Header, List}, Player) ->
-    io:format("INNE I SERVER LOBBY"),
+    io:format("INNE I SERVER LOBBY~n"),
     case Header of
 	5 -> % List game request
 	    Games = ?SERVER:list_games(),
-	    ?P_HANDLER:sendMsg(Player#player.socket, {6, [Games]}); %List game answer
+	    ?P_HANDLER:sendMsg(Player#player.socket, {6, [Games]}), %List game answer
+	    {next_state, server_lobby, Player};
 
 	7 -> % Host request
 	    [LoadFlag] = List,
@@ -66,7 +68,8 @@ server_lobby({Header, List}, Player) ->
 		    {next_state, game_lobby, {Player, Game}};
 
 		_ ->    %Load game, implement later
-		    'loadgame()' % Ladda spel
+		    {next_state, server_lobby, Player}
+		    % Ladda spel
 		    %Lägg in state senare...
 
 	    end; %end header
@@ -76,12 +79,14 @@ server_lobby({Header, List}, Player) ->
 
 	    case ?SERVER:get_game(GameName) of
 		[] ->
-		    ?P_HANDLER:sendFailMsg(Player#player.socket, 2, Header);% FailPacket "Game does not exist" 
+		    ?P_HANDLER:sendFailMsg(Player#player.socket, 2, Header),% FailPacket "Game does not exist" 
+		    {next_state, server_lobby, Player};
 
 		Game when is_record(Game, game) ->
 		    case ?GAMESRV:is_locked(Game#game.name) of
 			true ->
-			    ?P_HANDLER:sendFailMsg(Player#player.socket, 3, Header); % FailPacket "Game is locked"
+			    ?P_HANDLER:sendFailMsg(Player#player.socket, 3, Header), % FailPacket "Game is locked"
+			    {next_state, server_lobby, Player};
 			false ->
 			    ?P_HANDLER:sendMsg(Player#player.socket, {9, [GameName]}),
 			    UpdatedGame = ?GAMESRV:player_join(GameName, Player),
@@ -93,12 +98,12 @@ server_lobby({Header, List}, Player) ->
 
 
 	_ -> 
-	    ?P_HANDLER:sendFailMsg(Player#player.socket, -1, Header)
-    end,
-    {next_state, server_lobby, Player}.
+	    ?P_HANDLER:sendFailMsg(Player#player.socket, -1, Header),
+	    {next_state, server_lobby, Player}
+    end.
 
 game_lobby({Header, List}, {Player, Game}) ->
-    io:format("INNE I GAME LOBBY"),
+    io:format("INNE I GAME LOBBY~n"),
     case Header of
 
 	11 -> %Change civilization request
@@ -108,20 +113,21 @@ game_lobby({Header, List}, {Player, Game}) ->
 	%Broadcasta till samtliga spelare i gamet om den nya civilizationen
 
 	12 -> %Lock game request
-	    [LockFlag] = List; %FIXA!!!
+	    [LockFlag] = List, %FIXA!!!
+	    {next_state, game_lobby, {Player, Game}};
 
 	13 -> %Start game request
 	    case Player#player.name =:= Game#game.name of % Is player host?
 		false ->
-		    ?P_HANDLER:sendFailMsg(Player#player.socket, 13, Header); % FailPacket "Permission denied"
+		    ?P_HANDLER:sendFailMsg(Player#player.socket, 13, Header), % FailPacket "Permission denied"
+		    {next_state, game_lobby, {Player, Game}};
 		true ->
 		    UpdatedGame = ?GAMESRV:start_game(Game#game.name, 30), % param: Gamename, mapsize
 		    {next_state, in_game, {Player, UpdatedGame}}
 
 	    end % player = host
 
-    end, %end case header
-    {next_state, game_lobby, {Player, Game}}.
+    end. %end case header
 
 in_game({Header, List}, {Player, Game}) ->
     io:format("INNE I INGAME!"),
@@ -132,6 +138,6 @@ terminate(Reason, StateName, StateData) ->
 
 %Event sending functions
 connect(Pid, Player) ->
-    gen_fsm:sync_send_event(Pid, Player). %1:Which FSM, 2:arg
+    gen_fsm:send_event(Pid, Player). %1:Which FSM, 2:arg
 send_packet(Pid, Packet) ->
     gen_fsm:send_event(Pid, Packet).
