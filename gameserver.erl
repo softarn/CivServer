@@ -3,7 +3,7 @@
 
 -compile(export_all).
 -export([start/1, init/1]).
--export([player_join/1]).
+-export([player_join/2]).
 
 -include("config.hrl").
 
@@ -35,7 +35,7 @@ handle_call({toggle_lock, LockFlag}, _From, Game) ->
 handle_call({player_join, Player}, _From, Game) ->
     UpdatedGame = Game#game{players = [Player | Game#game.players]}, %
     io:format("Added player ~w~n", [Player]), %Glöm ej felkontroll ifall player existerar!
-    broadcastMsg(Game, UpdatedGame#game.players, game_info),
+    broadcastMsg(UpdatedGame, UpdatedGame#game.players, game_info),
     {reply, UpdatedGame#game.players, UpdatedGame};
 
 handle_call(is_locked, _From, Game) ->
@@ -59,7 +59,7 @@ list_players(GN) -> gen_server:call(list_to_atom(GN), list_players).
 toggle_lock(GN, LockFlag) -> gen_server:call(list_to_atom(GN), {toggle_lock, LockFlag}).
 is_locked(GN) -> gen_server:call(list_to_atom(GN), is_locked).
 start_game(GN, MapSize) -> gen_server:call(list_to_atom(GN), {start_game, MapSize}).
-player_join({GN, Player}) -> gen_server:call(list_to_atom(GN), {player_join, Player}).
+player_join(GN, Player) -> gen_server:call(list_to_atom(GN), {player_join, Player}).
 stop(GN) -> gen_server:call(list_to_atom(GN), stop).
 
 starting_game(Game) ->
@@ -87,7 +87,7 @@ broadcastMsg(Game, Msg, Type) ->
 		    Civ = "Rabarber",%X#player.civ,
 		    [Name, Civ]
 	    end,
-	    PList = lists:flatten([GetPlayer(X) || X <- Players]),
+	    PList = [GetPlayer(X) || X <- Players],
 
 	    Fun = fun(X) ->
 		    Socket = X#player.socket,
