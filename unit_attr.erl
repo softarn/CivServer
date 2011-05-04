@@ -19,3 +19,9 @@ get_attr(Unit)->
 		cavalry ->	{100,6,4,1,2,assault};		
 		knight ->	{100,12,8,1,2,assault};		
 		crusader ->	{100,18,12,1,2,assault};		
+
+		trireme ->	{50,4,3,1,3,range};		
+		galley ->	{250,30,25,2,3,bombardment};		
+		caravel ->	{100,50,40,3,6,bombardment};
+		_-> {error, invalid_unit}
+	end.
