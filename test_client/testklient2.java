@@ -2,7 +2,7 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
-public class testklient1
+public class testklient2
 {
 	private Socket 		m_clientSocket;
 	private OutputStream 	m_outStream;
@@ -10,7 +10,7 @@ public class testklient1
 	private boolean		turn = false;
 	private final int	protocolVersion = 0;
 	
-	public testklient1(String host, int port)
+	public testklient2(String host, int port)
 	{
 		try
 		{
@@ -405,7 +405,7 @@ public class testklient1
 */
 	public static void main(String [] args)
 	{
-		testklient1 k = new testklient1("localhost", 1234);//130.229.128.72", 1234);
+		testklient2 k = new testklient2("localhost", 1232);//130.229.128.72", 1234);
 		Packet login = new Packet((byte)2);
 		login.add(0);
 		login.add("Torsten");

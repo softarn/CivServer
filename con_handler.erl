@@ -15,10 +15,8 @@ accept(ListenSocket) ->
 	{ok, Socket} -> 
 	    io:format("Accepted Connection\n"),
 	    {ok, FSM_Pid} = ?P_FSM:start(),
-	    io:format("Startat FSM"),
 	    Player = #player{socket = Socket, ref = make_ref(), fsm_pid = FSM_Pid},
-	    ?P_FSM:connect(FSM_Pid, Player),
-	    io:format("Connectat FSM");
+	    ?P_FSM:connect(FSM_Pid, Player);
 	{error, enfile} -> 
 	    io:format("Denied Connection\n")
     end,
