@@ -15,7 +15,7 @@ connecting(Player, _From, _StateData) ->
     NewPlayer = Player#player{handler_pid = Pid},
     {next_state, getting_p_info, NewPlayer}. %2: new state, 3: state-data
 
-getting_p_info({Header, List}, _From, Player) -> 
+getting_p_info({Header, List}, Player) -> 
     io:format("INNE I GETTING P INFO!!!"),
     case Header of
 
@@ -30,7 +30,7 @@ getting_p_info({Header, List}, _From, Player) ->
 		    case ?SERVER:add_player(UpdatedPlayer) of
 			true ->
 			    ?P_HANDLER:sendMsg(UpdatedPlayer#player.socket, {3, []}), %Welcome the the Real world
-			    {reply, ok, server_lobby, UpdatedPlayer}; 
+			    {next_state, server_lobby, UpdatedPlayer}; 
 			false ->
 			    ?P_HANDLER:sendFailMsg(UpdatedPlayer#player.socket, 1, Header) %Fail packet name already exists
 
@@ -48,7 +48,7 @@ getting_p_info({Header, List}, _From, Player) ->
     {next_state, getting_p_info, Player}.
 
    
-server_lobby({Header, List}, _From, Player) ->
+server_lobby({Header, List}, Player) ->
     io:format("INNE I SERVER LOBBY"),
     case Header of
 	5 -> % List game request
@@ -97,7 +97,7 @@ server_lobby({Header, List}, _From, Player) ->
     end,
     {next_state, server_lobby, Player}.
 
-game_lobby({Header, List}, _From, {Player, Game}) ->
+game_lobby({Header, List}, {Player, Game}) ->
     io:format("INNE I GAME LOBBY"),
     case Header of
 
@@ -123,7 +123,7 @@ game_lobby({Header, List}, _From, {Player, Game}) ->
     end, %end case header
     {next_state, game_lobby, {Player, Game}}.
 
-in_game({Header, List}, _From, {Player, Game}) ->
+in_game({Header, List}, {Player, Game}) ->
     io:format("INNE I INGAME!"),
     ok.
 
@@ -134,4 +134,4 @@ terminate(Reason, StateName, StateData) ->
 connect(Pid, Player) ->
     gen_fsm:sync_send_event(Pid, Player). %1:Which FSM, 2:arg
 send_packet(Pid, Packet) ->
-    gen_fsm:sync_send_event(Pid, Packet).
+    gen_fsm:send_event(Pid, Packet).
