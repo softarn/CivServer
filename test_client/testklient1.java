@@ -405,34 +405,37 @@ public class testklient1
 */
     public static void main(String [] args)
     {
-        testklient1 k = new testklient1("localhost", 1232);//130.229.128.72", 1234);
+        testklient1 k = new testklient1("localhost", 1234);//130.229.128.72", 1234);
         Packet login = new Packet((byte)2);
         login.add(0);
         login.add("Kalle");
-        k.send(login);
+
 
         Packet list = new Packet((byte)5);
         //        for(int i=0; i <100; i++)
-        k.send(list);
 
         Packet host = new Packet((byte)7);
         host.add(false);
+
+        k.send(login);
+        k.send(list);
         k.send(host);
 
         /*
            try{
            Thread.sleep(20000);
-           }catch(Throwable t){}*/
+           }catch(Throwable t){}
 
+           */
         /*	ArrayList<Integer> skaMed = new ArrayList<Integer>();
-                skaMed.add(1);
-                skaMed.add(3);
-                skaMed.add(1);
-                skaMed.add(4);
-                skaMed.add(2);
-                skaMed.add(5);
-                skaMed.add(3);
-                skaMed.add(5);
-                System.out.println(k.listTest(14,13)); */
+            skaMed.add(1);
+            skaMed.add(3);
+            skaMed.add(1);
+            skaMed.add(4);
+            skaMed.add(2);
+            skaMed.add(5);
+            skaMed.add(3);
+            skaMed.add(5);
+            System.out.println(k.listTest(14,13)); */
     }
 }
