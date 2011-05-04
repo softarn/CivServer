@@ -13,11 +13,13 @@ init([]) ->
 
 connecting(Player, _From, _StateData) ->
     io:format("Inne i connecting"),
-    {ok, Pid} = spawn_link(?P_HANDLER, init, [Player#player.socket, self()]), %skicka med pid
+    Pid = spawn_link(?P_HANDLER, init, [Player#player.socket, self()]), %skicka med pid
     NewPlayer = Player#player{handler_pid = Pid},
     {next_state, getting_p_info, NewPlayer}. %2: new state, 3: state-data
 
-getting_p_info({Header, List}, Player) ->
+getting_p_info(Packet, Player) -> %{Header, List}, Player) ->
+    io:format("inne i p_info"),
+    {Header, List} = Packet,
     case Header of
 	2 -> % Hello World
 	    [ProtocolVersion, PlayerName] = List,
@@ -50,8 +52,8 @@ server_lobby({Header, List}, Player) ->
     case Header of
 	5 -> % List game request
 	    Games = ?SERVER:list_games(),
-	    ?P_HANDLER:sendMsg(Player#player.socket, {6, [Games]}); %List game answer
-
+	    ?P_HANDLER:sendMsg(Player#player.socket, {6, [Games]}), %List game answer
+	    {next_state, server_lobby, Player};
 	7 -> % Host request
 	    [LoadFlag] = List,
 
@@ -116,6 +118,9 @@ game_lobby({Header, List}, {Player, Game}) ->
 
 in_game({Header, List}, {Player, Game}) ->
     ok.
+
+terminate(Reason, StateName, StateData) ->
+    io:format("~p~n", [Reason]).
 
 %Event sending functions
 connect(Pid, Player) ->
