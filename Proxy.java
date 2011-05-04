@@ -99,14 +99,14 @@ public class Proxy
 		Packet toSend = new Packet((byte)12);
 		toSend.add(lock);
 		send(toSend);
-		return receiver.getResult();
+	//	return receiver.getResult();
 	}
 
 	// Public method for starting a game, only the host can start a game.
 	public Result startGame()
 	{
 		send(new Packet((byte)13));
-		return receiver.getResult();
+	//	return receiver.getResult();
 	}
 
 	// Public method for moving a unit, takes a list of positions
