@@ -20,3 +20,15 @@
 	players,
 	locked,
 	map}).
+
+-record(tile, {
+	position, %{X,Y}
+	unit = null, %{String, String, Int}
+	city = null, %cityrecord
+	improvement = null}). %String
+
+-record(city, {
+	owner = null, %String
+	units = null, % [Units]
+	buildings = null, %[String]
+	name = null}). %String
