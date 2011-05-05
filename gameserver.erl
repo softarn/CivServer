@@ -9,7 +9,7 @@
 
 %Startup
 start(Host) ->
-    Game = #game{name = Host#player.name, players = [], locked = 0}, %tog bort host fårn players
+    Game = #game{name = Host#player.name, players = [], locked = 0, current_state = game_lobby}, %tog bort host fårn players
     {ok, Pid} = gen_server:start(?MODULE, Game, []),
     NewGame = Game#game{game_pid=Pid},
     NewGame.
@@ -30,14 +30,14 @@ handle_call({toggle_lock, LockFlag}, _From, Game) ->
 	    {reply, Game#game.locked, Game};
 	true -> %else..
 	    UpdatedGame = Game#game{locked = LockFlag},
-	    broadcastMsg(UpdatedGame, game_info), 
+	    update_game(UpdatedGame),
 	    {reply, UpdatedGame#game.locked, UpdatedGame}
     end;
 
 handle_call({player_join, Player}, _From, Game) ->
     UpdatedGame = Game#game{players = [Player | Game#game.players]}, %
     io:format("Added player ~w~n", [Player]), %Glöm ej felkontroll ifall player existerar!
-    broadcastMsg(UpdatedGame, game_info),
+    update_game(UpdatedGame),
     {reply, UpdatedGame#game.players, UpdatedGame};
 
 handle_call(is_locked, _From, Game) ->
@@ -63,11 +63,21 @@ handle_call({finished_turn, Player}, _From, Game) ->
 terminate(Reason, State) ->
     ok.
 
+handle_cast({player_leave, Player}, Game) ->
+    case (Player#player.name =:= Game#game.name) and (Game#game.current_state =:= game_lobby) of
+	true ->
+	    UpdatedGame = Game#game{players = Game#game.players -- [Player]},
+	    io:format("NU BÖR SPELET STÄNGAS NED!");
+	false ->
+	    UpdatedGame = Game#game{players = Game#game.players -- [Player]}
+    end,
+    update_game(UpdatedGame),
+    {noreply, UpdatedGame};
+
 handle_cast({start_game, MapSize}, Game) ->
     Map = ?TERGEN:generate(MapSize, MapSize), % Fixa storleken senare
-    UpdatedGame = Game#game{locked = 1, map = Map, tilelist = []},
+    UpdatedGame = Game#game{locked = 1, map = Map, tilelist = [], current_state = in_game},
     starting_game(UpdatedGame),
-    broadcastMsg(UpdatedGame, start_game),
     {noreply, UpdatedGame}.
 
 %Server calls and casts
@@ -78,8 +88,11 @@ player_join(Game, Player) -> gen_server:call(Game, {player_join, Player}).
 stop(Game) -> gen_server:call(Game, stop).
 finished_turn(Game, Player) -> gen_server:call(Game, {finished_turn, Player}).
 start_game(Game, MapSize) -> gen_server:cast(Game, {start_game, MapSize}).
+player_leave(Game, Player) -> gen_server:cast(Game, {player_leave, Player}).
 
 starting_game(Game) ->
+    ?SERVER:update_game(Game),
+    broadcastMsg(Game, start_game),
     Players = Game#game.players,
     Fun = fun(X) ->
 	    FSM = X#player.fsm_pid,
@@ -92,6 +105,10 @@ change_turn(Game) ->
     [First | _Rest] = Game#game.players,
     FSM = First#player.fsm_pid,
     ?P_FSM:enter_turn(FSM, Game).
+
+update_game(Game) ->
+    ?SERVER:update_game(Game),
+    broadcastMsg(Game, game_info).
 
 broadcastMsg(Game, Type) ->
     Players = Game#game.players,	

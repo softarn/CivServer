@@ -7,20 +7,21 @@
 -define(P_FSM, player_fsm).
 
 -record(player,{
-	ref,
-	handler_pid,
-	fsm_pid,
-	name,
-	socket,
-	civ}).
+	ref = null,
+	handler_pid = null,
+	fsm_pid = null,
+	name = null,
+	socket = null,
+	civ = null}).
 
 -record(game,{
-	name,
-	game_pid,
-	players,
-	locked,
-	map,
-	tilelist}).
+	name = null,
+	game_pid = null,
+	players = null,
+	locked = null,
+	current_state = null, %States = game_lobby, in_game
+	map = null,
+	tilelist = null}).
 
 -record(tile, {
 	position = null, %{X,Y}

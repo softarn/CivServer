@@ -94,12 +94,14 @@ sendMsg(Socket, {Header, List}) ->
 	    ?TCP:sendBoolean(Socket, Locked);				
 
 	14 -> %Start game answer, implement later
-	    [MapData] = List, %Glöm ej preset units!!
+	    [Map, TileList] = List, %Glöm ej preset units!!
 	    ?TCP:sendHeader(Socket, Header),
-	    ?TCP:sendList(Socket, "Column", MapData);
-	    %?TCP:sendList(Socket, "Tile", Units);
+	    ?TCP:sendList(Socket, "Column", Map),
+	    ?TCP:sendList(Socket, "Tile", TileList);
 	17 -> %
-	    ok
+	    [TileList] = List,
+	    ?TCP:sendHeader(Socket, 17), %It's your turn
+	    ?TCP:sendList(Socket, "Tile", TileList) 
     end.
 
 send_to_fsm(To, Packet) ->

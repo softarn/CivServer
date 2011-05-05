@@ -46,23 +46,63 @@ handle_call({add_player, Player}, _From, {Games, Players}) ->
 handle_call(stop, _From, State) ->
     {stop, normal, shutdown_ok, State};
 
-handle_call({add_game, Game}, _From, {Games, Players}) ->
-    io:format("Adding game~n"),
-    {reply, ok, {[Game|Games], Players}};
+handle_call({update_game, Game}, _From, {Games, Players}) ->
+    io:format("Updating game~n"),
+    Find_Game = fun(GR) ->
+	    GR#game.game_pid =/= Game#game.game_pid
+    end,
+    NewGameList = lists:filter(Find_Game, Games),
+    NewGames = [Game | NewGameList],
+    {reply, ok, {NewGames, Players}};
 
 handle_call({get_game, GameName}, _From, {Games, Players}) ->
     Fun = fun(X) ->
 	    X#game.name =:= GameName 
     end,
-    [Game] = lists:filter(Fun, Games), %Kan orsaka fel om inga gamename hittas
-    {reply, Game, {Games, Players}}.
+    case lists:filter(Fun, Games) of
+	[] ->
+	    {reply, [], {Games, Players}};
+	[Game] ->
+	    {reply, Game, {Games, Players}}
+    end.
 
 handle_cast({rm_player, {socket, Socket}}, {Games, Players}) ->
-    Fun = fun(P) ->
+    Find_Player = fun(P) ->
+	    P#player.socket =:= Socket
+    end,
+
+    [OldPlayer] = lists:filter(Find_Player, Players),
+
+    Something = fun(Game) ->
+	    Find_P_layer = fun(PRecord) ->
+		    OldPlayer =:= PRecord
+	    end,
+	    List = lists:filter(Find_P_layer, Game#game.players),
+	    case length(List) of
+		0 ->
+		    false;
+		1 ->
+		    true
+	    end
+    end,
+    
+    PerhapsGame = lists:filter(Something, Games),
+
+    case length(PerhapsGame) of
+	    0 ->
+		ok;
+	    1 ->
+		[TheGame] = PerhapsGame,
+		?GAMESRV:player_leave(TheGame#game.game_pid, OldPlayer);
+	    _ ->
+		io:format("Fel! En spelare är med i flera spel..")
+	end,
+
+    Find_Other_Players = fun(P) ->
 	    P#player.socket =/= Socket
     end,
 
-    NewPlayers = lists:filter(Fun, Players),
+    NewPlayers = lists:filter(Find_Other_Players, Players),
     io:format("Deleted a player~n"),
     {noreply, {Games, NewPlayers}}.
 
@@ -76,7 +116,7 @@ add_player(Player) -> gen_server:call(?SERVER, {add_player, Player}).
 list_players() -> gen_server:call(?SERVER, list_players).
 rm_player({socket, Socket}) -> gen_server:cast(?SERVER, {rm_player, {socket, Socket}}).
 %Game
-add_game(Game) -> gen_server:call(?SERVER, {add_game, Game}).
+update_game(Game) -> gen_server:call(?SERVER, {update_game, Game}).
 create_game(Host) -> gen_server:call(?SERVER, {create_game, Host}).
 list_games() -> gen_server:call(?SERVER, list_games).
 get_game(GameName) -> gen_server:call(?SERVER, {get_game, GameName}).

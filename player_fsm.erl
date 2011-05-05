@@ -61,7 +61,8 @@ server_lobby({Header, List}, {Player, Game}) ->
 	    NewGame = ?SERVER:create_game(Player),
 	    HostName = Player#player.name,
 	    ?P_HANDLER:sendMsg(Player#player.socket, {9, [HostName]}), %Join answer
-	    {next_state, game_lobby, {Player, NewGame}};
+	    JoinGame = ?GAMESRV:player_join(NewGame#game.game_pid, Player),
+	    {next_state, game_lobby, {Player, JoinGame}};
 
 	8 -> %Join request
 	    [GameName] = List,
@@ -116,8 +117,8 @@ game_lobby({Header, List}, {Player, Game}) ->
 		    ?P_HANDLER:sendFailMsg(Player#player.socket, 13, Header), % FailPacket "Permission denied"
 		    {next_state, game_lobby, {Player, Game}};
 		true ->
-		    UpdatedGame = ?GAMESRV:start_game(Game#game.game_pid, 30), % param: Gamename, mapsize
-		    {next_state, in_game, {Player, UpdatedGame}}
+		    ?GAMESRV:start_game(Game#game.game_pid, 10), % param: Gamename, mapsize
+		    {next_state, game_wait, {Player, Game}}
 
 	    end;	% player = host
 
@@ -133,7 +134,7 @@ game_wait({Header, List}, {Player, Game}) ->
 
 game_turn({Header, List}, {Player, Game}) -> %GLÖM EJ ATT UPPDATERA GAME i början av varje turn
     io:format("INNE I GAMETURN: ~p~n", [Player#player.name]),
-    ?P_HANDLER:sendMsg(Player#player.socket, {17, Game#game.map}), %It's your turn
+    ?P_HANDLER:sendMsg(Player#player.socket, {17, [Game#game.tilelist]}), %It's your turn GLÖM EJ ATT SKAPA TILEMAP I BÖRJAN
     case Header of
 
 	15 -> %Move request
@@ -150,8 +151,8 @@ game_turn({Header, List}, {Player, Game}) -> %GLÖM EJ ATT UPPDATERA GAME i bör
     end.
 
 
-handle_event(NewState, StateName, {Player, Game}) ->
-    case NewState of
+handle_event(Msg, StateName, {Player, Game}) ->
+    case Msg of
 	{game_wait, UpdatedGame} ->
 	    {next_state, game_wait, {Player, UpdatedGame}};
 
