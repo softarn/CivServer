@@ -9,12 +9,14 @@
 
 %Startup
 start(Host) ->
-    Game = #game{name = Host#player.name, game_pid = self(), players = [Host], locked = 0},
-    gen_server:start_link({local, list_to_atom(Host#player.name)}, ?MODULE, Game, []),
-    Game.
+    Game = #game{name = Host#player.name, players = [Host], locked = 0},
+    Pid = gen_server:start(?MODULE, Game, []),
+    NewGame = Game#game{game_pid=Pid},
+    NewGame.
 
 init(Game) ->
-    {ok, Game}.
+    NewGame = Game#game{game_pid = self()},
+    {ok, NewGame}.
 
 %Callbacks
 handle_call(list_players, _From, Game) ->
@@ -55,12 +57,12 @@ terminate(Reason, State) ->
     ok.
 
 %Server calls and casts
-list_players(GN) -> gen_server:call(list_to_atom(GN), list_players).
-toggle_lock(GN, LockFlag) -> gen_server:call(list_to_atom(GN), {toggle_lock, LockFlag}).
-is_locked(GN) -> gen_server:call(list_to_atom(GN), is_locked).
-start_game(GN, MapSize) -> gen_server:call(list_to_atom(GN), {start_game, MapSize}).
-player_join(GN, Player) -> gen_server:call(list_to_atom(GN), {player_join, Player}).
-stop(GN) -> gen_server:call(list_to_atom(GN), stop).
+list_players(GN) -> gen_server:call(GN, list_players).
+toggle_lock(GN, LockFlag) -> gen_server:call(GN, {toggle_lock, LockFlag}).
+is_locked(GN) -> gen_server:call(GN, is_locked).
+start_game(GN, MapSize) -> gen_server:call(GN, {start_game, MapSize}).
+player_join(GN, Player) -> gen_server:call(GN, {player_join, Player}).
+stop(GN) -> gen_server:call(GN, stop).
 
 starting_game(Game) ->
     Players = Game#game.players,

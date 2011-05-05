@@ -81,10 +81,10 @@ server_lobby({Header, List}, {Player, Game}) ->
 		    {next_state, server_lobby, {Player, Game}};
 
 		ListedGame when is_record(ListedGame, game) ->
-		    case ?GAMESRV:is_locked(ListedGame#game.name) of
+		    case ?GAMESRV:is_locked(ListedGame#game.game_pid) of
 			0 ->
 			    ?P_HANDLER:sendMsg(Player#player.socket, {9, [GameName]}),
-			    JoinGame = ?GAMESRV:player_join(GameName, Player),
+			    JoinGame = ?GAMESRV:player_join(ListedGame#game.game_pid, Player),
 			    {next_state, game_lobby, {Player, JoinGame}};
 			_->
 			    ?P_HANDLER:sendFailMsg(Player#player.socket, 3, Header), % FailPacket "Game is locked"
@@ -117,7 +117,7 @@ game_lobby({Header, List}, {Player, Game}) ->
 		    {next_state, game_lobby, {Player, Game}};
 		true ->
 		    [LockFlag] = List,
-		    UpdatedGame = ?GAMESRV:toggle_lock(Game#game.name, LockFlag),
+		    UpdatedGame = ?GAMESRV:toggle_lock(Game#game.game_pid, LockFlag),
 		    {next_state, game_lobby, {Player, UpdatedGame}}
 	    end;
 
@@ -127,7 +127,7 @@ game_lobby({Header, List}, {Player, Game}) ->
 		    ?P_HANDLER:sendFailMsg(Player#player.socket, 13, Header), % FailPacket "Permission denied"
 		    {next_state, game_lobby, {Player, Game}};
 		true ->
-		    UpdatedGame = ?GAMESRV:start_game(Game#game.name, 30), % param: Gamename, mapsize
+		    UpdatedGame = ?GAMESRV:start_game(Game#game.game_pid, 30), % param: Gamename, mapsize
 		    {next_state, in_game, {Player, UpdatedGame}}
 
 	    end;	% player = host
