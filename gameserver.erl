@@ -9,8 +9,8 @@
 
 %Startup
 start(Host) ->
-    Game = #game{name = Host#player.name, players = [Host], locked = 0},
-    Pid = gen_server:start(?MODULE, Game, []),
+    Game = #game{name = Host#player.name, players = [], locked = 0}, %tog bort host fårn players
+    {ok, Pid} = gen_server:start(?MODULE, Game, []),
     NewGame = Game#game{game_pid=Pid},
     NewGame.
 
@@ -30,25 +30,19 @@ handle_call({toggle_lock, LockFlag}, _From, Game) ->
 	    {reply, Game#game.locked, Game};
 	true -> %else..
 	    UpdatedGame = Game#game{locked = LockFlag},
-	    broadcastMsg(UpdatedGame, UpdatedGame#game.players, game_info), 
+	    broadcastMsg(UpdatedGame, game_info), 
 	    {reply, UpdatedGame#game.locked, UpdatedGame}
     end;
 
 handle_call({player_join, Player}, _From, Game) ->
     UpdatedGame = Game#game{players = [Player | Game#game.players]}, %
     io:format("Added player ~w~n", [Player]), %Glöm ej felkontroll ifall player existerar!
-    broadcastMsg(UpdatedGame, UpdatedGame#game.players, game_info),
+    broadcastMsg(UpdatedGame, game_info),
     {reply, UpdatedGame#game.players, UpdatedGame};
 
 handle_call(is_locked, _From, Game) ->
     {reply, Game#game.locked, Game};
 
-handle_call({start_game, MapSize}, _From, Game) ->
-    Map = ?TERGEN:generate(MapSize, MapSize), % Fixa storleken senare
-    UpdatedGame = Game#game{locked = 1, map = Map},
-    starting_game(UpdatedGame),
-    broadcastMsg(UpdatedGame, Map, start_game),
-    {reply, UpdatedGame, UpdatedGame};
 
 handle_call(stop, _From, State) ->
     {stop, normal, shutdown_ok, State};
@@ -69,14 +63,21 @@ handle_call({finished_turn, Player}, _From, Game) ->
 terminate(Reason, State) ->
     ok.
 
+handle_cast({start_game, MapSize}, Game) ->
+    Map = ?TERGEN:generate(MapSize, MapSize), % Fixa storleken senare
+    UpdatedGame = Game#game{locked = 1, map = Map, tilelist = []},
+    starting_game(UpdatedGame),
+    broadcastMsg(UpdatedGame, start_game),
+    {noreply, UpdatedGame}.
+
 %Server calls and casts
 list_players(Game) -> gen_server:call(Game, list_players).
 toggle_lock(Game, LockFlag) -> gen_server:call(Game, {toggle_lock, LockFlag}).
 is_locked(Game) -> gen_server:call(Game, is_locked).
-start_game(Game, MapSize) -> gen_server:call(Game, {start_game, MapSize}).
 player_join(Game, Player) -> gen_server:call(Game, {player_join, Player}).
 stop(Game) -> gen_server:call(Game, stop).
 finished_turn(Game, Player) -> gen_server:call(Game, {finished_turn, Player}).
+start_game(Game, MapSize) -> gen_server:cast(Game, {start_game, MapSize}).
 
 starting_game(Game) ->
     Players = Game#game.players,
@@ -92,13 +93,13 @@ change_turn(Game) ->
     FSM = First#player.fsm_pid,
     ?P_FSM:enter_turn(FSM, Game).
 
-broadcastMsg(Game, Msg, Type) ->
+broadcastMsg(Game, Type) ->
     Players = Game#game.players,	
     case Type of
 	start_game ->
 	    Fun = fun(X) -> 
 		    Socket = X#player.socket,
-		    ?P_HANDLER:sendMsg(Socket, {14, [Msg]}) % Start game answer%DONT FORGET TO SEND LIST<TILE> WITH PRESET UNITS!
+		    ?P_HANDLER:sendMsg(Socket, {14, [Game#game.map, Game#game.tilelist]}) % Start game answer%DONT FORGET TO SEND LIST<TILE> WITH PRESET UNITS!
 	    end,
 	    lists:foreach(Fun, Players);
 
