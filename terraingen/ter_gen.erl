@@ -20,6 +20,9 @@
 % Ocean tiles are just generated when all neighbours is water-tiles.
 % Note: the generate_ocean function removes islands (lone land tiles in water)
 % as it is right now.
+%
+%	NOTE: The matrix is represented as coordinates {x,y} and not the usual matrix {y,x} 
+%	as required by the specs
 % 
 % If you have any questions please feel free to contact either one of us.
 
@@ -31,7 +34,7 @@
 %% Returns a matrix (a list containing lists) representing a randomly
 %% generated terrain map, with the given width and height.
 %% This is the only method you need to call.
-generate(Width,Height) when is_number(Width), is_number(Height)->
+generate(Height,Width) when is_number(Width), is_number(Height)->
 	TheMap = generate_ocean(create_map(Width, Height)),
 	% Water = check_map(Width, Height, TheMap, Width, Height, 0),
 	% case Water > ______ of
