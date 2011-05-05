@@ -98,8 +98,7 @@ broadcastMsg(Game, Msg, Type) ->
 	start_game ->
 	    Fun = fun(X) -> 
 		    Socket = X#player.socket,
-		    ?TCP:sendHeader(Socket, 14), % Start game answer
-		    ?TCP:sendList(Socket, "Column", Msg)
+		    ?P_HANDLER:sendMsg(Socket, {14, [Msg]}) % Start game answer%DONT FORGET TO SEND LIST<TILE> WITH PRESET UNITS!
 	    end,
 	    lists:foreach(Fun, Players);
 
@@ -113,10 +112,7 @@ broadcastMsg(Game, Msg, Type) ->
 
 	    Fun = fun(X) ->
 		    Socket = X#player.socket,
-
-		    ?TCP:sendHeader(Socket, 10), %Game session information
-		    ?TCP:sendList(Socket, "Player", PList),
-		    ?TCP:sendBoolean(Socket, Game#game.locked)				
+		    ?P_HANDLER:sendMsg(Socket, {10, [PList, Game#game.locked]})
 	    end,
 	    lists:foreach(Fun, Players)
     end.
