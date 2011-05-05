@@ -6,7 +6,7 @@ public class Proxy
 {
 	private Socket 		m_clientSocket;
 	private OutputStream 	m_outStream;
-	private final int	protocolVersion = 0;
+	private final int	protocolVersion = 2;
 	private Receiver	receiver;
 	
 	public Proxy(String host, int port, PacketListener pl)
@@ -67,10 +67,9 @@ public class Proxy
 	}
 
 	// Public method for requesting to host a game.
-	public Result host(Boolean load)
+	public Result host()
 	{
 		Packet toSend = new Packet((byte)7);
-		toSend.add(load);
 		send(toSend);
 		return receiver.getResult();
 	}

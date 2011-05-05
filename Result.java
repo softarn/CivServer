@@ -6,7 +6,7 @@ class Result{
 	private boolean ok, locked;
 	private String okMsg, failMsg, name;
 	private List sessions, players, map, updatedTiles;
-	private int size, requestFail, failNumber, requestOk;
+	private int size, requestFail, failNumber, requestOk, attackerLeft, defenderLeft;
 
 	// Här är medlemsvariabler som bara är hjälpvariabler till vissa metoder.
 	private List cityUnits = new ArrayList<Unit>();
@@ -68,6 +68,14 @@ class Result{
 
 	public void addRequestOk(int requestOK){
 		this.requestOk = requestOk;
+	}
+
+	public void addAttackerLeft(int attLeft){
+		attackerLeft = attLeft;
+	}
+
+	public void addDefenderLeft(int defLeft){
+		defenderLeft = defLeft;
 	}
 
 	// Sets för komplexa strukturer.
@@ -166,6 +174,14 @@ class Result{
 
 	public int getRequestOk(){
 		return requestOk;
+	}
+
+	public int getAttackerLeft(){
+		return attackerLeft;
+	}
+
+	public int getDefenderLeft(){
+		return defenderLeft;
 	}
 
 	// Här under kommer det att finnas getters för dom mer komplexa strukturerna.

@@ -69,7 +69,6 @@ public class Receiver implements Runnable
 			else if(header == 0)
 			{
 				toReturn.addOk(false);
-				toReturn.addFailNumber(receiveInt());
 				toReturn.addRequestFail(m_inStream.read());
 				toReturn.addFailMsg(receiveString());
 				packet = toReturn;
@@ -79,6 +78,7 @@ public class Receiver implements Runnable
 			else if(header == 1)
 			{
 				toReturn.addRequestOk(m_inStream.read());
+				m_inStream.read();
 				toReturn.addOk(true);
 				packet = toReturn;
 			}
@@ -127,12 +127,18 @@ public class Receiver implements Runnable
 			else if(header == 14)
 			{
 				toReturn.addMap(receiveListList(receiveInt()));
+				toReturn.setupTiles();
+				int size = receiveInt();
+				for(int i=0; i<size; i++)
+				{
+					receiveTile(toReturn);
+				}
 
 				pl.gameStarted(toReturn);
 			}
 
-			// Header 16, Tile Update, this one needs more work.
-			else if(header == 16)
+			// Header 17, It's your turn, receives a list of updated tiles.
+			else if(header == 17)
 			{
 				toReturn.setupTiles();
 				int size = receiveInt();
@@ -142,6 +148,15 @@ public class Receiver implements Runnable
 				}
 
 				pl.newTurn(toReturn);
+			}
+
+			// Header 19, Combat result, receives what's left of the fighting units.
+			else if(header == 19)
+			{
+				toReturn.addAttackerLeft(receiveInt());
+				toReturn.addDefenderLeft(receiveInt());
+
+				packet = toReturn;
 			}
 
 			// Test
