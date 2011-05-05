@@ -19,11 +19,12 @@
 	game_pid,
 	players,
 	locked,
-	map}).
+	map,
+	tilelist}).
 
 -record(tile, {
-	position, %{X,Y}
-	unit = null, %{String, String, Int}
+	position = null, %{X,Y}
+	unit = null, %unitrecord
 	city = null, %cityrecord
 	improvement = null}). %String
 
@@ -32,3 +33,8 @@
 	units = null, % [Units]
 	buildings = null, %[String]
 	name = null}). %String
+
+-record(unit, {
+	owner = null, %String
+	type = null, %String
+	manpower = null}). %Integer
