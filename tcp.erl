@@ -111,6 +111,10 @@ sendString(Socket, List) ->
     io:format("SendString sent: "),
     io:format("~p\n", [NewList]).
 
+sendPlayer(Socket, {Name, Civ}) ->
+    sendString(Socket, Name),
+    sendString(Socket, Civ).
+
 sendInteger(Socket, Int) ->
     gen_tcp:send(Socket, <<Int?INTEGER>>),
     io:format("SendInteger sent: "),
@@ -131,9 +135,8 @@ sendList(Socket, ElemType, List) ->
 	    Packet = [<<NumberOfElements?INTEGER>>, NewList],
 	    gen_tcp:send(Socket, Packet);
 	"Player" ->
-	    NewList = [X ++ "\0"|| X <- List], % Lägger till nullterminering på alla strängar i listan
-	    Packet = [<<NumberOfElements?INTEGER>>, NewList],
-	    gen_tcp:send(Socket, Packet);
+	    sendInteger(Socket, NumberOfElements),
+	    [sendPlayer(Socket, X)|| X <- List]; % Lägger till nullterminering på alla strängar i listan
 	"Position" ->
 	    NewList = [<<X?INTEGER>> || X <- List], % Tolkar alla intar i listan som ?INTEGER
 	    Packet = [<<NumberOfElements?INTEGER>>, NewList],
@@ -194,7 +197,6 @@ sendFailPacket(Socket, FailureID, ReqHeader) -> % 2:Number to identify failure. 
     io:format("Created the following failmsg: "),
     FailText = getFailMsg(FailureID), % Text that describes the failure
     sendHeader(Socket, 0),
-    sendInteger(Socket, FailureID),
     sendHeader(Socket, ReqHeader),
     sendString(Socket, FailText).
 

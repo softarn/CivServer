@@ -11,7 +11,13 @@ init(Port) ->
     accept(ListenSocket).
 
 accept(ListenSocket) ->
-    {ok, Socket} = gen_tcp:accept(ListenSocket),
-    io:format("Accepted Connection\n"),
-    spawn(?P_HANDLER, init, [Socket]),
+    case gen_tcp:accept(ListenSocket) of
+	{ok, Socket} -> 
+	    io:format("Accepted Connection\n"),
+	    {ok, FSM_Pid} = ?P_FSM:start(),
+	    Player = #player{socket = Socket, ref = make_ref(), fsm_pid = FSM_Pid},
+	    ?P_FSM:connect(FSM_Pid, Player);
+	{error, enfile} -> 
+	    io:format("Denied Connection\n")
+    end,
     accept(ListenSocket).
