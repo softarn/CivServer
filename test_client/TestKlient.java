@@ -12,7 +12,8 @@ class TestKlient{
 	public void mainMenu(){
 
 		while(true){
-			System.out.println("What you wanna do?\n1: connect\n2: list games\n3: host game\n4: start game\n0:quit");
+			System.out.println("What you wanna do?\n"+
+                    "1: connect \n2: list games\n3: host game\n4: start game\n0:quit");
 			int what = sc.nextInt();
 
 			switch(what){
