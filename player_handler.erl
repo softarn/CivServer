@@ -33,8 +33,7 @@ recv(Socket, FSM) ->
 	    [];
 
 	7 -> % Host request
-	    LoadFlag = ?TCP:readBoolean(Socket),
-	    [LoadFlag];
+	    [];
 
 	8 -> % Join request
 	    GameName = ?TCP:readString(Socket),
@@ -89,11 +88,17 @@ sendMsg(Socket, {Header, List}) ->
 	    ?TCP:sendHeader(Socket, Header),
 	    ?TCP:sendString(Socket, HostName);
 
-	10 -> %Game session information implement later
-	    ok;
+	10 -> %Game session information
+	    [PList, Locked] = List,
+	    ?TCP:sendHeader(Socket, 10), %Game session information
+	    ?TCP:sendList(Socket, "Player", PList),
+	    ?TCP:sendBoolean(Socket, Locked);				
 
 	14 -> %Start game answer, implement later
-	    ok;
+	    [MapData] = List, %Glöm ej preset units!!
+	    ?TCP:sendHeader(Socket, Header),
+	    ?TCP:sendList(Socket, "Column", MapData);
+	    %?TCP:sendList(Socket, "Tile", Units);
 	17 -> %
 	    ok
     end.

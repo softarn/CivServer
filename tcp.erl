@@ -197,7 +197,6 @@ sendFailPacket(Socket, FailureID, ReqHeader) -> % 2:Number to identify failure. 
     io:format("Created the following failmsg: "),
     FailText = getFailMsg(FailureID), % Text that describes the failure
     sendHeader(Socket, 0),
-    sendInteger(Socket, FailureID),
     sendHeader(Socket, ReqHeader),
     sendString(Socket, FailText).
 
