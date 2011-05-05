@@ -152,10 +152,10 @@ game_turn({Header, List}, {Player, Game}) -> %GLÖM EJ ATT UPPDATERA GAME i bör
 
 handle_event(NewState, StateName, {Player, Game}) ->
     case NewState of
-	{enter_game, UpdatedGame} ->
-	    {next_state, in_game, {Player, UpdatedGame}};
+	{game_wait, UpdatedGame} ->
+	    {next_state, game_wait, {Player, UpdatedGame}};
 
-	{your_turn, UpdatedGame} ->
+	{game_turn, UpdatedGame} ->
 	    {next_state, game_turn, {Player, UpdatedGame}}
     end.
 
@@ -168,6 +168,6 @@ connect(Pid, Player) ->
 send_packet(Pid, Packet) ->
     gen_fsm:send_event(Pid, Packet).
 enter_game(Pid, UpdatedGame) ->
-    gen_fsm:send_all_state_event(Pid, {enter_game, UpdatedGame}).
+    gen_fsm:send_all_state_event(Pid, {game_wait, UpdatedGame}).
 enter_turn(Pid, UpdatedGame) ->
-    gen_fsm:send_all_state_event(Pid, {your_turn, UpdatedGame}).
+    gen_fsm:send_all_state_event(Pid, {game_turn, UpdatedGame}).
