@@ -16,7 +16,7 @@ connecting(Player, _StateData) ->
     {next_state, getting_p_info, {NewPlayer, #game{}}}. %2: new state, 3: state-data
 
 getting_p_info({Header, List}, {Player, Game}) -> 
-    io:format("INNE I GETTING P INFO!!!~n"),
+    io:format("In state getting_p_info  ~n"),
     case Header of
 
 	2 -> % Hello World
@@ -26,7 +26,6 @@ getting_p_info({Header, List}, {Player, Game}) ->
 
 		true ->
 		    UpdatedPlayer = Player#player{name=PlayerName},
-
 		    case ?SERVER:add_player(UpdatedPlayer) of
 			true ->
 			    ?P_HANDLER:sendMsg(UpdatedPlayer#player.socket, {3, []}), %Welcome the the Real world
@@ -34,7 +33,6 @@ getting_p_info({Header, List}, {Player, Game}) ->
 			false ->
 			    ?P_HANDLER:sendFailMsg(UpdatedPlayer#player.socket, 1, Header), %Fail packet name already exists
 			    {next_state, getting_p_info, {Player, Game}}
-
 		    end; %end add player
 
 		false ->
@@ -50,7 +48,7 @@ getting_p_info({Header, List}, {Player, Game}) ->
     end. %end header
 
 server_lobby({Header, List}, {Player, Game}) ->
-    io:format("INNE I SERVER LOBBY~n"),
+    io:format("In state server_lobby~n"),
     case Header of
 	5 -> % List game request
 	    Games = ?SERVER:list_games(),
@@ -101,7 +99,7 @@ server_lobby({Header, List}, {Player, Game}) ->
     end.
 
 game_lobby({Header, List}, {Player, Game}) ->
-    io:format("INNE I GAME LOBBY~n"),
+    io:format("In state game_lobby~n"),
     case Header of
 
 	11 -> %Change civilization request
@@ -139,8 +137,9 @@ game_lobby({Header, List}, {Player, Game}) ->
     end. %end case header
 
 game_wait({Header, List}, {Player, Game}) ->
-    io:format("INNE I INGAME: ~p~n", [Player#player.name]),
-    ok.
+    io:format("In state in_game: ~p~n", [Player#player.name]),
+    io:format("Not implemented yet~n" ),
+    {next_state, in_game, {Player, Game}}.
 
 game_turn({Header, List}, {Player, Game}) -> %GLÖM EJ ATT UPPDATERA GAME i början av varje turn
     io:format("INNE I GAMETURN: ~p~n", [Player#player.name]),

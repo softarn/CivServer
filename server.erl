@@ -47,7 +47,7 @@ handle_call(stop, _From, State) ->
     {stop, normal, shutdown_ok, State};
 
 handle_call({add_game, Game}, _From, {Games, Players}) ->
-    io:format("adding game"),
+    io:format("Adding game~n"),
     {reply, ok, {[Game|Games], Players}};
 
 handle_call({get_game, GameName}, _From, {Games, Players}) ->
