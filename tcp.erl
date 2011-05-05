@@ -1,5 +1,7 @@
 -module(tcp).
 
+-include("config.hrl").
+
 -compile(export_all).
 
 -define(CHARACTER, 	:8/unsigned-big-integer).
@@ -128,67 +130,64 @@ sendBoolean(Socket, Bool) ->
 
 sendList(Socket, ElemType, List) ->
     NumberOfElements = length(List),
+    sendInteger(Socket, NumberOfElements),
 
     case ElemType of 
 	"String" ->
-	    NewList = [X ++ "\0"|| X <- List], % Lägger till nullterminering på alla strängar i listan
-	    Packet = [<<NumberOfElements?INTEGER>>, NewList],
-	    gen_tcp:send(Socket, Packet);
+	    [sendString(Socket, X) || X <- List]; % Lägger till nullterminering på alla strängar i listan
 	"Player" ->
-	    sendInteger(Socket, NumberOfElements),
 	    [sendPlayer(Socket, X)|| X <- List]; % Lägger till nullterminering på alla strängar i listan
 	"Position" ->
-	    NewList = [<<X?INTEGER>> || X <- List], % Tolkar alla intar i listan som ?INTEGER
-	    Packet = [<<NumberOfElements?INTEGER>>, NewList],
-	    gen_tcp:send(Socket, Packet);
+	    [sendPosition(Socket, X) || X <- List]; % Tolkar alla intar i listan som ?INTEGER
 	"Integer" ->
-	    NewList = [<<X?INTEGER>> || X <- List], % Tolkar alla intar i listan som ?INTEGER
-	    Packet = [<<NumberOfElements?INTEGER>>, NewList],
-	    gen_tcp:send(Socket, Packet);
+	    [sendInteger(Socket, X) || X <- List]; % Tolkar alla intar i listan som ?INTEGER
 	"Column" ->
-	    sendInteger(Socket, NumberOfElements), % Skicka antalet listor
 	    [sendList(Socket, "String", X) || X <- List]; % Skicka alla listor
+	"Tile" ->
+	   [sendTile(Socket, X) || X <- List];
 	"Unit" ->
-	    Fun = fun(X) ->
-		    case is_integer(X) of
-			true ->
-			    sendInteger(Socket, <<X?INTEGER>>);
-			false ->
-			    sendString(Socket, X ++ "\0")
-		    end
-	    end,
-	    lists:foreach(Fun, List);
-
+	    [sendUnit(Socket, X) || X <- List];
 	_ ->
 	    io:format("Invalid ElemType in function sendList!")
     end,       
     io:format("SendList sent: "),
     io:format("~p\n", [List]).
 
+sendTile(Socket, Tile) ->
+    sendPosition(Socket, Tile#tile.position),
+    sendPerhaps(Socket, "Unit", Tile#tile.unit),
+    sendPerhaps(Socket, "City", Tile#tile.city),
+    sendPerhaps(Socket, "String", Tile#tile.improvement).
 
-sendPerhaps(Socket, false) ->
-    sendBoolean(Socket, 0).
+sendPosition(Socket, {X, Y}) ->
+    sendInteger(Socket, X),
+    sendInteger(Socket, Y).
 
-sendPerhaps(Socket, true, Type, Elem) ->
+sendCity(Socket, City) ->
+    sendString(Socket, City#city.owner),
+    sendList(Socket, "Unit", City#city.units),
+    sendList(Socket, "String", City#city.buildings),
+    sendString(Socket, City#city.name).
+
+sendUnit(Socket, Unit) ->
+    sendString(Socket, Unit#unit.owner),
+    sendString(Socket, Unit#unit.type),
+    sendInteger(Socket, Unit#unit.manpower).
+
+sendPerhaps(Socket, _Type, null) ->
+    sendBoolean(Socket, 0);
+
+sendPerhaps(Socket, Type, Elem) ->
     sendBoolean(Socket, 1),
     case Type of
 	"Integer" ->
 	    sendInteger(Socket, Elem);
 	"String" ->
 	    sendString(Socket, Elem);
-	"List" ->
-	    sendList(Socket, Type, Elem);
 	"Unit" ->
-	    {unit, Owner, Type, ManPower} = Elem,
-	    sendString(Socket, Owner),
-	    sendString(Socket, Type),
-	    sendInteger(Socket, ManPower);
+	    sendUnit(Socket, Elem);
 	"City" ->
-	    {city, Owner, Units, Buildings, Name} = Elem,
-	    sendString(Socket, Owner),
-	    sendList(Socket, "Unit", Units),
-	    sendList(Socket, "String", Buildings),
-	    sendString(Socket, Name);
+	    sendCity(Socket, Elem);
 	"Boolean" ->
 	    sendBoolean(Socket, Elem)
     end.
