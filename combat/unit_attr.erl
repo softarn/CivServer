@@ -1,5 +1,5 @@
 -module(unit_attr).
--compile(export_all).
+-export([get_attr/1]).
 
 
 
