@@ -49,6 +49,13 @@ recv(Socket, FSM) ->
 	    [LockFlag];
 
 	13 -> % Start game request
+	    [];
+
+	15 -> %Move request
+	    MovePath = ?TCP:readList(Socket, "Position"),
+	    [MovePath];
+
+	16-> % End of turn
 	    []
     end,
 
@@ -86,6 +93,8 @@ sendMsg(Socket, {Header, List}) ->
 	    ok;
 
 	14 -> %Start game answer, implement later
+	    ok;
+	17 -> %
 	    ok
     end.
 

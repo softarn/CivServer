@@ -111,7 +111,7 @@ sendString(Socket, List) ->
     io:format("SendString sent: "),
     io:format("~p\n", [NewList]).
 
-sendPlayer(Socket, [Name, Civ]) ->
+sendPlayer(Socket, {Name, Civ}) ->
     sendString(Socket, Name),
     sendString(Socket, Civ).
 
