@@ -6,7 +6,7 @@ public class Proxy
 {
 	private Socket 		m_clientSocket;
 	private OutputStream 	m_outStream;
-	private final int	protocolVersion = 0;
+	private final int	protocolVersion = 2;
 	private Receiver	receiver;
 	
 	public Proxy(String host, int port, PacketListener pl)

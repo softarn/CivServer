@@ -1,19 +1,24 @@
 import java.util.*;
 
 class TestKlient{
-	String name = "Xanindorf2";
-	Proxy p = new Proxy("localhost", 1234, new MyPackLyss());
+	Proxy p = null;
 	Scanner sc = new Scanner(System.in);
 
-	public TestKlient(){
-		mainMenu();
+	public TestKlient(String name, int port){
+        p = new Proxy("localhost", port, new MyPackLyss());
+		mainMenu(name);
 	}
 
-	public void mainMenu(){
+	public void mainMenu(String name){
 
 		while(true){
 			System.out.println("What you wanna do?\n"+
-                    "1: connect \n2: list games\n3: host game\n4: start game\n0:quit");
+                    "1: connect \n"+
+                    "2: list games\n"+
+                    "3: host game\n"+
+                    "4: start game\n"+
+                    "5: join game\n"+
+                    "0:quit");
 			int what = sc.nextInt();
 
 			switch(what){
@@ -44,6 +49,10 @@ class TestKlient{
 					p.startGame();
 					break;
 
+				case 5:
+					Result res = p.joinGame(sc.next());
+					System.out.println(res.getOk() + "   " + res.getOkMsg());
+					break;
 
 
 			}
@@ -66,7 +75,7 @@ class TestKlient{
 	}
 
 	public static void main(String [] args){
-		TestKlient flum = new TestKlient();
+		TestKlient flum = new TestKlient(args[0], Integer.parseInt(args[1]));
 
 		
 
