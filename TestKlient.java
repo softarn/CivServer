@@ -1,7 +1,7 @@
 import java.util.*;
 
 class TestKlient{
-	String name, ip;
+	String name, ip = "130.229.157.246";
 	Proxy p;
 	int port;
 	Scanner sc = new Scanner(System.in);
@@ -18,9 +18,6 @@ class TestKlient{
 		
 	//	System.out.println("Enter IP to connect to: ");
 	//	ip = scan.next();
-    
-
-		ip = "130.229.157.246";
 		System.out.println("Enter a port to connect via: ");
 		port = sc.nextInt();
 

@@ -127,13 +127,13 @@ public class Receiver implements Runnable
 			else if(header == 14)
 			{
 				toReturn.addMap(receiveListList(receiveInt()));
-				toReturn.setupTiles();
+			/*	toReturn.setupTiles();
 				int size = receiveInt();
 				for(int i=0; i<size; i++)
 				{
 					receiveTile(toReturn);
 				}
-
+*/
 				pl.gameStarted(toReturn);
 			}
 
