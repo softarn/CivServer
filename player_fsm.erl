@@ -95,8 +95,6 @@ server_lobby({Header, List}, {Player, Game}) ->
 		    end %end game is locked
 	    end; %end get_game
 
-
-
 	_ -> 
 	    ?P_HANDLER:sendFailMsg(Player#player.socket, -1, Header),
 	    {next_state, server_lobby, {Player, Game}}
@@ -130,26 +128,48 @@ game_lobby({Header, List}, {Player, Game}) ->
 		    {next_state, game_lobby, {Player, Game}};
 		true ->
 		    UpdatedGame = ?GAMESRV:start_game(Game#game.name, 30), % param: Gamename, mapsize
-		    {next_state, in_game, {Player, UpdatedGame}}
+		    {next_state, game_wait, {Player, UpdatedGame}}
 
 	    end;	% player = host
-	
+
 	_ -> %Other
 	    ?P_HANDLER:sendFailMsg(Player#player.socket, -1, Header), % FailPacket "Permission denied"
 	    {next_state, game_lobby, {Player, Game}}
-	    
+
     end. %end case header
 
-in_game({Header, List}, {Player, Game}) ->
+game_wait({Header, List}, {Player, Game}) ->
     io:format("INNE I INGAME: ~p~n", [Player#player.name]),
     ok.
+
+game_turn({Header, List}, {Player, Game}) -> %GLÖM EJ ATT UPPDATERA GAME i början av varje turn
+    io:format("INNE I GAMETURN: ~p~n", [Player#player.name]),
+    ?P_HANDLER:sendMsg(Player#player.socket, {17, Game#game.map}), %It's your turn
+    case Header of
+
+	15 -> %Move request
+	    %?GAMESRV:move_unit....
+	    ok;
+	16 -> %End of turn
+	    ?GAMESRV:finished_turn(Player),
+	    {next_state, game_wait, {Game, Player}};
+	18 -> %Combat request
+	    ok;
+	20 -> %Message for you sir
+	    ok
+
+    end.
+
 
 handle_event(NewState, StateName, {Player, Game}) ->
     case NewState of
 	{enter_game, UpdatedGame} ->
-	    {next_state, in_game, {Player, UpdatedGame}}
+	    {next_state, in_game, {Player, UpdatedGame}};
+
+	{your_turn, UpdatedGame} ->
+	    {next_state, game_turn, {Player, UpdatedGame}}
     end.
-		
+
 terminate(Reason, StateName, StateData) ->
     io:format("~p~n", [Reason]).
 
@@ -160,3 +180,5 @@ send_packet(Pid, Packet) ->
     gen_fsm:send_event(Pid, Packet).
 enter_game(Pid, UpdatedGame) ->
     gen_fsm:send_all_state_event(Pid, {enter_game, UpdatedGame}).
+enter_turn(Pid, UpdatedGame) ->
+    gen_fsm:send_all_state_event(Pid, {your_turn, UpdatedGame}).

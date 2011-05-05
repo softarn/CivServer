@@ -49,7 +49,20 @@ handle_call({start_game, MapSize}, _From, Game) ->
     {reply, UpdatedGame, UpdatedGame};
 
 handle_call(stop, _From, State) ->
-    {stop, normal, shutdown_ok, State}.
+    {stop, normal, shutdown_ok, State};
+
+handle_call({finished_turn, Player}, _From, Game) ->
+   [Current | Rest] = Game#game.players,
+   case Current =:= Player of
+       true ->
+	   io:format("Current == Player");
+       false ->
+	   io:format("finished turn tog ut felaktig person! Current != player!")
+   end,
+   UpdatedPlayers = Rest ++ Current, %Sätt aktuell spelare sist i listan
+   UpdatedGame = Game#game{players = UpdatedPlayers},
+   change_turn(UpdatedGame), %Nästa spelares tur
+   {reply, UpdatedGame, UpdatedGame}.
 
 terminate(Reason, State) ->
     ok.
@@ -61,6 +74,7 @@ is_locked(GN) -> gen_server:call(list_to_atom(GN), is_locked).
 start_game(GN, MapSize) -> gen_server:call(list_to_atom(GN), {start_game, MapSize}).
 player_join(GN, Player) -> gen_server:call(list_to_atom(GN), {player_join, Player}).
 stop(GN) -> gen_server:call(list_to_atom(GN), stop).
+finished_turn(GN, Player) -> gen_server:call(list_to_atom(GN), {finished_turn, Player}).
 
 starting_game(Game) ->
     Players = Game#game.players,
@@ -68,7 +82,13 @@ starting_game(Game) ->
 	    FSM = X#player.fsm_pid,
 	    ?P_FSM:enter_game(FSM, Game)
     end,
-    lists:foreach(Fun, Players).
+    lists:foreach(Fun, Players),
+    change_turn(Game).
+
+change_turn(Game) ->
+    [First | _Rest] = Game#game.players,
+    FSM = First#player.fsm_pid,
+    ?P_FSM:enter_turn(FSM, Game).
 
 broadcastMsg(Game, Msg, Type) ->
     Players = Game#game.players,	
@@ -85,7 +105,7 @@ broadcastMsg(Game, Msg, Type) ->
 	    GetPlayer = fun(X) ->
 		    Name = X#player.name,
 		    Civ = "Rabarber",%X#player.civ,
-		    [Name, Civ]
+		    {Name, Civ}
 	    end,
 	    PList = [GetPlayer(X) || X <- Players],
 
