@@ -190,6 +190,76 @@ class Result{
 		return updatedTiles.size();
 	}
 
+	public int getTileX(int n){
+		return ((Tile)updatedTiles.get(n)).getPosition().getX();
+	}
+
+	public int getTileY(int n){
+		return ((Tile)updatedTiles.get(n)).getPosition().getY();
+	}
+
+	public boolean existUnit(int n){
+		if(((Tile)updatedTiles.get(n)).getUnit() != null){
+			return true;
+		}
+		else{
+			return false;
+		}
+	}
+
+	public String getUnitOwner(int n){
+		return ((Tile)updatedTiles.get(n)).getUnit().getOwner();
+	}
+
+	public String getUnitType(int n){
+		return ((Tile)updatedTiles.get(n)).getUnit().getType();
+	}
+
+	public int getUnitManPower(int n){
+		return ((Tile)updatedTiles.get(n)).getUnit().getManPower();
+	}
+
+	public boolean existCity(int n){
+		if(((Tile)updatedTiles.get(n)).getCity() != null){
+			return true;
+		}
+		else{
+			return false;
+		}
+	}
+
+	public String getCityOwner(int n){
+		return ((Tile)updatedTiles.get(n)).getCity().getOwner();
+	}
+
+	public String getCityName(int n){
+		return ((Tile)updatedTiles.get(n)).getCity().getName();
+	}
+
+	public List<String> getCityBuildings(int n){
+		return ((Tile)updatedTiles.get(n)).getCity().getBuildings();
+	}
+
+	public int getAmountCityUnits(int n){
+		return ((Tile)updatedTiles.get(n)).getCity().getAmountUnits();
+	}
+
+	public String getCityUnitOwner(int n, int k){
+		return ((Tile)updatedTiles.get(n)).getCity().getUnit(k).getOwner();
+	}
+
+	public String getCityUnitType(int n, int k){
+		return ((Tile)updatedTiles.get(n)).getCity().getUnit(k).getType();
+	}
+
+	public int getCityUnitManPower(int n, int k){
+		return ((Tile)updatedTiles.get(n)).getCity().getUnit(k).getManPower();
+	}
+
+	public String getImprovement(int n){
+		return ((Tile)updatedTiles.get(n)).getImprovement();
+	}
+
 	// Här slutar getters.
 	// --------------------------------------------
 	// Här under är nestlade klasser för ytterligare containers!
@@ -245,8 +315,14 @@ class Result{
 			return buildings;
 		}
 
-		public List<Unit> getUnits(){
-			return units;
+		public int getAmountUnits(){
+			return units.size();
+		}
+
+		
+
+		public Unit getUnit(int n){
+			return units.get(n);
 		}
 
 		public String toString(){

@@ -1,33 +1,36 @@
+import java.util.*;
 import java.io.*;
 import java.net.*;
-import java.util.*;
 
-public class testklient2
+public class Receiver implements Runnable
 {
-	private Socket 		m_clientSocket;
-	private OutputStream 	m_outStream;
-	private InputStream	m_inStream;
-	private boolean		turn = false;
-	private final int	protocolVersion = 0;
-	
-	public testklient2(String host, int port)
+
+	private Result packet = null;
+	private InputStream m_inStream;
+	private OutputStream m_outStream;
+	private PacketListener pl;
+
+	public Receiver(PacketListener pl, InputStream inStream, OutputStream outStream)
 	{
-		try
+		this.pl = pl;
+		m_inStream = inStream;
+		m_outStream = outStream;
+	}
+
+	public void run()
+	{
+		while(true)
 		{
-			m_clientSocket 	= new Socket(host, port);
-			m_outStream 	= m_clientSocket.getOutputStream();
-			m_inStream	= m_clientSocket.getInputStream();
-			
-			System.out.println("[+] Connected to server \""+ host +"\" on port "+ port);
+			receive();
 		}
-		catch(UnknownHostException e)
-		{
-			e.printStackTrace();
-		}
-		catch(IOException e)
-		{
-			e.printStackTrace();
-		}
+	}
+
+	public Result getResult()
+	{
+		while(packet == null){}
+		Result toReturn = packet;
+		packet = null;
+		return toReturn;
 	}
 
 	// Sends the packet.
@@ -46,8 +49,9 @@ public class testklient2
 
 	// Waits for an answer from the server and parses what it gets.
 	// Puts what it gets into an object of the Result class, which is then returned.
-	private Result receive()
+	private void receive()
 	{
+		while(packet != null){}
 		Result toReturn = new Result();
 		try
 		{
@@ -58,6 +62,7 @@ public class testklient2
 			{
 				toReturn.addOk(true);
 				toReturn.addOkMsg("Welcome to the Real World");
+				packet = toReturn;
 			}
 
 			// Header 0, fail'd.
@@ -67,6 +72,7 @@ public class testklient2
 				toReturn.addFailNumber(receiveInt());
 				toReturn.addRequestFail(m_inStream.read());
 				toReturn.addFailMsg(receiveString());
+				packet = toReturn;
 			}
 
 			// Header 1, the confirm'd, but right now we receive a string for testing purposes.
@@ -74,6 +80,7 @@ public class testklient2
 			{
 				toReturn.addRequestOk(m_inStream.read());
 				toReturn.addOk(true);
+				packet = toReturn;
 			}
 		
 			// Header 4, a ping and answers directly with a pong.
@@ -90,6 +97,7 @@ public class testklient2
 			{
 				int size = receiveInt();
 				toReturn.addSessions(receiveListString(size));
+				packet = toReturn;
 			}
 
 			// Header 9, Join answer, returns what game you are connected to.
@@ -97,6 +105,7 @@ public class testklient2
 			{
 				toReturn.addOk(true);
 				toReturn.addName(receiveString());
+				packet = toReturn;
 			}
 
 			// Header 10, Game session info, returns all the other players and if the game is locked.
@@ -109,12 +118,17 @@ public class testklient2
 					toReturn.addPlayer(receiveString(), receiveString());
 				}
 				toReturn.addLocked(receiveBool());
+
+				pl.lobbyUpdated(toReturn);
+				
 			}
 
 			// Header 14, Start game answer, receives the map and hopefully returns it.
 			else if(header == 14)
 			{
 				toReturn.addMap(receiveListList(receiveInt()));
+
+				pl.gameStarted(toReturn);
 			}
 
 			// Header 16, Tile Update, this one needs more work.
@@ -126,6 +140,8 @@ public class testklient2
 				{
 					receiveTile(toReturn);
 				}
+
+				pl.newTurn(toReturn);
 			}
 
 			// Test
@@ -133,6 +149,7 @@ public class testklient2
 			{
 				int size = receiveInt();
 				toReturn.addSessions(receiveListString(size));
+			packet = toReturn;
 			}
 
 			// Testing perhaps
@@ -142,13 +159,13 @@ public class testklient2
 				{
 					System.out.println(receiveString());
 				}
+			packet = toReturn;
 			}
 	
 		}catch(IOException e)
 		{
 			e.printStackTrace();
 		}	
-		return toReturn;
 	}
 
 	// Läser in ett heltal från inStream:en.
@@ -217,21 +234,13 @@ public class testklient2
 		ArrayList<Integer> toReturn = new ArrayList<Integer>();
 		for(int i=0; i<size; i++)
 		{
-		/*	try
-			{
-				toReturn.add((int)m_inStream.read());
-			}
-			catch(IOException e)
-			{
-				e.printStackTrace();
-			}
-		*/
 			toReturn.add(receiveInt());
 		}
 		return toReturn;
 	}
-
+	
 	// Läser in en lista av strängar och returnerar den.
+	
 	private ArrayList<String> receiveListString(int size)
 	{
 		ArrayList<String> toReturn = new ArrayList<String>();
@@ -299,135 +308,5 @@ public class testklient2
 			toAddTo.setImprovement(receiveString());
 		}
 		toAddTo.addUpdatedTile();
-	}
-
-	// Public method for connecting to the server.
-	public Result connect(String name)
-	{
-		Packet toSend = new Packet((byte)2);
-		toSend.add(protocolVersion);
-                toSend.add(name);
-		send(toSend);
-		return receive();
-	}
-
-	// Public method for requesting a list of games.
-	public Result listGames()
-	{
-		send(new Packet((byte)5));
-		return receive();
-	}
-
-	// Public method for requesting to host a game.
-	public Result host(Boolean load)
-	{
-		Packet toSend = new Packet((byte)7);
-		toSend.add(load);
-		send(toSend);
-		return receive();
-	}
-
-	// public method for requesting to join a game.
-	public Result joinGame(String game)
-	{
-		Packet toSend = new Packet((byte)8);
-		toSend.add(game);
-		send(toSend);
-		return receive();
-	}
-
-	// Public method for requesting to change civilization when in a game.
-	public Result changeCiv(String newCiv)
-	{
-		Packet toSend = new Packet((byte)11);
-		toSend.add(newCiv);
-		send(toSend);
-		return receive();
-	}
-
-	// Public method for locking a game, only a host can lock and un-lock a game.
-	public Result lockGame(boolean lock)
-	{
-		Packet toSend = new Packet((byte)12);
-		toSend.add(lock);
-		send(toSend);
-		return receive();
-	}
-
-	// Public method for starting a game, only the host can start a game.
-	public Result startGame()
-	{
-		send(new Packet((byte)13));
-		return receive();
-	}
-
-	// Public method for moving a unit, takes a list of positions
-	// , this list always starts with the position the unit starts at.
-	// The list is of type Integer and should always be of even number,
-	// first the x-value then the y-value.
-	public Result moveUnit(List<Integer> positions)
-	{
-		Packet toSend = new Packet((byte)15);
-		toSend.add(positions);
-		return receive();
-	}
-	
-	// Method to test sending and receiving lists.
-	public Result listTest(int x, int y)
-	{
-		Packet toSend = new Packet((byte)99);
-		toSend.add(x);
-		toSend.add(y);
-		send(toSend);
-		return receive();
-	}
-
-
-/*
-	private void sendInt(int msg)
-	{
-		byte[] newMsg = new byte[4];
-		newMsg[0] = (byte)(msg >>> 24);
-		newMsg[1] = (byte)((msg << 8) >> 24);
-		newMsg[2] = (byte)((msg << 16) >> 24);
-		newMsg[3] = (byte)((msg << 24) >> 24);
-		try
-		{
-			out.write(newMsg);
-			out.flush();
-		}
-		catch(IOException e)
-		{
-			System.out.println("Något gick fel när det skulle skickas.");
-		}
-	}
-
-*/
-	public static void main(String [] args)
-	{
-		testklient2 k = new testklient2("localhost", 1232);//130.229.128.72", 1234);
-		Packet login = new Packet((byte)2);
-		login.add(0);
-		login.add("Torsten");
-		k.send(login);
-
-        Packet list = new Packet((byte)8);
-		list.add("Kalle");
-		k.send(list);
-
-        try{
-            Thread.sleep(10000);
-        }catch(Throwable t){}
-
-	/*	ArrayList<Integer> skaMed = new ArrayList<Integer>();
-		skaMed.add(1);
-		skaMed.add(3);
-		skaMed.add(1);
-		skaMed.add(4);
-		skaMed.add(2);
-		skaMed.add(5);
-		skaMed.add(3);
-		skaMed.add(5);
-		System.out.println(k.listTest(14,13)); */
 	}
 }
