@@ -25,7 +25,7 @@ getting_p_info({Header, List}, {Player, Game}) ->
 	    case ProtocolVersion =:= ?P_VERSION of
 
 		true ->
-		    UpdatedPlayer = Player#player{name=PlayerName},
+		    UpdatedPlayer = Player#player{name=PlayerName, civ = "Rabarber"},
 
 		    case ?SERVER:add_player(UpdatedPlayer) of
 			true ->
@@ -101,9 +101,11 @@ game_lobby({Header, List}, {Player, Game}) ->
     case Header of
 
 	11 -> %Change civilization request
+	    ?P_HANDLER:sendMsg(Player#player.socket, {1, [Header]}), %Confirm'd
 	    [NewCiv] = List,
 	    UpdatedPlayer = Player#player{civ = NewCiv},
-	    {next_state, game_lobby, {UpdatedPlayer, Game}};
+	    UpdatedGame = ?GAMESRV:change_civ(Game#game.game_pid, UpdatedPlayer),
+	    {next_state, game_lobby, {UpdatedPlayer, UpdatedGame}};
 	%Broadcasta till samtliga spelare i gamet om den nya civilizationen
 
 	12 -> %Lock game request
@@ -131,9 +133,9 @@ game_lobby({Header, List}, {Player, Game}) ->
 	    end;	% player = host
 
 	24 -> %Exit game request
-	    ?GAMESRV:player_leave(Game, Player),
+	    ?GAMESRV:player_leave(Game#game.game_pid, Player),
 	    ?P_HANDLER:sendMsg(Player#player.socket, {1, [Header]}), %Confirm'd
-	    {next_state, server_lobby, {Player, null}}; %%ELLR?
+	    {next_state, server_lobby, {Player, null}};
 
 	_ -> %Other
 	    ?P_HANDLER:sendFailMsg(Player#player.socket, -1, Header), % FailPacket "invalid state"

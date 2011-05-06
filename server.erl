@@ -36,7 +36,16 @@ handle_call({create_game, Player}, _From, {Games, Players}) ->
 	end;
 
 handle_call(list_games, _From, {Games, Players}) ->
-    {reply, [Game#game.name || Game <- Games], {Games,Players}};
+    FormatName = fun(G) ->
+	    case G#game.locked of
+		0 ->
+		    G#game.name;
+		_ ->
+		    "->" ++ G#game.name ++ "<- THIS GAME IS LOCKED"
+	    end
+    end,
+    GameList = [FormatName(Game) || Game <- Games, Game#game.current_state =:= game_lobby],
+    {reply, GameList, {Games,Players}};
 
 handle_call({add_player, Player}, _From, {Games, Players}) -> 
 
@@ -93,10 +102,7 @@ handle_cast({rm_player, {socket, Socket}}, {Games, Players}) ->
     [OldPlayer] = lists:filter(Find_Player, Players),
 
     In_game= fun(Game) ->
-	    Find_P_layer = fun(PRecord) ->
-		    OldPlayer =:= PRecord
-	    end,
-	    List = lists:filter(Find_P_layer, Game#game.players),
+	    List = lists:filter(Find_Player, Game#game.players),
 	    case length(List) of
 		0 ->
 		    false;

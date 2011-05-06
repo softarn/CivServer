@@ -31,8 +31,18 @@ handle_call({toggle_lock, LockFlag}, _From, Game) ->
 	true -> %else..
 	    UpdatedGame = Game#game{locked = LockFlag},
 	    update_game(UpdatedGame),
-	    {reply, UpdatedGame#game.locked, UpdatedGame}
+	    {reply, UpdatedGame, UpdatedGame}
     end;
+
+handle_call({change_civ, UpdatedPlayer}, _From, Game) ->
+   Rem_Player = fun(PL) -> %Rem_Player removes the player with the same name as UpdatedPlayer
+	   PL#player.name =/= UpdatedPlayer#player.name
+   end,
+
+   Updated_Player_List = [UpdatedPlayer | lists:filter(Rem_Player, Game#game.players)], %adds the updated player to the result of lists:filter with Rem_Player
+   UpdatedGame = Game#game{players = Updated_Player_List},
+   update_game(UpdatedGame), 
+   {reply, UpdatedGame, UpdatedGame};
 
 handle_call({player_join, Player}, _From, Game) ->
     UpdatedGame = Game#game{players = [Player | Game#game.players]}, %
@@ -63,18 +73,34 @@ handle_call({finished_turn, Player}, _From, Game) ->
 terminate(Reason, State) ->
     ok.
 
+%player_leave:
+%% If the leaving player is host and game is in game_lobby:
+    %Removes the player that left from the game,
+    %Broadcasts Packet 25 (Game closed) to the remaining players
+    %Tells the main server to remove this game
+    %Kills itself
+%%Else
+    %Removes the leaving player
+    %If the game is empty
+	%tells the main server to remove the game and kills itself
+    %Else broadcasts game session information.
 handle_cast({player_leave, Player}, Game) ->
     case (Player#player.name =:= Game#game.name) and (Game#game.current_state =:= game_lobby) of
 	true ->
 	    UpdatedGame = Game#game{players = Game#game.players -- [Player]},
 	    broadcastMsg(UpdatedGame, game_close),
 	    ?SERVER:remove_game(UpdatedGame),
-	    io:format("NU BÖR SPELET STÄNGAS NED!"),
 	    {stop, "Host left the game", UpdatedGame};
 	false ->
 	    UpdatedGame = Game#game{players = Game#game.players -- [Player]},
-	    update_game(UpdatedGame),
-	    {noreply, UpdatedGame}
+	    case UpdatedGame#game.players of
+		[] -> %Game is empty
+		    ?SERVER:remove_game(UpdatedGame),
+		    {stop, "All players have left - game is empty", UpdatedGame};
+		_ ->
+		    update_game(UpdatedGame),
+		    {noreply, UpdatedGame}
+	    end
     end;
 
 handle_cast({start_game, MapSize}, Game) ->
@@ -84,15 +110,17 @@ handle_cast({start_game, MapSize}, Game) ->
     {noreply, UpdatedGame}.
 
 %Server calls and casts
-list_players(Game) -> gen_server:call(Game, list_players).
-toggle_lock(Game, LockFlag) -> gen_server:call(Game, {toggle_lock, LockFlag}).
-is_locked(Game) -> gen_server:call(Game, is_locked).
-player_join(Game, Player) -> gen_server:call(Game, {player_join, Player}).
-stop(Game) -> gen_server:call(Game, stop).
-finished_turn(Game, Player) -> gen_server:call(Game, {finished_turn, Player}).
-start_game(Game, MapSize) -> gen_server:cast(Game, {start_game, MapSize}).
-player_leave(Game, Player) -> gen_server:cast(Game, {player_leave, Player}).
+list_players(Game_pid) -> gen_server:call(Game_pid, list_players).
+toggle_lock(Game_pid, LockFlag) -> gen_server:call(Game_pid, {toggle_lock, LockFlag}).
+change_civ(Game_pid, Player) -> gen_server:call(Game_pid, {change_civ, Player}).
+player_join(Game_pid, Player) -> gen_server:call(Game_pid, {player_join, Player}).
+is_locked(Game_pid) -> gen_server:call(Game_pid, is_locked).
+stop(Game_pid) -> gen_server:call(Game_pid, stop).
+finished_turn(Game_pid, Player) -> gen_server:call(Game_pid, {finished_turn, Player}).
+player_leave(Game_pid, Player) -> gen_server:cast(Game_pid, {player_leave, Player}).
+start_game(Game_pid, MapSize) -> gen_server:cast(Game_pid, {start_game, MapSize}).
 
+%Internal functions
 starting_game(Game) ->
     ?SERVER:update_game(Game),
     broadcastMsg(Game, start_game),
@@ -134,7 +162,7 @@ broadcastMsg(Game, Type) ->
 	game_info ->
 	    GetPlayer = fun(X) ->
 		    Name = X#player.name,
-		    Civ = "Rabarber",%X#player.civ,
+		    Civ = X#player.civ,
 		    {Name, Civ}
 	    end,
 	    PList = [GetPlayer(X) || X <- Players],
