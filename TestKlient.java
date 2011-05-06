@@ -70,7 +70,12 @@ class TestKlient{
 					break;
 
 				case 4:
-					p.startGame();
+					try{
+						p.startGame();
+					}
+					catch(FailedException fe){
+						System.out.println(fe);
+					}
 					break;
 				case 5:
 					try{
@@ -100,13 +105,6 @@ class TestKlient{
 
 	public static void main(String [] args){
 		TestKlient flum = new TestKlient();
-
-		
-
-//		flum.p.startGame();
-
-					
-
 	}
 
 	private class MyPackLyss implements PacketListener{

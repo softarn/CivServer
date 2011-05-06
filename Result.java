@@ -3,7 +3,7 @@ import java.util.*;
 class Result{
 	
 	// Här är medlemsvariabler som ska kunna returneras.
-	private boolean ok, locked;
+	private boolean ok = true, locked;
 	private String okMsg, failMsg, name;
 	private List sessions, players, map, updatedTiles;
 	private int size, requestFail, failNumber, requestOk, attackerLeft, defenderLeft;

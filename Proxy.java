@@ -127,19 +127,33 @@ public class Proxy
 	}
 
 	// Public method for locking a game, only a host can lock and un-lock a game.
-	public void lockGame(boolean lock)
+	public Result lockGame(boolean lock) throws FailedException
 	{
-		Packet toSend = new Packet((byte)12);
-		toSend.add(lock);
-		send(toSend);
-	//	return receiver.getResult();
+		try
+		{
+			Packet toSend = new Packet((byte)12);
+			toSend.add(lock);
+			send(toSend);
+			return receiver.getResult();
+		}
+		catch(FailedException fe)
+		{
+			throw fe;
+		}
 	}
 
 	// Public method for starting a game, only the host can start a game.
-	public void startGame()
+	public Result startGame() throws FailedException
 	{
-		send(new Packet((byte)13));
-	//	return receiver.getResult();
+		try
+		{
+			send(new Packet((byte)13));
+			return receiver.getResult();
+		}
+		catch(FailedException fe)
+		{
+			throw fe;
+		}
 	}
 
 	// Public method for moving a unit, takes a list of positions
@@ -151,7 +165,8 @@ public class Proxy
 		try
 		{
 			Packet toSend = new Packet((byte)15);
-			toSend.add(positions);
+			toSend.addPosList(positions);
+			send(toSend);
 			return receiver.getResult();
 		}
 		catch(FailedException fe)
@@ -159,7 +174,85 @@ public class Proxy
 			throw fe;
 		}
 	}
-	
+
+	public Result endTurn() throws FailedException
+	{
+		try
+		{
+			send(new Packet((byte)16));
+			return receiver.getResult();
+		}
+		catch(FailedException fe)
+		{
+			throw fe;
+		}
+	}
+
+	public Result combatRequest(int attX, int attY, int defX, int defY) throws FailedException
+	{
+		try{
+			Packet toSend = new Packet((byte)18);
+			toSend.add(attX);
+			toSend.add(attY);
+			toSend.add(defX);
+			toSend.add(defY);
+			send(toSend);
+			return receiver.getResult();
+		}
+		catch(FailedException fe)
+		{
+			throw fe;
+		}
+	}
+
+	public Result builtCity(int x, int y, String name) throws FailedException
+	{
+		try{
+			Packet toSend = new Packet((byte)21);
+			toSend.add(x);
+			toSend.add(y);
+			toSend.add(name);
+			send(toSend);
+			return receiver.getResult();
+		}
+		catch(FailedException fe)
+		{
+			throw fe;
+		}
+	}
+
+	public Result builtImprovement(int x, int y, String improvement) throws FailedException
+	{
+		try{
+			Packet toSend = new Packet((byte)22);
+			toSend.add(x);
+			toSend.add(y);
+			toSend.add(improvement);
+			send(toSend);
+			return receiver.getResult();
+		}
+		catch(FailedException fe)
+		{
+			throw fe;
+		}
+	}
+
+	public Result madeUnit(int x, int y, String type) throws FailedException
+	{
+		try{
+			Packet toSend = new Packet((byte)23);
+			toSend.add(x);
+			toSend.add(y);
+			toSend.add(type);
+			send(toSend);
+			return receiver.getResult();
+		}
+		catch(FailedException fe)
+		{
+			throw fe;
+		}
+	}
+
 	// Method to test sending and receiving lists.
 	public Result listTest(int x, int y) throws FailedException
 	{
