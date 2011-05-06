@@ -97,7 +97,7 @@ public class Receiver implements Runnable
 			{
 				int size = receiveInt();
 				toReturn.addSessions(receiveListString(size));
-				pl.newTurn(toReturn);
+				packet = toReturn;
 			}
 
 			// Header 9, Join answer, returns what game you are connected to.

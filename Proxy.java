@@ -94,19 +94,19 @@ public class Proxy
 	}
 
 	// Public method for locking a game, only a host can lock and un-lock a game.
-	public Result lockGame(boolean lock)
+	public void lockGame(boolean lock)
 	{
 		Packet toSend = new Packet((byte)12);
 		toSend.add(lock);
 		send(toSend);
-		return receiver.getResult();
+	//	return receiver.getResult();
 	}
 
 	// Public method for starting a game, only the host can start a game.
-	public Result startGame()
+	public void startGame()
 	{
 		send(new Packet((byte)13));
-		return receiver.getResult();
+	//	return receiver.getResult();
 	}
 
 	// Public method for moving a unit, takes a list of positions
