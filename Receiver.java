@@ -25,10 +25,13 @@ public class Receiver implements Runnable
 		}
 	}
 
-	public Result getResult()
+	public Result getResult() throws FailedException
 	{
 		while(packet == null){}
 		Result toReturn = packet;
+		if(!toReturn.getOk()){
+			throw new FailedException(toReturn.getRequestFail(), toReturn.getFailMsg());
+		}
 		packet = null;
 		return toReturn;
 	}
