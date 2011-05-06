@@ -47,8 +47,6 @@ public class Proxy
 		}
 	}
 
-
-
 	// Public method for connecting to the server.
 	public Result connect(String name) throws FailedException
 	{

@@ -169,6 +169,11 @@ public class Receiver implements Runnable
 				setPacket(toReturn);
 			}
 
+            else if(header == 25)
+            {
+                pl.gameClosed();
+            }
+
 			// Test
 			else if(header == 99)
 			{
