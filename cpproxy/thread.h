@@ -4,28 +4,32 @@
 
 #include <pthread.h>
 
-
-class Thread
+namespace proxy
 {
-private:
-	pthread_t m_handle;
+
+	class Thread
+	{
+	private:
+		pthread_t m_handle;
 
 
-	Thread(const Thread &);
-	Thread &operator=(const Thread &);
+		Thread(const Thread &);
+		Thread &operator=(const Thread &);
 
-	static void *internalRun(void *);
+		static void *internalRun(void *);
 
 
-protected:
-	virtual void run() = 0;
+	protected:
+		virtual void run() = 0;
 
-public:
-	Thread();
-	virtual ~Thread();
+	public:
+		Thread();
+		virtual ~Thread();
 
-	void start();
-	void join();
-};
+		void start();
+		void join();
+		bool isRunning();
+	};
+}
 
 #endif // THREAD_H

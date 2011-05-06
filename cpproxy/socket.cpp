@@ -1,6 +1,5 @@
 
 #include "socket.h"
-#include <stdexcept>
 
 
 // Includes for using sockets
@@ -17,159 +16,207 @@
 
 #include <iostream>
 
+#include <cerrno>
 
-
-bool setupSocketAPI();
-void cleanupSocketAPI();
-sockaddr_in createSocketAddress(unsigned short port);
-
-
-int Socket::ms_socketCount = 0;
-
-
-Socket::Socket()
-	: m_stream(*this)
+namespace proxy
 {
-	// If this is the first socket to be created, we must first setup the
-	// networking library we're using
-	if(!ms_socketCount)
-		if(!setupSocketAPI())
-			throw std::runtime_error("Unable to setup the networking library");
+
+	bool setupSocketAPI();
+	void cleanupSocketAPI();
+	sockaddr_in createSocketAddress(unsigned short port);
 
 
-	m_socket = socket(AF_INET, SOCK_STREAM, 0);
+	int Socket::ms_socketCount = 0;
 
-	if(m_socket < 0)
-		throw std::runtime_error("Unable to open socket");
 
-	// Finally increase socket count if this socket was successfully created
-	++ms_socketCount;
-}
-
-Socket::Socket(int socketHandle)
-	: m_socket(socketHandle),
-	  m_stream(*this)
-{
-	if(m_socket < 0)
-		throw std::runtime_error("Invalid socket");
-
-	++ms_socketCount;
-}
-
-Socket::~Socket()
-{
-	#ifdef _WIN32
-		closesocket(m_socket);
-	#else
-		close(m_socket);
-	#endif
-
-	// Cleanup the networking library if we're destroying the last socket
-	if(!--ms_socketCount)
-		cleanupSocketAPI();
-}
-
-Socket::~Socket()
-{
-	close();
-}
-
-void Socket::close()
-{
-	if(m_socket >= 0)
+	Socket::Socket()
+		: m_stream(*this)
 	{
-		std::cout << "Shutdown: " << ::shutdown(m_socket, 2) << std::endl;
-		std::cout << "Close: " << ::close(m_socket) << std::endl;
+		// If this is the first socket to be created, we must first setup the
+		// networking library we're using
+		if(!ms_socketCount)
+			if(!setupSocketAPI())
+				throw SocketError("Unable to setup the networking library");
+
+
+		m_socket = socket(AF_INET, SOCK_STREAM, 0);
+
+		if(m_socket < 0)
+			throw SocketError("Unable to open socket");
+
+		// Finally increase socket count if this socket was successfully created
+		++ms_socketCount;
 	}
-	m_socket = -1;
-}
 
-void Socket::connect(const std::string &address, unsigned short port)
-{
-	hostent *host = gethostbyname(address.c_str());
+	Socket::Socket(int socketHandle)
+		: m_socket(socketHandle),
+		  m_stream(*this)
+	{
+		if(m_socket < 0)
+			throw SocketError("Invalid socket");
 
-	if(!host)
-		throw std::runtime_error("Unable to find host " + address);
+		++ms_socketCount;
+	}
 
-	sockaddr_in socketAddress = createSocketAddress(port);
-	socketAddress.sin_addr.s_addr = *reinterpret_cast<unsigned int*>(host->h_addr);
+	Socket::~Socket()
+	{
+		close();
 
-	if(::connect(m_socket, reinterpret_cast<sockaddr *>(&socketAddress), sizeof(socketAddress)) < 0)
-		throw std::runtime_error("Unable to connect");
-}
+		// Cleanup the networking library if we're destroying the last socket
+		if(!--ms_socketCount)
+			cleanupSocketAPI();
+	}
 
-void Socket::listen(unsigned short port)
-{
-	sockaddr_in socketAddress = createSocketAddress(port);
-	socketAddress.sin_addr.s_addr = INADDR_ANY;
+	void Socket::close()
+	{
+		if(m_socket < 0)
+			return;
 
-	if(::bind(m_socket, reinterpret_cast<sockaddr *>(&socketAddress), sizeof(socketAddress)) < 0)
-		throw std::runtime_error("Unable to bind socket");
-
-	// Will not fail
-	::listen(m_socket, 5);
-}
-
-std::auto_ptr<Socket> Socket::accept()
-{
-	sockaddr_in socketAddress;
-	int len = sizeof(socketAddress);
-	int newSocket = ::accept(m_socket, reinterpret_cast<sockaddr *>(&socketAddress), &len);
-
-	if(newSocket < 0)
-		throw std::runtime_error("Unable to accept");
-
-	return std::auto_ptr<Socket>(new Socket(newSocket));
-}
-
-
-unsigned int Socket::send(const char *data, unsigned int size)
-{
-	std::cout << "Sending " << size << " bytes\n";
-	int sendSize = ::send(m_socket, data, size, 0);
-	if(sendSize < 0)
-		throw std::runtime_error("Unable to send");
-
-	return sendSize;
-}
-
-unsigned int Socket::recv(char *data, unsigned int size)
-{
-	int recvSize = ::recv(m_socket, data, size, 0);
-
-	if(recvSize < 0)
-		throw std::runtime_error("Unable to receive");
-
-	return recvSize;
-}
-
-
-
-bool setupSocketAPI()
-{
 	#ifdef _WIN32
-		WSADATA data;
-		return WSAStartup(MAKEWORD(2, 2), &data) == 0;
+		::closesocket(m_socket);
 	#else
-		return true;
+		::shutdown(m_socket, 2);
+		::close(m_socket);
 	#endif
-}
 
-void cleanupSocketAPI()
-{
-	#ifdef _WIN32
-		WSACleanup();
-	#endif
-}
+		m_socket = -1;
+	}
 
-sockaddr_in createSocketAddress(unsigned short port)
-{
-	sockaddr_in socketAddress;
+	void Socket::connect(const std::string &address, unsigned short port)
+	{
+		hostent *host = gethostbyname(address.c_str());
 
-	socketAddress.sin_family = AF_INET;
-	socketAddress.sin_port = htons(port);
-	for(int i = 0; i < 8; ++i)
-		socketAddress.sin_zero[i] = 0;
+		if(!host)
+			throw SocketError("Unable to find host " + address);
 
-	return socketAddress;
+		sockaddr_in socketAddress = createSocketAddress(port);
+		socketAddress.sin_addr.s_addr = *reinterpret_cast<unsigned int*>(host->h_addr);
+
+		if(::connect(m_socket, reinterpret_cast<sockaddr *>(&socketAddress), sizeof(socketAddress)) < 0)
+			throw SocketError("Unable to connect");
+	}
+
+	void Socket::listen(unsigned short port)
+	{
+		sockaddr_in socketAddress = createSocketAddress(port);
+		socketAddress.sin_addr.s_addr = INADDR_ANY;
+
+		if(::bind(m_socket, reinterpret_cast<sockaddr *>(&socketAddress), sizeof(socketAddress)) < 0)
+			throw SocketError("Unable to bind socket");
+
+		// Will not fail
+		::listen(m_socket, 5);
+	}
+
+	std::auto_ptr<Socket> Socket::accept()
+	{
+		sockaddr_in socketAddress;
+		socklen_t len = sizeof(socketAddress);
+		int newSocket = ::accept(m_socket, reinterpret_cast<sockaddr *>(&socketAddress), &len);
+
+		if(newSocket < 0)
+			throw SocketError("Unable to accept");
+
+		return std::auto_ptr<Socket>(new Socket(newSocket));
+	}
+
+
+	unsigned int Socket::send(const char *data, unsigned int size)
+	{
+		std::cout << "Sending " << size << " bytes\n";
+		int sendSize = ::send(m_socket, data, size, 0);
+		if(sendSize < 0)
+			throw SocketError("Unable to send");
+
+		return sendSize;
+	}
+
+	unsigned int Socket::recv(char *data, unsigned int size)
+	{
+		int recvSize = ::recv(m_socket, data, size, 0);
+
+		if(recvSize < 0)
+		{
+			std::cout << "Errno: " << errno << std::endl;
+
+			std::string error;
+			switch(errno)
+			{
+			case EAGAIN:
+				error = "EAGAIN/EWOULDBLOCK";
+				break;
+
+			case EBADF:
+				error = "EBADF";
+				break;
+
+			case ECONNREFUSED:
+				error = "ECONNREFUSED";
+				break;
+
+			case EFAULT:
+				error = "EFAULT";
+				break;
+
+			case EINTR:
+				error = "EINTR";
+				break;
+
+			case EINVAL:
+				error = "EINVAL";
+				break;
+
+			case ENOMEM:
+				error = "ENOMEM";
+				break;
+
+			case ENOTCONN:
+				error = "ENOTCONN";
+				break;
+
+			case ENOTSOCK:
+				error = "ENOTSOCK";
+				break;
+
+			default:
+				error = "Unknown error";
+			}
+
+			throw SocketError("Unable to receive: " + error);
+		}
+
+		return recvSize;
+	}
+
+
+
+	bool setupSocketAPI()
+	{
+		#ifdef _WIN32
+			WSADATA data;
+			return WSAStartup(MAKEWORD(2, 2), &data) == 0;
+		#else
+			return true;
+		#endif
+	}
+
+	void cleanupSocketAPI()
+	{
+		#ifdef _WIN32
+			WSACleanup();
+		#endif
+	}
+
+	sockaddr_in createSocketAddress(unsigned short port)
+	{
+		sockaddr_in socketAddress;
+
+		socketAddress.sin_family = AF_INET;
+		socketAddress.sin_port = htons(port);
+		for(int i = 0; i < 8; ++i)
+			socketAddress.sin_zero[i] = 0;
+
+		return socketAddress;
+	}
+
 }

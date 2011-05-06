@@ -1,47 +1,257 @@
 
 #include <stdexcept>
+#include <vector>
+#include <sstream>
 #include "proxy.h"
-#include "confirmdresult.h"
+#include "protocol.h"
 
+#include <iostream>
 
-
-Proxy::Proxy()
+namespace proxy
 {
-}
 
-void Proxy::connect(const std::string &address)
-{
-	m_socket.connect(address, 1233);
-}
-
-std::auto_ptr<FaildResult> Proxy::recvFaildResult()
-{
-	return std::auto_ptr<FaildResult>(new FaildResult(m_socket.recv<int>(), m_socket.recv<int>(), m_socket.recv<std::string>()));
-}
+	void tryPacket(const protocol::Packet &packet, uint8_t header);
+	void confirmPacket(const protocol::Packet &packet, uint8_t header);
 
 
-std::auto_ptr<Result> Proxy::sayHelloWorld()
-{
-	std::auto_ptr<Result> result;
-
-	m_socket.send<uint8_t>(2);
-	m_socket.send<int>(0);
-	m_socket.send<std::string>("C++proxxyn");
-
-	uint8_t header = m_socket.recv<uint8_t>();
-
-	if(header == 3)
+	Proxy::Proxy(PacketListener &packetListener)
+		: m_networkManager(packetListener)
 	{
-		result = std::auto_ptr<Result>(new ConfirmdResult(header));
-	}
-	else if(header == 0)
-	{
-		result = recvFaildResult();
-	}
-	else
-	{
-		throw std::runtime_error("INVALID HEADER");
 	}
 
-	return result;
+	Proxy::~Proxy()
+	{
+	}
+
+	void Proxy::connect(const std::string &address, unsigned short port)
+	{
+		m_networkManager.connect(address, port);
+	}
+
+
+
+	void Proxy::sayHelloWorld(const std::string &name)
+	{
+		m_playerName = name;
+
+		// Send a hello world packet
+		m_networkManager.send<uint8_t>(protocol::Header::HELLO_WORLD);
+		// Send protocol version
+		m_networkManager.send<int>(0x02);
+		// Send player name
+		m_networkManager.send(m_playerName);
+
+
+		// Receive the answer
+		std::auto_ptr<protocol::Packet> packet = m_networkManager.receivePacket();
+
+
+		tryPacket(*packet, protocol::Header::WELCOME_TO_THE_REAL_WORLD);
+	}
+
+
+	std::vector<std::string> Proxy::listGames()
+	{
+		// Request a game list
+		m_networkManager.send<uint8_t>(protocol::Header::LIST_GAME_REQUEST);
+
+		// Receive the answer
+		std::auto_ptr<protocol::Packet> packet = m_networkManager.receivePacket();
+
+		tryPacket(*packet, protocol::Header::LIST_GAME_ANSWER);
+
+		return packet->listGameAnswer->gameList;
+	}
+
+	void Proxy::hostGame()
+	{
+		// Request to host a game
+		m_networkManager.send<uint8_t>(protocol::Header::HOST_GAME_REQUEST);
+
+
+		// Receive the answer
+		std::auto_ptr<protocol::Packet> packet = m_networkManager.receivePacket();
+
+		// which must be a join answer
+		tryPacket(*packet, protocol::Header::JOIN_ANSWER);
+
+		// and must be the game we tried to host
+		if(packet->joinAnswer->hostName != m_playerName)
+			throw std::runtime_error("Something fucked up, tried to host \"" + m_playerName + "\" but actually joined \"" + packet->joinAnswer->hostName + "\"");
+
+		m_currentGame = m_playerName;
+	}
+
+
+	void Proxy::joinGame(const std::string &gameName)
+	{
+		// Request to join a game
+		m_networkManager.send<uint8_t>(protocol::Header::JOIN_GAME_REQUEST);
+
+		// Specify which game to join
+		m_networkManager.send(gameName);
+
+
+		// Receive the answer
+		std::auto_ptr<protocol::Packet> packet = m_networkManager.receivePacket();
+
+		// which must be a join answer
+		tryPacket(*packet, protocol::Header::JOIN_ANSWER);
+
+		// and must be the game we tried to join
+		if(packet->joinAnswer->hostName != gameName)
+			throw std::runtime_error("Something fucked up, tried to join \"" + gameName + "\" but actually joined \"" + packet->joinAnswer->hostName + "\"");
+
+		m_currentGame = gameName;
+	}
+
+
+	void Proxy::changeCivilization(const std::string &newCivilization)
+	{
+		// Request to change civ
+		m_networkManager.send<uint8_t>(protocol::Header::CHANGE_CIVILIZATION_REQUEST);
+
+		// Send which civ to change to
+		m_networkManager.send(newCivilization);
+
+
+		// Receive the answer
+		std::auto_ptr<protocol::Packet> packet = m_networkManager.receivePacket();
+
+		// which must be a confirmation
+		confirmPacket(*packet, protocol::Header::CHANGE_CIVILIZATION_REQUEST);
+	}
+
+	void Proxy::lockGame(bool lock)
+	{
+		// Request to lock the game
+		m_networkManager.send<uint8_t>(protocol::Header::LOCK_GAME_REQUEST);
+
+		// Lock or unlock?
+		m_networkManager.send(lock);
+
+
+		// Receive the answer
+		std::auto_ptr<protocol::Packet> packet = m_networkManager.receivePacket();
+
+		// which must be a confirmation
+		confirmPacket(*packet, protocol::Header::LOCK_GAME_REQUEST);
+	}
+
+	void Proxy::startGame()
+	{
+		// Request to start a game
+		m_networkManager.send<uint8_t>(protocol::Header::START_GAME_REQUEST);
+
+
+		// Receive the answer
+		std::auto_ptr<protocol::Packet> packet = m_networkManager.receivePacket();
+
+		// which must be a confirmation
+		confirmPacket(*packet, protocol::Header::START_GAME_REQUEST);
+	}
+
+	void Proxy::leaveGame()
+	{
+		int h = protocol::Header::EXIT_GAME;
+		// Request to leave the game
+		m_networkManager.send<uint8_t>(h);
+
+
+		// Receive the answer
+		std::auto_ptr<protocol::Packet> packet = m_networkManager.receivePacket();
+
+		// which must be a confirmation
+		confirmPacket(*packet, protocol::Header::EXIT_GAME);
+	}
+
+
+	void Proxy::move(const std::vector<protocol::Position> &moveList)
+	{
+		// Request to move
+		m_networkManager.send<uint8_t>(protocol::Header::MOVE_REQUEST);
+
+		// Send the move list
+		m_networkManager.send(moveList);
+
+
+		// Receive the answer
+		std::auto_ptr<protocol::Packet> packet = m_networkManager.receivePacket();
+
+		// which must be a confirmation
+		confirmPacket(*packet, protocol::Header::MOVE_REQUEST);
+	}
+
+	void Proxy::move(int fromX, int fromY, int toX, int toY)
+	{
+		std::vector<protocol::Position> moveList;
+		moveList.push_back( protocol::Position(fromX, fromY) );
+		moveList.push_back( protocol::Position(toX, toY) );
+		move(moveList);
+	}
+
+	void Proxy::endTurn()
+	{
+		// Request to move
+		m_networkManager.send<uint8_t>(protocol::Header::END_TURN);
+
+
+		// Receive the answer
+		std::auto_ptr<protocol::Packet> packet = m_networkManager.receivePacket();
+
+		// which must be a confirmation
+		confirmPacket(*packet, protocol::Header::END_TURN);
+	}
+
+
+	void tryPacket(const protocol::Packet &packet, uint8_t header)
+	{
+		// Just return if the packet matches the demanded header
+		if(packet.header == header)
+			return;
+
+		// Unexpected header
+		if(packet.header != protocol::Header::FAILD)
+		{
+			std::stringstream sstream;
+			sstream << "Unexpected header, required: " << int(header) << ", but actually got: " << int(packet.header);
+			throw std::runtime_error(sstream.str());
+		}
+
+		throw std::runtime_error(packet.faild->description);
+	}
+
+	void confirmPacket(const protocol::Packet &packet, uint8_t header)
+	{
+		if(packet.header == protocol::Header::CONFIRMD)
+		{
+			// Just return if the packet matches the demanded header
+			if(packet.confirmd->confirmdPacket == header)
+				return;
+
+			// If we get here, we've been confirm'd on wrong packet, which isn't what we wanted
+			std::stringstream sstream;
+			sstream << "Unexpected confirm'd, required: " << int(header) << ", but actually got: " << int(packet.confirmd->confirmdPacket);
+			throw std::runtime_error(sstream.str());
+		}
+
+		// Unexpected header
+		if(packet.header != protocol::Header::FAILD)
+		{
+			std::stringstream sstream;
+			sstream << "Unexpected header, required: " << int(header) << ", but actually got: " << int(packet.header);
+			throw std::runtime_error(sstream.str());
+		}
+
+		// Unexpected failure
+		if(packet.faild->faildPacket != header)
+		{
+			std::stringstream sstream;
+			sstream << "Unexpected failure, required: " << int(header) << ", but actually got: " << int(packet.faild->faildPacket);
+			throw std::runtime_error(sstream.str());
+		}
+
+		throw std::runtime_error(packet.faild->description);
+	}
+
 }
