@@ -7,4 +7,6 @@ public interface PacketListener{
 	public void gameStarted(Result received);
 
 	public void chatMessageReceived(Result received);
+
+    public void gameClosed();
 }

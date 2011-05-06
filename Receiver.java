@@ -27,15 +27,22 @@ public class Receiver implements Runnable
 
 	public Result getResult() throws FailedException
 	{
-		while(packet == null){}
+		while(getPacket() == null){}
 		Result toReturn = packet;
+        setPacket(null);
 		if(!toReturn.getOk()){
-			packet = null;
 			throw new FailedException(toReturn.getRequestFail(), toReturn.getFailMsg());
 		}
-		packet = null;
 		return toReturn;
 	}
+
+    private synchronized void setPacket(Result res){
+        packet = res;
+    }
+
+    private synchronized Result getPacket(){
+        return packet;
+    }
 
 	// Sends the packet.
 	private void send(Packet p)
@@ -55,7 +62,7 @@ public class Receiver implements Runnable
 	// Puts what it gets into an object of the Result class, which is then returned.
 	private void receive()
 	{
-		while(packet != null){}
+		while(getPacket() != null){}
 		Result toReturn = new Result();
 		try
 		{
@@ -66,7 +73,7 @@ public class Receiver implements Runnable
 			{
 				toReturn.addOk(true);
 				toReturn.addOkMsg("Welcome to the Real World");
-				packet = toReturn;
+				setPacket(toReturn);
 			}
 
 			// Header 0, fail'd.
@@ -75,7 +82,7 @@ public class Receiver implements Runnable
 				toReturn.addOk(false);
 				toReturn.addRequestFail(m_inStream.read());
 				toReturn.addFailMsg(receiveString());
-				packet = toReturn;
+				setPacket(toReturn);
 			}
 
 			// Header 1, the confirm'd, but right now we receive a string for testing purposes.
@@ -83,7 +90,7 @@ public class Receiver implements Runnable
 			{
 				toReturn.addRequestOk(m_inStream.read());
 				toReturn.addOk(true);
-				packet = toReturn;
+				setPacket(toReturn);
 			}
 		
 			// Header 4, a ping and answers directly with a pong.
@@ -100,7 +107,7 @@ public class Receiver implements Runnable
 			{
 				int size = receiveInt();
 				toReturn.addSessions(receiveListString(size));
-				packet = toReturn;
+				setPacket(toReturn);
 			}
 
 			// Header 9, Join answer, returns what game you are connected to.
@@ -108,7 +115,7 @@ public class Receiver implements Runnable
 			{
 				toReturn.addOk(true);
 				toReturn.addName(receiveString());
-				packet = toReturn;
+				setPacket(toReturn);
 			}
 
 			// Header 10, Game session info, returns all the other players and if the game is locked.
@@ -159,15 +166,20 @@ public class Receiver implements Runnable
 				toReturn.addAttackerLeft(receiveInt());
 				toReturn.addDefenderLeft(receiveInt());
 
-				packet = toReturn;
+				setPacket(toReturn);
 			}
+
+            else if(header == 25)
+            {
+                pl.gameClosed();
+            }
 
 			// Test
 			else if(header == 99)
 			{
 				int size = receiveInt();
 				toReturn.addSessions(receiveListString(size));
-			packet = toReturn;
+			setPacket(toReturn);
 			}
 
 			// Testing perhaps
@@ -177,7 +189,7 @@ public class Receiver implements Runnable
 				{
 					System.out.println(receiveString());
 				}
-			packet = toReturn;
+			setPacket(toReturn);
 			}
 	
 		}catch(IOException e)

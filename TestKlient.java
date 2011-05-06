@@ -128,7 +128,10 @@ class TestKlient{
 		}
 
 		public void chatMessageReceived(Result res){
-
 		}
+
+        public void gameClosed(){
+            System.out.println("Game closed");
+        }
 	}
 }
