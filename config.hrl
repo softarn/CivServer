@@ -39,3 +39,11 @@
 	owner = null, %String
 	type = null, %String
 	manpower = null}). %Integer
+
+-record(game_unit, {
+	name = null,
+	manpower = null,
+	attack_point = null,
+	defense_point = null,
+	range = null,
+	movement = null}).
