@@ -53,7 +53,10 @@ recv(Socket, FSM) ->
 	    MovePath = ?TCP:readList(Socket, "Position"),
 	    [MovePath];
 
-	16-> % End of turn
+	16 -> % End of turn
+	    [];
+
+	24 -> %Exit game
 	    []
     end,
 
@@ -68,8 +71,9 @@ sendMsg(Socket, {Header, List}) ->
     case Header of
 
 	1 -> %Confirm'd
+	    [Head] = List,
 	    ?TCP:sendHeader(Socket, Header),
-	    ?TCP:sendInteger(Socket, Header);
+	    ?TCP:sendHeader(Socket, Head);
 
 	3 -> %Welcome to the Real world
 	    ?TCP:sendHeader(Socket, Header);
@@ -94,14 +98,18 @@ sendMsg(Socket, {Header, List}) ->
 	    ?TCP:sendBoolean(Socket, Locked);				
 
 	14 -> %Start game answer, implement later
-	    [Map, TileList] = List, %Glöm ej preset units!!
+	    [Map, TileList] = List,
 	    ?TCP:sendHeader(Socket, Header),
 	    ?TCP:sendList(Socket, "Column", Map),
 	    ?TCP:sendList(Socket, "Tile", TileList);
-	17 -> %
+
+	17 -> % It's your turn
 	    [TileList] = List,
 	    ?TCP:sendHeader(Socket, 17), %It's your turn
-	    ?TCP:sendList(Socket, "Tile", TileList) 
+	    ?TCP:sendList(Socket, "Tile", TileList);
+	
+	25 -> % Game Closed
+	    ?TCP:sendHeader(Socket, 25)
     end.
 
 send_to_fsm(To, Packet) ->

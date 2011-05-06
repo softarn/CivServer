@@ -20,9 +20,20 @@ handle_call(list_players, _From, {Games, Players}) ->
     {reply, [Player#player.name || Player <- Players], {Games,Players}};
 
 handle_call({create_game, Player}, _From, {Games, Players}) ->
-    Game = ?GAMESRV:start(Player), 
-    io:format("Created new game\n"),
-    {reply, Game, {[Game|Games], Players}};
+    Find_Existing_Game = fun(GR) ->
+	    GR#game.name =:= Player#player.name
+    end,
+
+    case length(lists:filter(Find_Existing_Game, Games)) of
+
+	0 ->
+	    Game = ?GAMESRV:start(Player), 
+	    io:format("Created new game\n"),
+	    {reply, Game, {[Game|Games], Players}};
+
+	_ -> %Game name already exists!
+	    {reply, failed, {Games, Players}}
+	end;
 
 handle_call(list_games, _From, {Games, Players}) ->
     {reply, [Game#game.name || Game <- Games], {Games,Players}};
@@ -46,15 +57,6 @@ handle_call({add_player, Player}, _From, {Games, Players}) ->
 handle_call(stop, _From, State) ->
     {stop, normal, shutdown_ok, State};
 
-handle_call({update_game, Game}, _From, {Games, Players}) ->
-    io:format("Updating game~n"),
-    Find_Game = fun(GR) ->
-	    GR#game.game_pid =/= Game#game.game_pid
-    end,
-    NewGameList = lists:filter(Find_Game, Games),
-    NewGames = [Game | NewGameList],
-    {reply, ok, {NewGames, Players}};
-
 handle_call({get_game, GameName}, _From, {Games, Players}) ->
     Fun = fun(X) ->
 	    X#game.name =:= GameName 
@@ -66,6 +68,23 @@ handle_call({get_game, GameName}, _From, {Games, Players}) ->
 	    {reply, Game, {Games, Players}}
     end.
 
+handle_cast({update_game, Game}, {Games, Players}) ->
+    io:format("Updating game~n"),
+    Find_Game = fun(GR) ->
+	    GR#game.game_pid =/= Game#game.game_pid
+    end,
+    NewGameList = lists:filter(Find_Game, Games),
+    NewGames = [Game | NewGameList],
+    {noreply, {NewGames, Players}};
+
+handle_cast({remove_game, Game}, {Games, Players}) ->
+    io:format("Removing game~n"),
+    Find_Game = fun(GR) ->
+	    GR#game.game_pid =/= Game#game.game_pid
+    end,
+    UpdatedGames = lists:filter(Find_Game, Games),
+    {noreply, {UpdatedGames, Players}}; 
+
 handle_cast({rm_player, {socket, Socket}}, {Games, Players}) ->
     Find_Player = fun(P) ->
 	    P#player.socket =:= Socket
@@ -73,7 +92,7 @@ handle_cast({rm_player, {socket, Socket}}, {Games, Players}) ->
 
     [OldPlayer] = lists:filter(Find_Player, Players),
 
-    Something = fun(Game) ->
+    In_game= fun(Game) ->
 	    Find_P_layer = fun(PRecord) ->
 		    OldPlayer =:= PRecord
 	    end,
@@ -86,7 +105,7 @@ handle_cast({rm_player, {socket, Socket}}, {Games, Players}) ->
 	    end
     end,
     
-    PerhapsGame = lists:filter(Something, Games),
+    PerhapsGame = lists:filter(In_game, Games),
 
     case length(PerhapsGame) of
 	    0 ->
@@ -116,10 +135,11 @@ add_player(Player) -> gen_server:call(?SERVER, {add_player, Player}).
 list_players() -> gen_server:call(?SERVER, list_players).
 rm_player({socket, Socket}) -> gen_server:cast(?SERVER, {rm_player, {socket, Socket}}).
 %Game
-update_game(Game) -> gen_server:call(?SERVER, {update_game, Game}).
+update_game(Game) -> gen_server:cast(?SERVER, {update_game, Game}).
 create_game(Host) -> gen_server:call(?SERVER, {create_game, Host}).
 list_games() -> gen_server:call(?SERVER, list_games).
 get_game(GameName) -> gen_server:call(?SERVER, {get_game, GameName}).
+remove_game(Game) -> gen_server:cast(?SERVER, {remove_game, Game}).
 
 %Server
 stop() -> gen_server:call(?SERVER, stop).

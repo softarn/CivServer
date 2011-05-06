@@ -38,7 +38,7 @@ handle_call({player_join, Player}, _From, Game) ->
     UpdatedGame = Game#game{players = [Player | Game#game.players]}, %
     io:format("Added player ~w~n", [Player]), %Glöm ej felkontroll ifall player existerar!
     update_game(UpdatedGame),
-    {reply, UpdatedGame#game.players, UpdatedGame};
+    {reply, UpdatedGame, UpdatedGame};
 
 handle_call(is_locked, _From, Game) ->
     {reply, Game#game.locked, Game};
@@ -67,12 +67,15 @@ handle_cast({player_leave, Player}, Game) ->
     case (Player#player.name =:= Game#game.name) and (Game#game.current_state =:= game_lobby) of
 	true ->
 	    UpdatedGame = Game#game{players = Game#game.players -- [Player]},
-	    io:format("NU BÖR SPELET STÄNGAS NED!");
+	    broadcastMsg(UpdatedGame, game_close),
+	    ?SERVER:remove_game(UpdatedGame),
+	    io:format("NU BÖR SPELET STÄNGAS NED!"),
+	    {stop, "Host left the game", UpdatedGame};
 	false ->
-	    UpdatedGame = Game#game{players = Game#game.players -- [Player]}
-    end,
-    update_game(UpdatedGame),
-    {noreply, UpdatedGame};
+	    UpdatedGame = Game#game{players = Game#game.players -- [Player]},
+	    update_game(UpdatedGame),
+	    {noreply, UpdatedGame}
+    end;
 
 handle_cast({start_game, MapSize}, Game) ->
     Map = ?TERGEN:generate(MapSize, MapSize), % Fixa storleken senare
@@ -117,6 +120,14 @@ broadcastMsg(Game, Type) ->
 	    Fun = fun(X) -> 
 		    Socket = X#player.socket,
 		    ?P_HANDLER:sendMsg(Socket, {14, [Game#game.map, Game#game.tilelist]}) % Start game answer%DONT FORGET TO SEND LIST<TILE> WITH PRESET UNITS!
+	    end,
+	    lists:foreach(Fun, Players);
+
+	game_close ->
+	    Fun = fun(X) -> 
+		    Socket = X#player.socket,
+		    ?P_HANDLER:sendMsg(Socket, {25, []}), % Game Closed
+		    ?P_FSM:game_close(X#player.fsm_pid)
 	    end,
 	    lists:foreach(Fun, Players);
 

@@ -59,10 +59,16 @@ server_lobby({Header, List}, {Player, Game}) ->
 
 	7 -> % Host request
 	    NewGame = ?SERVER:create_game(Player),
-	    HostName = Player#player.name,
-	    ?P_HANDLER:sendMsg(Player#player.socket, {9, [HostName]}), %Join answer
-	    JoinGame = ?GAMESRV:player_join(NewGame#game.game_pid, Player),
-	    {next_state, game_lobby, {Player, JoinGame}};
+	    case NewGame of
+		failed ->
+		    ?P_HANDLER:sendFailMsg(Player#player.socket, 1, Header), %FailPacket "Name already exists"
+		    {next_state, server_lobby, {Player, Game}};
+		_ ->
+		    HostName = Player#player.name,
+		    ?P_HANDLER:sendMsg(Player#player.socket, {9, [HostName]}), %Join answer
+		    JoinGame = ?GAMESRV:player_join(NewGame#game.game_pid, Player),
+		    {next_state, game_lobby, {Player, JoinGame}}
+	end;
 
 	8 -> %Join request
 	    [GameName] = List,
@@ -107,6 +113,7 @@ game_lobby({Header, List}, {Player, Game}) ->
 		    {next_state, game_lobby, {Player, Game}};
 		true ->
 		    [LockFlag] = List,
+		    ?P_HANDLER:sendMsg(Player#player.socket, {1, [Header]}), %Confirm'd
 		    UpdatedGame = ?GAMESRV:toggle_lock(Game#game.game_pid, LockFlag),
 		    {next_state, game_lobby, {Player, UpdatedGame}}
 	    end;
@@ -117,20 +124,30 @@ game_lobby({Header, List}, {Player, Game}) ->
 		    ?P_HANDLER:sendFailMsg(Player#player.socket, 13, Header), % FailPacket "Permission denied"
 		    {next_state, game_lobby, {Player, Game}};
 		true ->
+		    ?P_HANDLER:sendMsg(Player#player.socket, {1, [Header]}), %Comfirm'd
 		    ?GAMESRV:start_game(Game#game.game_pid, 10), % param: Gamename, mapsize
 		    {next_state, game_wait, {Player, Game}}
 
 	    end;	% player = host
 
+	24 -> %Exit game request
+	    ?GAMESRV:player_leave(Game, Player),
+	    ?P_HANDLER:sendMsg(Player#player.socket, {1, [Header]}), %Confirm'd
+	    {next_state, server_lobby, {Player, null}}; %%ELLR?
+
 	_ -> %Other
-	    ?P_HANDLER:sendFailMsg(Player#player.socket, -1, Header), % FailPacket "Permission denied"
+	    ?P_HANDLER:sendFailMsg(Player#player.socket, -1, Header), % FailPacket "invalid state"
 	    {next_state, game_lobby, {Player, Game}}
 
     end. %end case header
 
 game_wait({Header, List}, {Player, Game}) ->
     io:format("INNE I INGAME: ~p~n", [Player#player.name]),
-    ok.
+    case Header of
+	_ ->
+	    ?P_HANDLER:sendFailMsg(Player#player.socket, -1, Header), % FailPacket "invalid state"
+	    {next_state, game_wait, {Player, Game}}
+    end.
 
 game_turn({Header, List}, {Player, Game}) -> %GLÖM EJ ATT UPPDATERA GAME i början av varje turn
     io:format("INNE I GAMETURN: ~p~n", [Player#player.name]),
@@ -138,16 +155,20 @@ game_turn({Header, List}, {Player, Game}) -> %GLÖM EJ ATT UPPDATERA GAME i bör
     case Header of
 
 	15 -> %Move request
-	    %?GAMESRV:move_unit....
+	    Positions = [List],
+	    %?GAMESRV:move_unit(Game#game.game_pid, Positions),
 	    {next_state, game_turn, {Player, Game}};
 	16 -> %End of turn
+	    ?P_HANDLER:sendMsg(Player#player.socket, {1, [Header]}), %Confirm'd
 	    ?GAMESRV:finished_turn(Game#game.game_pid, Player),
 	    {next_state, game_wait, {Player, Game}};
 	18 -> %Combat request
 	    {next_state, game_turn, {Player, Game}};
 	20 -> %Message for you sir
+	    {next_state, game_turn, {Player, Game}};
+	_ ->
+	    ?P_HANDLER:sendFailMsg(Player#player.socket, -1, Header), % FailPacket "invalid state"
 	    {next_state, game_turn, {Player, Game}}
-
     end.
 
 
@@ -155,6 +176,9 @@ handle_event(Msg, StateName, {Player, Game}) ->
     case Msg of
 	{game_wait, UpdatedGame} ->
 	    {next_state, game_wait, {Player, UpdatedGame}};
+
+	game_close ->
+	    {next_state, server_lobby, {Player, null}};
 
 	{game_turn, UpdatedGame} ->
 	    {next_state, game_turn, {Player, UpdatedGame}}
@@ -172,3 +196,6 @@ enter_game(Pid, UpdatedGame) ->
     gen_fsm:send_all_state_event(Pid, {game_wait, UpdatedGame}).
 enter_turn(Pid, UpdatedGame) ->
     gen_fsm:send_all_state_event(Pid, {game_turn, UpdatedGame}).
+game_close(Pid) ->
+    gen_fsm:send_all_state_event(Pid, game_close).
+
