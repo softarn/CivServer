@@ -1,12 +1,10 @@
 import java.util.*;
 import java.io.*;
 import java.net.*;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class Receiver implements Runnable
 {
 
-    private static final ReentrantLock lock = new ReentrantLock();
 	private Result packet = null;
 	private InputStream m_inStream;
 	private OutputStream m_outStream;
