@@ -169,7 +169,7 @@ broadcastMsg(Game, Type) ->
 
 	    Fun = fun(X) ->
 		    Socket = X#player.socket,
-		    ?P_HANDLER:sendMsg(Socket, {10, [PList, Game#game.locked]})
+		    ?P_HANDLER:sendMsg(Socket, {10, [PList, Game#game.locked]}) %Game session information)
 	    end,
 	    lists:foreach(Fun, Players)
     end.
