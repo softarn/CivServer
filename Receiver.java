@@ -25,10 +25,14 @@ public class Receiver implements Runnable
 		}
 	}
 
-	public Result getResult()
+	public Result getResult() throws FailedException
 	{
 		while(packet == null){}
 		Result toReturn = packet;
+		if(!toReturn.getOk()){
+			packet = null;
+			throw new FailedException(toReturn.getRequestFail(), toReturn.getFailMsg());
+		}
 		packet = null;
 		return toReturn;
 	}
@@ -78,7 +82,6 @@ public class Receiver implements Runnable
 			else if(header == 1)
 			{
 				toReturn.addRequestOk(m_inStream.read());
-				m_inStream.read();
 				toReturn.addOk(true);
 				packet = toReturn;
 			}
@@ -127,13 +130,13 @@ public class Receiver implements Runnable
 			else if(header == 14)
 			{
 				toReturn.addMap(receiveListList(receiveInt()));
-			/*	toReturn.setupTiles();
+				toReturn.setupTiles();
 				int size = receiveInt();
 				for(int i=0; i<size; i++)
 				{
 					receiveTile(toReturn);
 				}
-*/
+
 				pl.gameStarted(toReturn);
 			}
 

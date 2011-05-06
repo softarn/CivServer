@@ -23,6 +23,7 @@ class TestKlient{
 
 		p = new Proxy(ip, port, new MyPackLyss());
 
+		Result returned;
 
 		while(true){
 			System.out.println("What you wanna do?\n1: connect\n2: list games\n3: host game\n4: start game\n5: join game\n0:quit");
@@ -33,37 +34,58 @@ class TestKlient{
 					System.exit(0);
 					
 				case 1:
-					Result conRes = p.connect(name);
+					try{
+						returned = p.connect(name);
+						System.out.println(returned.getOk() + "   " + returned.getOkMsg());
+					}
+					catch(FailedException fe){
+						System.out.println(fe);
+					}
 
-					System.out.println(conRes.getOk() + "   " + conRes.getOkMsg());
 
 					break;
 
 				case 2:
-					Result lista = p.listGames();
+					try{
+						returned = p.listGames();
+						System.out.println(returned.getSessions());
+					}
+					catch(FailedException fe){
+						System.out.println(fe);
+					}
 
-					System.out.println(lista.getSessions());
 					
 					break;
 
 				case 3:
-					Result host = p.host();
+					try{
+						returned = p.host();
+						System.out.println(returned.getName());
+					}
+					catch(FailedException fe){
+						System.out.println(fe);
+					}
 
-					System.out.println(host.getName());
 					break;
 
 				case 4:
-					p.startGame();
+					try{
+						p.startGame();
+					}
+					catch(FailedException fe){
+						System.out.println(fe);
+					}
 					break;
 				case 5:
-					p.joinGame(scan.next());
+					try{
+						p.joinGame(scan.next());
+					}
+					catch(FailedException fe){
+						System.out.println(fe);
+					}
 					break;
-
-
-
 			}
 		}
-
 	}
 
 	public class Unit{
@@ -82,13 +104,6 @@ class TestKlient{
 
 	public static void main(String [] args){
 		TestKlient flum = new TestKlient();
-
-		
-
-//		flum.p.startGame();
-
-					
-
 	}
 
 	private class MyPackLyss implements PacketListener{
