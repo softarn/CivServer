@@ -25,7 +25,7 @@ getting_p_info({Header, List}, {Player, Game}) ->
 	    case ProtocolVersion =:= ?P_VERSION of
 
 		true ->
-		    UpdatedPlayer = Player#player{name=PlayerName, civ = "Rabarber"},
+		    UpdatedPlayer = Player#player{name=PlayerName, civ = "DefaultCiv"},
 
 		    case ?SERVER:add_player(UpdatedPlayer) of
 			true ->

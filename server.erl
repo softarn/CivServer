@@ -99,8 +99,6 @@ handle_cast({rm_player, {socket, Socket}}, {Games, Players}) ->
 	    P#player.socket =:= Socket
     end,
 
-    [OldPlayer] = lists:filter(Find_Player, Players),
-
     In_game= fun(Game) ->
 	    List = lists:filter(Find_Player, Game#game.players),
 	    case length(List) of
@@ -110,26 +108,32 @@ handle_cast({rm_player, {socket, Socket}}, {Games, Players}) ->
 		    true
 	    end
     end,
-    
-    PerhapsGame = lists:filter(In_game, Games),
 
-    case length(PerhapsGame) of
-	    0 ->
-		ok;
-	    1 ->
-		[TheGame] = PerhapsGame,
-		?GAMESRV:player_leave(TheGame#game.game_pid, OldPlayer);
-	    _ ->
-		io:format("Fel! En spelare är med i flera spel..")
-	end,
+    case lists:filter(Find_Player, Players) of
+	[OldPlayer] ->
 
-    Find_Other_Players = fun(P) ->
-	    P#player.socket =/= Socket
-    end,
+	    PerhapsGame = lists:filter(In_game, Games),
 
-    NewPlayers = lists:filter(Find_Other_Players, Players),
-    io:format("Deleted a player~n"),
-    {noreply, {Games, NewPlayers}}.
+	    case length(PerhapsGame) of
+		0 ->
+		    ok;
+		1 ->
+		    [TheGame] = PerhapsGame,
+		    ?GAMESRV:player_leave(TheGame#game.game_pid, OldPlayer);
+		_ ->
+		    io:format("Fel! En spelare är med i flera spel..")
+	    end,
+
+	    Find_Other_Players = fun(P) ->
+		    P#player.socket =/= Socket
+	    end,
+
+	    NewPlayers = lists:filter(Find_Other_Players, Players),
+	    io:format("Deleted a player~n"),
+	    {noreply, {Games, NewPlayers}};
+	_ ->
+	    {noreply, {Games, Players}}
+    end.
 
 terminate(_Reason, _State) ->
     %Kill con_handler?
