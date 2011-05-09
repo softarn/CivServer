@@ -14,7 +14,7 @@ get_base_pos(Players,Map)->
 	base_placement(Players,Map,Width,Height,dict:new()).
 
 base_placement(0,_,_,_,Dict)->
-	dict:to_list(Dict);
+	[{X,Y}|| {{X,Y},_} <-dict:to_list(Dict)];
 base_placement(Player,Map,Width,Height,Dict)->
 	X = random:uniform(Width),
 	Y = random:uniform(Height),
