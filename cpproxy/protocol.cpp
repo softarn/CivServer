@@ -70,6 +70,13 @@ namespace proxy
 			case Header::ITS_YOUR_TURN:
 				packet->destructablePacket = packet->itsYourTurn = receiveNewPacket<ItsYourTurn>(socket);
 				break;
+
+			case Header::COMBAT_RESULT:
+				packet->destructablePacket = packet->combatResult = receiveNewPacket<CombatResult>(socket);
+				break;
+
+			case Header::MESSAGE_FOR_YOU_SIR:
+				packet->destructablePacket = packet->chatMessage = receiveNewPacket<ChatMessage>(socket);
 			}
 
 			return packet;
@@ -164,6 +171,18 @@ namespace proxy
 	template <> void Serializer::get(protocol::ItsYourTurn &iyt)
 	{
 		get(iyt.updatedTiles);
+	}
+
+	template <> void Serializer::get(protocol::CombatResult &cr)
+	{
+		get(cr.attackerRemainingManpower);
+		get(cr.defenderRemainingManpower);
+	}
+
+	template <> void Serializer::get(protocol::ChatMessage &cm)
+	{
+		get(cm.sender);
+		get(cm.message);
 	}
 
 

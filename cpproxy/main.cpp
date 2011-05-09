@@ -32,7 +32,10 @@ public:
 		std::cout << "IT'S YOUR TURN!\n";
 	}
 
-	void chatMessageReceived() {}
+	void chatMessageReceived(protocol::ChatMessage &cm)
+	{
+		std::cout << cm.sender << ": " << cm.message << std::endl;
+	}
 
 	void gameClosed()
 	{
@@ -140,50 +143,27 @@ void mainMenu(Proxy &proxy, std::string playerName)
 
 int main()
 {
-	for(int i = 0; i < 1; ++i)
+	try
 	{
-		unsigned short port;
-		std::cin >> port;
-		try
-		{
-			MyPacketListener pl;
-			Proxy proxy(pl);
-			//proxy.connect("130.229.134.186", port);
-			//proxy.connect("130.237.238.239", port);
-			proxy.connect("130.229.157.246", port);
-			//proxy.connect("localhost");
+		MyPacketListener pl;
+		Proxy proxy(pl);
+		//proxy.connect("dvk.fishface.se", 1339);
+		proxy.connect("130.229.157.246", 1234);
 
-			std::stringstream stream;
-			stream << i;
-
-			std::cout << "Connected, what is your name? ";
-			std::string name;
-			std::cin >> name;
+		std::cout << "Connected, what is your name? ";
+		std::string name;
+		std::cin >> name;
 
 
-			proxy.sayHelloWorld(name);// + stream.str());
+		proxy.sayHelloWorld(name);
 
-			std::cout << "Welcome to the real world!\n";
+		std::cout << "Welcome to the real world!\n";
 
-			mainMenu(proxy, name);
-
-
-			/*
-			list(proxy);
-
-			//proxy.hostGame();
-			proxy.joinGame("Kalle");
-
-			list(proxy);
-			*/
-
-			std::cin.get();
-		}
-		catch(std::exception &e)
-		{
-			std::cout << "Failure: " << e.what() << std::endl;
-		}
-
+		mainMenu(proxy, name);
+	}
+	catch(std::exception &e)
+	{
+		std::cout << "Failure: " << e.what() << std::endl;
 	}
 
     return 0;

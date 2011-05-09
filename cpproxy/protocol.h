@@ -35,6 +35,9 @@ namespace proxy
 				MOVE_REQUEST = 15,
 				END_TURN = 16,
 				ITS_YOUR_TURN = 17,
+				COMBAT_REQUEST = 18,
+				COMBAT_RESULT = 19,
+				MESSAGE_FOR_YOU_SIR = 20,
 				EXIT_GAME = 24,
 				GAME_CLOSED = 25
 			};
@@ -120,7 +123,6 @@ namespace proxy
 			bool locked;
 		};
 
-
 		struct StartGameAnswer : DestructablePacket
 		{
 			std::vector< std::vector<std::string> > mapData;
@@ -130,6 +132,18 @@ namespace proxy
 		struct ItsYourTurn : DestructablePacket
 		{
 			std::vector<Tile> updatedTiles;
+		};
+
+		struct CombatResult : DestructablePacket
+		{
+			int attackerRemainingManpower;
+			int defenderRemainingManpower;
+		};
+
+		struct ChatMessage : DestructablePacket
+		{
+			std::string sender;
+			std::string message;
 		};
 
 
@@ -149,6 +163,8 @@ namespace proxy
 				GameSessionInformation *gameSessionInformation;
 				StartGameAnswer *startGameAnswer;
 				ItsYourTurn *itsYourTurn;
+				CombatResult *combatResult;
+				ChatMessage *chatMessage;
 			};
 
 			Packet(uint8_t header);

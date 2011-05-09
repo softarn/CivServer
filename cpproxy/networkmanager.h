@@ -23,7 +23,7 @@ namespace proxy
 
 		virtual void yourTurn(protocol::ItsYourTurn &) = 0;
 
-		virtual void chatMessageReceived() = 0;
+		virtual void chatMessageReceived(protocol::ChatMessage &) = 0;
 
 		virtual void gameClosed() = 0;
 	};

@@ -66,6 +66,10 @@ namespace proxy
 					m_packetListener.yourTurn(*packet->itsYourTurn);
 					break;
 
+				case protocol::Header::MESSAGE_FOR_YOU_SIR:
+					m_packetListener.chatMessageReceived(*packet->chatMessage);
+					break;
+
 				case protocol::Header::GAME_CLOSED:
 					m_packetListener.gameClosed();
 					break;

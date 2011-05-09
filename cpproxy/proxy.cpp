@@ -190,9 +190,31 @@ namespace proxy
 		move(moveList);
 	}
 
-	void Proxy::endTurn()
+	protocol::CombatResult Proxy::combat(int fromX, int fromY, int toX, int toY)
 	{
 		// Request to move
+		m_networkManager.send<uint8_t>(protocol::Header::COMBAT_REQUEST);
+
+		// Send the attacking unit
+		m_networkManager.send(fromX);
+		m_networkManager.send(fromY);
+
+		// Send the defending unit
+		m_networkManager.send(toX);
+		m_networkManager.send(toY);
+
+		// Receive the answer
+		std::auto_ptr<protocol::Packet> packet = m_networkManager.receivePacket();
+
+		// which must be a combat result
+		tryPacket(*packet, protocol::Header::COMBAT_RESULT);
+
+		return *packet->combatResult;
+	}
+
+	void Proxy::endTurn()
+	{
+		// Request to end turn
 		m_networkManager.send<uint8_t>(protocol::Header::END_TURN);
 
 
@@ -201,6 +223,25 @@ namespace proxy
 
 		// which must be a confirmation
 		confirmPacket(*packet, protocol::Header::END_TURN);
+	}
+
+	void Proxy::sendMessage(const std::string &to, const std::string &message)
+	{
+		// Send a message
+		m_networkManager.send<uint8_t>(protocol::Header::MESSAGE_FOR_YOU_SIR);
+
+		// Send to who?
+		m_networkManager.send(to);
+
+		// Send the actual message
+		m_networkManager.send(message);
+
+
+		// Receive the answer
+		std::auto_ptr<protocol::Packet> packet = m_networkManager.receivePacket();
+
+		// which must be a confirmation
+		confirmPacket(*packet, protocol::Header::MESSAGE_FOR_YOU_SIR);
 	}
 
 

@@ -43,7 +43,9 @@ namespace proxy
 		// In-game functions
 		void move(const std::vector<protocol::Position> &);
 		void move(int fromX, int fromY, int toX, int toY);
+		protocol::CombatResult combat(int fromX, int fromY, int toX, int toY);
 		void endTurn();
+		void sendMessage(const std::string &to, const std::string &message);
 	};
 
 }
