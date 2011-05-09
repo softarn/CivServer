@@ -18,22 +18,39 @@ init(Game) ->
     NewGame = Game#game{game_pid = self()},
     {ok, NewGame}.
 
-%Callbacks
+%%%Callbacks
+
+
+%Returns a list containing all the player names in the game
 handle_call(list_players, _From, Game) ->
     {reply, [Player#player.name || Player <- Game#game.players], Game};
 
+
+% Arguments: LockFlag - 0 means unlocked, everything else means locked
+% If the LockFlag is different from current lock-status:
+%   Change the lock,
+%   Update the main server about the changes
+%   Broadcast the "Game Session Information" packet to all the game's players
+%   Returns the updated game record
+%Else if the LockFlag isn't different from current lock-status
+%   Return the Game-record (do nothing).  
 handle_call({toggle_lock, LockFlag}, _From, Game) ->
     if 
 	(Game#game.locked > 0) and (LockFlag > 0) ->
-	    {reply, Game#game.locked, Game};
+	    {reply, Game, Game};
 	(Game#game.locked =:= 0) and (LockFlag =:= 0) ->
-	    {reply, Game#game.locked, Game};
+	    {reply, Game, Game};
 	true -> %else..
 	    UpdatedGame = Game#game{locked = LockFlag},
 	    update_game(UpdatedGame),
 	    {reply, UpdatedGame, UpdatedGame}
     end;
 
+% Arguments: Player-record,
+% Replaces the old player with the updated player (with the new civilization) to the games playerlist,
+% Updates the main server about the changes
+% Broadcasts the "Game Session Information" packet to all the game's players
+% Returns the updated game record
 handle_call({change_civ, UpdatedPlayer}, _From, Game) ->
    Rem_Player = fun(PL) -> %Rem_Player removes the player with the same name as UpdatedPlayer
 	   PL#player.name =/= UpdatedPlayer#player.name
@@ -44,12 +61,19 @@ handle_call({change_civ, UpdatedPlayer}, _From, Game) ->
    update_game(UpdatedGame), 
    {reply, UpdatedGame, UpdatedGame};
 
+
+% Arguments: The Player record to join the game,
+% Adds the player to the game's playerlist
+% Updates the main server about the changes
+% Broadcasts the "Game Session Information" packet to all the game's players
+% Returns the updated game record
 handle_call({player_join, Player}, _From, Game) ->
     UpdatedGame = Game#game{players = [Player | Game#game.players]}, %
     io:format("Added player ~w~n", [Player]), %Glöm ej felkontroll ifall player existerar!
     update_game(UpdatedGame),
     {reply, UpdatedGame, UpdatedGame};
 
+% Returns the game records locked status (0 = unlocked, everything else = locked)
 handle_call(is_locked, _From, Game) ->
     {reply, Game#game.locked, Game};
 
@@ -57,6 +81,10 @@ handle_call(is_locked, _From, Game) ->
 handle_call(stop, _From, State) ->
     {stop, normal, shutdown_ok, State};
 
+% Arguments: The player who finished his/her turn,
+% Takes the first element of the game's playerlist (the current player) and puts it last in the list,
+% Changes the next players state to "game_turn",
+% Returns the update game record
 handle_call({finished_turn, Player}, _From, Game) ->
    [Current | Rest] = Game#game.players,
    case Current =:= Player of
@@ -73,7 +101,6 @@ handle_call({finished_turn, Player}, _From, Game) ->
 terminate(Reason, State) ->
     ok.
 
-%player_leave:
 %% If the leaving player is host and game is in game_lobby:
     %Removes the player that left from the game,
     %Broadcasts Packet 25 (Game closed) to the remaining players
@@ -103,9 +130,12 @@ handle_cast({player_leave, Player}, Game) ->
 	    end
     end;
 
+% Updates the game-record with a terrainmap, unitmap and starting units,
+% Sets game status to locked and in_game,
+% updates main server, puts players fsm into correct state (see starting_game comments below)
+% Returns the updated game record
 handle_cast({start_game, MapSize}, Game) ->
     UpdatedGame = ?GAMEPLAN:make_gameplan(MapSize, Game), % Fixa storleken senare
-    %ListUMap = ?GAMEPLAN:tuplemap_to_listmap(UpdatedGame#game.tilemap),
     UpdatedGame2 = UpdatedGame#game{locked = 1, current_state = in_game}, %Glöm ej att göra t_map till list
     starting_game(UpdatedGame2),
     {noreply, UpdatedGame2}.
@@ -122,6 +152,11 @@ player_leave(Game_pid, Player) -> gen_server:cast(Game_pid, {player_leave, Playe
 start_game(Game_pid, MapSize) -> gen_server:cast(Game_pid, {start_game, MapSize}).
 
 %Internal functions
+
+% Updates the main server with the game-status,
+% broadcasts the "Start game answer" packet to the game's players (this includes sending the terrainmap and unitmap),
+% puts all the game's player's FSM-states into the "game_wait" state
+% puts the first player in the playerlist into the "game_turn" state
 starting_game(Game) ->
     ?SERVER:update_game(Game),
     broadcastMsg(Game, start_game),
@@ -133,15 +168,29 @@ starting_game(Game) ->
     lists:foreach(Fun, Players),
     change_turn(Game).
 
+
+% Arguments: The current game-record,
+% Takes the first player from the playerlist and changes its current FSM-state to "game_turn".			 %SKICKA ITS YOUR TURN???
 change_turn(Game) ->
     [First | _Rest] = Game#game.players,
     FSM = First#player.fsm_pid,
     ?P_FSM:enter_turn(FSM, Game).
 
+% Updates the main server,
+% Broadcasts the "Game Session Information" packet to all players in the game
 update_game(Game) ->
     ?SERVER:update_game(Game),
     broadcastMsg(Game, game_info).
 
+
+% If type is:
+    % start_game:
+	%sends "start game answer" + terrainmap + unitlist to all players in game, 
+    % game_close:
+	%sends "game closed" to all players in game,
+	%puts all players fsm into "server_lobby" state, setting their game-record to null
+    % game_info:
+	%sends "Game session information" (with player name + player civilization) to all clients in the game
 broadcastMsg(Game, Type) ->
     Players = Game#game.players,	
     case Type of
@@ -149,7 +198,7 @@ broadcastMsg(Game, Type) ->
 	    Fun = fun(X) -> 
 		    Socket = X#player.socket,
 		    TileList = lists:flatten(?GAMEPLAN:tuplemap_to_listmap(Game#game.tilemap)), %Gör om tuplemappen till en lista och skicka
-		    ?P_HANDLER:sendMsg(Socket, {14, [Game#game.map, TileList]}) % Start game answer%DONT FORGET TO SEND LIST<TILE> WITH PRESET UNITS!
+		    ?P_HANDLER:sendMsg(Socket, {14, [Game#game.map, TileList]}) % Start game answer
 	    end,
 	    lists:foreach(Fun, Players);
 

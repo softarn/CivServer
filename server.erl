@@ -19,6 +19,14 @@ init(Port) ->
 handle_call(list_players, _From, {Games, Players}) ->
     {reply, [Player#player.name || Player <- Players], {Games,Players}};
 
+
+% Arguments: Player that wants to create a game
+% If there already exists a game with the same name as the host
+%   Returns failed
+% Else
+%   Creates a new game
+%   Returns the new game and adds it to the server loopdata
+
 handle_call({create_game, Player}, _From, {Games, Players}) ->
     Find_Existing_Game = fun(GR) ->
 	    GR#game.name =:= Player#player.name
@@ -46,6 +54,14 @@ handle_call(list_games, _From, {Games, Players}) ->
     end,
     GameList = [FormatName(Game) || Game <- Games, Game#game.current_state =:= game_lobby],
     {reply, GameList, {Games,Players}};
+
+
+% Arguments: Player to add
+% If the playername already exists:
+%   Returns false
+% Else
+%   Adds player to server
+%   Returns true
 
 handle_call({add_player, Player}, _From, {Games, Players}) -> 
 
