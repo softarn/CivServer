@@ -18,6 +18,7 @@ class TestKlient{
 		
 	//	System.out.println("Enter IP to connect to: ");
 	//	ip = scan.next();
+
 		System.out.println("Enter a port to connect via: ");
 		port = sc.nextInt();
 
@@ -36,7 +37,7 @@ class TestKlient{
 				case 1:
 					try{
 						returned = p.connect(name);
-						System.out.println(returned.getOk() + "   " + returned.getOkMsg());
+						System.out.println(returned.getOk());  
 					}
 					catch(FailedException fe){
 						System.out.println(fe);
@@ -60,7 +61,7 @@ class TestKlient{
 				case 3:
 					try{
 						returned = p.host();
-						System.out.println(returned.getName());
+						System.out.println(returned.getHostName());
 					}
 					catch(FailedException fe){
 						System.out.println(fe);
