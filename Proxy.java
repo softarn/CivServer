@@ -204,7 +204,7 @@ public class Proxy
 		}
 	}
 
-	public Result sendChatMessage(String toWhom, String message)
+	public Result sendChatMessage(String toWhom, String message) throws FailedException
 	{
 		try
 		{

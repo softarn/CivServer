@@ -16,8 +16,8 @@ class TestKlient{
 		System.out.println("Enter player name: ");
 		name = scan.next();
 		
-	//	System.out.println("Enter IP to connect to: ");
-	//	ip = scan.next();
+		System.out.println("Enter IP to connect to: ");
+		ip = scan.next();
 
 		System.out.println("Enter a port to connect via: ");
 		port = sc.nextInt();

@@ -4,7 +4,7 @@ class Result{
 	
 	// Här är medlemsvariabler som ska kunna returneras.
 	private boolean ok = true, locked;
-	private String failMsg, hostName, chatMessage, fromWhom;
+	private String failMsg, hostName, chatMessage, chatName, fromWhom;
 	private List sessions, players, map, updatedTiles;
 	private int requestFail, requestOk, attackerLeft, defenderLeft;
 
