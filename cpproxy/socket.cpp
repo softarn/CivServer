@@ -9,6 +9,9 @@
 	#define ECONNREFUSED WSAECONNREFUSED
 	#define ENOTCONN WSAENOTCONN
 	#define ENOTSOCK WSAENOTSOCK
+	#ifdef _MSC_VER
+		typedef int socklen_t;
+	#endif
 #else
 	// Else we should use berkeley sockets
 	#include <sys/socket.h>
@@ -114,7 +117,7 @@ namespace proxy
 	std::auto_ptr<Socket> Socket::accept()
 	{
 		sockaddr_in socketAddress;
-		int len = sizeof(socketAddress);
+		socklen_t len = sizeof(socketAddress);
 		int newSocket = ::accept(m_socket, reinterpret_cast<sockaddr *>(&socketAddress), &len);
 
 		if(newSocket < 0)
