@@ -18,13 +18,13 @@
 -export([combat/4]).
 
 combat(Attacker, AtkMP, Defender, DefMp) ->
-	case element(6, unit_attr:get_attr(Attacker)) of
+	case element(6, unit_attr:get_attr(list_to_atom(Attacker))) of
 		assault ->
-			assault_combat(Attacker, AtkMP, Defender, DefMp);
+			assault_combat(list_to_atom(Attacker), AtkMP, list_to_atom(Defender), DefMp);
 		range ->
-			ranged_combat(Attacker, AtkMP, DefMp);
+			ranged_combat(list_to_atom(Attacker), AtkMP, DefMp);
 		bombardment ->
-			bombard_combat(Attacker, AtkMP, DefMp)
+			bombard_combat(list_to_atom(Attacker), AtkMP, DefMp)
 	end.
 	
 assault_combat(Atk, AtkMP, Def, DefMP) ->
@@ -34,7 +34,18 @@ assault_combat(Atk, AtkMP, Def, DefMP) ->
 	AP = element(2, AtkAttrs),
 	% Add attack bonus from terrain
 	% NewAP = AP * TerrAtk,
-	DP = element(3, DefAttrs),
+	case Def of
+		pikeman ->
+			case element(7, unit_attr:get_attr(Atk)) of
+				mounted ->
+					DP = (element(2, element(3, DefAttrs)));
+				_ ->
+					DP = (element(1, element(3, DefAttrs)))
+			end;
+		_ ->
+			DP = (element(3, DefAttrs))
+	end,
+	%DP = element(3, DefAttrs),
 	% Add defense bonus
 	% NewDP = DP * TerrDef,
 	assault_charge(AP, AtkMP, DP, DefMP, Charges).
