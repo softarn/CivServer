@@ -5,8 +5,11 @@
 -define(GAMESRV, gameserver).
 -define(TERGEN, ter_gen).
 -define(P_FSM, player_fsm).
+-define(GAMEPLAN, gameplan).
+-define(START_POS, player_place).
 
 -record(player,{
+	start_pos = null, %{X,Y}
 	ref = null,
 	handler_pid = null,
 	fsm_pid = null,
@@ -39,11 +42,3 @@
 	owner = null, %String
 	type = null, %String
 	manpower = null}). %Integer
-
--record(game_unit, {
-	name = null,
-	manpower = null,
-	attack_point = null,
-	defense_point = null,
-	range = null,
-	movement = null}).

@@ -104,7 +104,7 @@ handle_cast({player_leave, Player}, Game) ->
     end;
 
 handle_cast({start_game, MapSize}, Game) ->
-    Map = ?TERGEN:generate(MapSize, MapSize), % Fixa storleken senare
+    {T_Ma, U_Map} = ?GAMEPLAN:make_gameplan(MapSize, ), % Fixa storleken senare
     UpdatedGame = Game#game{locked = 1, map = Map, tilelist = [], current_state = in_game},
     starting_game(UpdatedGame),
     {noreply, UpdatedGame}.
