@@ -1,28 +1,28 @@
 -module(unit_attr).
--export([get_attr/1,create_unit/1]).
+-export([get_attr/1,create_unit/2]).
 
 -include("config.hrl").
 
-create_unit(UnitType) ->
+create_unit(UnitType, Owner) ->
     case UnitType of
-	"Catapult" ->	#unit{type="Catapult",name=catapult,mp=100,ap=12,dp=1,range=2,movement=1,att_type=bombardment,move_type=ground};		
-	"Trebuchet" ->	#unit{type="Trebuchet",name=trebuchet,mp=100,ap=20,dp=2,range=3,movement=1,att_type=bombardment,move_type=ground};		
-	"Cannon" ->	#unit{type="Cannon",name=cannon,mp=100,ap=30,dp=3,range=4,movement=1,att_type=bombardment,move_type=ground};		
-	"Archer" ->	#unit{type="Archer",name=archer,mp=100,ap=4,dp=2,range=2,movement=1,att_type=range,move_type=ground};		
-	"Musketeer" ->	#unit{type="Musketeer",name=musketeer,mp=100,ap=8,dp=6,range=2,movement=1,att_type=range,move_type=ground};		
+	"Catapult" ->	#unit{owner=Owner,type="Catapult",name=catapult,mp=100,ap=12,dp=1,range=2,movement=1,att_type=bombardment,move_type=ground};		
+	"Trebuchet" ->	#unit{owner=Owner,type="Trebuchet",name=trebuchet,mp=100,ap=20,dp=2,range=3,movement=1,att_type=bombardment,move_type=ground};		
+	"Cannon" ->	#unit{owner=Owner,type="Cannon",name=cannon,mp=100,ap=30,dp=3,range=4,movement=1,att_type=bombardment,move_type=ground};		
+	"Archer" ->	#unit{owner=Owner,type="Archer",name=archer,mp=100,ap=4,dp=2,range=2,movement=1,att_type=range,move_type=ground};		
+	"Musketeer" ->	#unit{owner=Owner,type="Musketeer",name=musketeer,mp=100,ap=8,dp=6,range=2,movement=1,att_type=range,move_type=ground};		
 
-	"Phalanx" ->	#unit{type="Phalanx",name=phalanx,mp=100,ap=2,dp=5,range=1,movement=1,att_type=assault,move_type=ground};		
-	"Legion" ->	#unit{type="Legion",name=legion,mp=100,ap=6,dp=4,range=1,movement=1,att_type=assault,move_type=ground};		
-	"Infantry" ->	#unit{type="Infantry",name=infantry,mp=100,ap=3,dp=3,range=1,movement=1,att_type=assault,move_type=ground};		
-	"Pikeman" ->	#unit{type="Pikeman",name=pikeman, mp=100,ap=2,dp={3,12},range=1,movement=1,att_type=assault,move_type=ground};		
+	"Phalanx" ->	#unit{owner=Owner,type="Phalanx",name=phalanx,mp=100,ap=2,dp=5,range=1,movement=1,att_type=assault,move_type=ground};		
+	"Legion" ->	#unit{owner=Owner,type="Legion",name=legion,mp=100,ap=6,dp=4,range=1,movement=1,att_type=assault,move_type=ground};		
+	"Infantry" ->	#unit{owner=Owner,type="Infantry",name=infantry,mp=100,ap=3,dp=3,range=1,movement=1,att_type=assault,move_type=ground};		
+	"Pikeman" ->	#unit{owner=Owner,type="Pikeman",name=pikeman, mp=100,ap=2,dp={3,12},range=1,movement=1,att_type=assault,move_type=ground};		
 
-	"Cavalry" ->	#unit{type="Cavalry",name=cavalry,mp=100,ap=6,dp=4,range=1,movement=2,att_type=assault,move_type=mounted};		
-	"Knight" ->	#unit{type="Knight",name=knight,mp=100,ap=12,dp=8,range=1,movement=2,att_type=assault,move_type=mounted};		
-	"Crusader" ->	#unit{type="Crusader",name=crusader,mp=100,ap=18,dp=12,range=1,movement=2,att_type=assault,move_type=mounted};		
+	"Cavalry" ->	#unit{owner=Owner,type="Cavalry",name=cavalry,mp=100,ap=6,dp=4,range=1,movement=2,att_type=assault,move_type=mounted};		
+	"Knight" ->	#unit{owner=Owner,type="Knight",name=knight,mp=100,ap=12,dp=8,range=1,movement=2,att_type=assault,move_type=mounted};		
+	"Crusader" ->	#unit{owner=Owner,type="Crusader",name=crusader,mp=100,ap=18,dp=12,range=1,movement=2,att_type=assault,move_type=mounted};		
 
-	"Trireme" ->	#unit{type="Trireme",name=trireme,mp=50,ap=4,dp=3,range=1,movement=3,att_type=range,move_type=naval};		
-	"Galley" ->	#unit{type="Galley",name=galley,mp=250,ap=30,dp=25,range=2,movement=3,att_type=bombardment,move_type=naval};		
-	"Caravel" ->	#unit{type="Caravel",name=caravel,mp=100,ap=50,dp=40,range=3,movement=6,att_type=bombardment,move_type=naval};
+	"Trireme" ->	#unit{owner=Owner,type="Trireme",name=trireme,mp=50,ap=4,dp=3,range=1,movement=3,att_type=range,move_type=naval};		
+	"Galley" ->	#unit{owner=Owner,type="Galley",name=galley,mp=250,ap=30,dp=25,range=2,movement=3,att_type=bombardment,move_type=naval};		
+	"Caravel" ->	#unit{owner=Owner,type="Caravel",name=caravel,mp=100,ap=50,dp=40,range=3,movement=6,att_type=bombardment,move_type=naval};
 	_-> {error, invalid_unit}
     end.
 
