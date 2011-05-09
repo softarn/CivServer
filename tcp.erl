@@ -93,8 +93,8 @@ readElement(Socket, "Player") -> % Lista av Player
     {player, Name, Civ};
 
 readElement(Socket, "Position") -> % Lista av Position
-    X = readInteger(Socket),
-    Y = readInteger(Socket),
+    X = readInteger(Socket)+1,
+    Y = readInteger(Socket)+1,
     {position, X, Y};
 
 readElement(Socket, "Column") -> % Lista av Column
@@ -160,8 +160,8 @@ sendTile(Socket, Tile) ->
     sendPerhaps(Socket, "String", Tile#tile.improvement).
 
 sendPosition(Socket, {X, Y}) ->
-    sendInteger(Socket, X),
-    sendInteger(Socket, Y).
+    sendInteger(Socket, X-1),
+    sendInteger(Socket, Y-1).
 
 sendCity(Socket, City) ->
     sendString(Socket, City#city.owner),
@@ -172,7 +172,7 @@ sendCity(Socket, City) ->
 sendUnit(Socket, Unit) ->
     sendString(Socket, Unit#unit.owner),
     sendString(Socket, Unit#unit.str),
-    sendInteger(Socket, Unit#unit.manpower).
+    sendInteger(Socket, Unit#unit.mp).
 
 sendPerhaps(Socket, _Type, null) ->
     sendBoolean(Socket, 0);

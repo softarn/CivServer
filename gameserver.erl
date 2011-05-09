@@ -105,7 +105,8 @@ handle_cast({player_leave, Player}, Game) ->
 
 handle_cast({start_game, MapSize}, Game) ->
     UpdatedGame = ?GAMEPLAN:make_gameplan(MapSize, Game), % Fixa storleken senare
-    UpdatedGame2 = UpdatedGame#game{locked = 1, current_state = in_game},
+    %ListUMap = ?GAMEPLAN:tuplemap_to_listmap(UpdatedGame#game.tilemap),
+    UpdatedGame2 = UpdatedGame#game{locked = 1, current_state = in_game}, %Glöm ej att göra t_map till list
     starting_game(UpdatedGame2),
     {noreply, UpdatedGame2}.
 
@@ -147,7 +148,8 @@ broadcastMsg(Game, Type) ->
 	start_game ->
 	    Fun = fun(X) -> 
 		    Socket = X#player.socket,
-		    ?P_HANDLER:sendMsg(Socket, {14, [Game#game.map, Game#game.tilemap]}) % Start game answer%DONT FORGET TO SEND LIST<TILE> WITH PRESET UNITS!
+		    TileList = lists:flatten(?GAMEPLAN:tuplemap_to_listmap(Game#game.tilemap)), %Gör om tuplemappen till en lista och skicka
+		    ?P_HANDLER:sendMsg(Socket, {14, [Game#game.map, TileList]}) % Start game answer%DONT FORGET TO SEND LIST<TILE> WITH PRESET UNITS!
 	    end,
 	    lists:foreach(Fun, Players);
 

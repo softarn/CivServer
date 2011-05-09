@@ -127,7 +127,7 @@ game_lobby({Header, List}, {Player, Game}) ->
 		    {next_state, game_lobby, {Player, Game}};
 		true ->
 		    ?P_HANDLER:sendMsg(Player#player.socket, {1, [Header]}), %Comfirm'd
-		    ?GAMESRV:start_game(Game#game.game_pid, 10), % param: Gamename, mapsize
+		    ?GAMESRV:start_game(Game#game.game_pid, 2), % param: Gamename, mapsize
 		    {next_state, game_wait, {Player, Game}}
 
 	    end;	% player = host

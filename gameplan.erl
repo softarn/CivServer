@@ -6,11 +6,11 @@ make_gameplan(Size, Game) ->
     Players = Game#game.players,
     TerrainMatrix = ?TERGEN:generate(Size, Size),
     UnitMatrix = erlang:make_tuple(Size, erlang:make_tuple(Size, #tile{})),
+    UpdUnitMatrix = add_pos(UnitMatrix, Size, Size, Size),
     NumberOfPlayers = length(Game#game.players),
-    StartPos = ?START_POS:get_placement(TerrainMatrix, NumberOfPlayers),
-    UpdatedUnitMatrix = assign_pos(Players, StartPos, UnitMatrix),
-    UpdatedGame = Game#game{map = TerrainMatrix, tilemap = UpdatedUnitMatrix},
-    UpdatedGame.
+    StartPos = ?START_POS:get_placement(NumberOfPlayers, TerrainMatrix),
+    UpdatedUnitMatrix = assign_pos(Players, StartPos, UpdUnitMatrix),
+    Game#game{map = TerrainMatrix, tilemap = UpdatedUnitMatrix}. 
     
 assign_pos([], [], UMap) ->
     UMap;
@@ -39,3 +39,19 @@ get_tile(Map, X, Y) -> %Returns a tile
 get_unit(Map, X, Y) -> %Returns a Unit or null
     Tile = element(Y, element(X, Map)),
     Tile#tile.unit.
+
+tuplemap_to_listmap(Tuple) ->
+	[tuple_to_list(Column)|| Column <- tuple_to_list(Tuple)].
+
+
+add_pos(UMap, 0, _Y, _OrigSize) ->
+    UMap;
+add_pos(UMap, X, 0, OrigSize) ->
+    add_pos(UMap, X-1, OrigSize, OrigSize);
+add_pos(UMap, X, Y, OrigSize) ->
+    UpdatedTile = #tile{position = {X, Y}},
+    UpdatedRow = setelement(Y, element(X, UMap), UpdatedTile),  
+    UpdatedUMap = setelement(X, UMap, UpdatedRow),
+    add_pos(UpdatedUMap, X, Y-1, OrigSize). 
+
+
