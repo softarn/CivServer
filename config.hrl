@@ -7,6 +7,7 @@
 -define(P_FSM, player_fsm).
 -define(GAMEPLAN, gameplan).
 -define(START_POS, player_place).
+-define(U_HANDLER, unit_attr).
 
 -record(player,{
 	start_pos = null, %{X,Y}
