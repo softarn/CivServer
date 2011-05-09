@@ -37,10 +37,11 @@
 
 -record(unit, {
 	owner = null, %String
+	type = null,
 	name = null, %String
-	manpower = null, %Integer
-	att_points = null,
-	def_points = null,
+	mp = null, %Integer
+	ap = null,
+	dp = null,
 	range = null,
 	movement = null,
 	att_type = null,
