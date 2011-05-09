@@ -2,7 +2,7 @@
 #ifndef BYTESTREAM_H
 #define BYTESTREAM_H
 
-#include <stdint.h>
+#include "portable.h"
 
 class ByteStream
 {

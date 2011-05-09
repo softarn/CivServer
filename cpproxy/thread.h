@@ -2,7 +2,13 @@
 #ifndef THREAD_H
 #define THREAD_H
 
-#include <pthread.h>
+#ifdef _MSC_VER
+	#include <windows.h>
+	typedef HANDLE thread_handle;
+#else
+	#include <pthread.h>
+	typedef pthread_t thread_handle;
+#endif
 
 namespace proxy
 {
@@ -10,7 +16,8 @@ namespace proxy
 	class Thread
 	{
 	private:
-		pthread_t m_handle;
+		thread_handle m_handle;
+		bool m_running;
 
 
 		Thread(const Thread &);

@@ -2,7 +2,13 @@
 #ifndef MUTEX_H
 #define MUTEX_H
 
-#include <pthread.h>
+#ifdef _MSC_VER
+	#include <windows.h>
+	typedef CRITICAL_SECTION mutex_handle;
+#else
+	#include <pthread.h>
+	typedef pthread_mutex_t mutex_handle;
+#endif
 
 class Mutex
 {
@@ -19,7 +25,7 @@ public:
 	};
 
 private:
-	pthread_mutex_t m_mutex;
+	mutex_handle m_mutex;
 
 	Mutex(const Mutex &);
 	Mutex &operator=(const Mutex &);

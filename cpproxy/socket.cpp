@@ -6,6 +6,9 @@
 #ifdef _WIN32
 	// Use winsock if we're using windoze
 	#include <winsock2.h>
+	#define ECONNREFUSED WSAECONNREFUSED
+	#define ENOTCONN WSAENOTCONN
+	#define ENOTSOCK WSAENOTSOCK
 #else
 	// Else we should use berkeley sockets
 	#include <sys/socket.h>
@@ -26,7 +29,7 @@ namespace proxy
 	sockaddr_in createSocketAddress(unsigned short port);
 
 
-	int Socket::ms_socketCount = 0;
+	int Socket::sm_socketCount = 0;
 
 
 	Socket::Socket()
@@ -34,7 +37,7 @@ namespace proxy
 	{
 		// If this is the first socket to be created, we must first setup the
 		// networking library we're using
-		if(!ms_socketCount)
+		if(!sm_socketCount)
 			if(!setupSocketAPI())
 				throw SocketError("Unable to setup the networking library");
 
@@ -45,7 +48,7 @@ namespace proxy
 			throw SocketError("Unable to open socket");
 
 		// Finally increase socket count if this socket was successfully created
-		++ms_socketCount;
+		++sm_socketCount;
 	}
 
 	Socket::Socket(int socketHandle)
@@ -55,7 +58,7 @@ namespace proxy
 		if(m_socket < 0)
 			throw SocketError("Invalid socket");
 
-		++ms_socketCount;
+		++sm_socketCount;
 	}
 
 	Socket::~Socket()
@@ -63,7 +66,7 @@ namespace proxy
 		close();
 
 		// Cleanup the networking library if we're destroying the last socket
-		if(!--ms_socketCount)
+		if(!--sm_socketCount)
 			cleanupSocketAPI();
 	}
 
@@ -111,7 +114,7 @@ namespace proxy
 	std::auto_ptr<Socket> Socket::accept()
 	{
 		sockaddr_in socketAddress;
-		socklen_t len = sizeof(socketAddress);
+		int len = sizeof(socketAddress);
 		int newSocket = ::accept(m_socket, reinterpret_cast<sockaddr *>(&socketAddress), &len);
 
 		if(newSocket < 0)

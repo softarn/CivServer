@@ -3,7 +3,7 @@
 #define PROTOCOL_H
 
 #include <string>
-#include <stdint.h>
+#include "portable.h"
 #include <memory>
 #include "socket.h"
 

@@ -25,7 +25,7 @@ namespace proxy
 	class Socket
 	{
 	private:
-		static int ms_socketCount;
+		static int sm_socketCount;
 		int m_socket;
 		SocketStream m_stream;
 
