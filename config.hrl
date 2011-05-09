@@ -37,13 +37,12 @@
 
 -record(unit, {
 	owner = null, %String
-	type = null, %String
-	manpower = null}). %Integer
-
--record(game_unit, {
-	name = null,
-	manpower = null,
-	attack_point = null,
-	defense_point = null,
+	name = null, %String
+	manpower = null, %Integer
+	att_point = null,
+	def_point = null,
 	range = null,
-	movement = null}).
+	movement = null,
+	att_type = null,
+	move_type = null}).
+
