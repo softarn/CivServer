@@ -72,7 +72,6 @@ public class Receiver implements Runnable
 			if(header == 3)
 			{
 				toReturn.addOk(true);
-				toReturn.addOkMsg("Welcome to the Real World");
 				setPacket(toReturn);
 			}
 
@@ -114,7 +113,7 @@ public class Receiver implements Runnable
 			else if(header == 9)
 			{
 				toReturn.addOk(true);
-				toReturn.addName(receiveString());
+				toReturn.addHostName(receiveString());
 				setPacket(toReturn);
 			}
 
@@ -167,6 +166,15 @@ public class Receiver implements Runnable
 				toReturn.addDefenderLeft(receiveInt());
 
 				setPacket(toReturn);
+			}
+
+			// Header 20, Message for you, sir!, receives a chat message.
+			else if(header == 20)
+			{
+				toReturn.addFromWhom(receiveString());
+				toReturn.addChatMessage(receiveString());
+
+				pl.chatMessageReceived(toReturn);
 			}
 
             else if(header == 25)

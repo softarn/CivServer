@@ -4,9 +4,9 @@ class Result{
 	
 	// Här är medlemsvariabler som ska kunna returneras.
 	private boolean ok = true, locked;
-	private String okMsg, failMsg, name;
+	private String failMsg, hostName, chatMessage, fromWhom;
 	private List sessions, players, map, updatedTiles;
-	private int size, requestFail, failNumber, requestOk, attackerLeft, defenderLeft;
+	private int requestFail, requestOk, attackerLeft, defenderLeft;
 
 	// Här är medlemsvariabler som bara är hjälpvariabler till vissa metoder.
 	private List cityUnits = new ArrayList<Unit>();
@@ -30,16 +30,20 @@ class Result{
 
 	// Sen så kommer strängar.
 
-	public void addOkMsg(String msg){
-		okMsg = msg;
-	}
-
 	public void addFailMsg(String msg){
 		failMsg = msg;
 	}
 
-	public void addName(String name){
-		this.name = name;
+	public void addHostName(String name){
+		hostName = name;
+	}
+
+	public void addChatMessage(String message){
+		chatMessage = message;
+	}
+
+	public void addFromWhom(String name){
+		fromWhom = name;
 	}
 
 	// Här nedan är det för listor.
@@ -54,16 +58,8 @@ class Result{
 
 	// Och sist heltal.
 
-	public void addSize(int size){
-		this.size = size;
-	}
-
 	public void addRequestFail(int requestFail){
 		this.requestFail = requestFail;
-	}
-
-	public void addFailNumber(int failNumber){
-		this.failNumber = failNumber;
 	}
 
 	public void addRequestOk(int requestOK){
@@ -136,16 +132,20 @@ class Result{
 
 	// Sen Strängar.
 
-	public String getOkMsg(){
-		return okMsg;
-	}
-
 	public String getFailMsg(){
 		return failMsg;
 	}
 
-	public String getName(){
-		return name;
+	public String getHostName(){
+		return hostName;
+	}
+
+	public String getChatMessage(){
+		return chatName;
+	}
+
+	public String getChatFromWhom(){
+		return fromWhom;
 	}
 
 	// Under finns getters för listor.
@@ -160,16 +160,8 @@ class Result{
 
 	// Här kommer getters för heltal.
 
-	public int getSize(){
-		return size;
-	}
-
 	public int getRequestFail(){
 		return requestFail;
-	}
-
-	public int getFailNumber(){
-		return failNumber;
 	}
 
 	public int getRequestOk(){
