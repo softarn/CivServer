@@ -8,20 +8,15 @@ class TestKlient{
 	Scanner sc = new Scanner(System.in);
 	Scanner scan = new Scanner(System.in);
 
-	public TestKlient(){
-		mainMenu();
+	public TestKlient(String name, String ip, int port){
+		mainMenu(name, ip, port);
 	}
 
-	public void mainMenu(){
+	public void mainMenu(String name, String ip, int port){
 
-		System.out.println("Enter player name: ");
-		name = scan.next();
-		
-	//	System.out.println("Enter IP to connect to: ");
-	//	ip = scan.next();
-
-		System.out.println("Enter a port to connect via: ");
-		port = sc.nextInt();
+        this.name = name;
+        this.ip = ip;
+        this.port = port;
 
 		p = new Proxy(ip, port, new MyPackLyss());
 
@@ -137,7 +132,8 @@ class TestKlient{
 	}
 
 	public static void main(String [] args){
-		TestKlient flum = new TestKlient();
+        //Name, ip, port
+		TestKlient flum = new TestKlient(args[0], args[1], Integer.parseInt(args[2]));
 	}
 
 	private class MyPackLyss implements PacketListener{
