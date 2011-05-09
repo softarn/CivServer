@@ -39,9 +39,7 @@
 	buildings = null, %[String]
 	name = null}). %String
 
--record(unit, {
-	owner = null, %String
-	str = null,
+-record(unit_info, {
 	name = null, %String
 	mp = null, %Integer
 	ap = null,
@@ -50,3 +48,9 @@
 	movement = null,
 	att_type = null,
 	move_type = null}).
+
+-record(unit, {
+	owner = null,
+	name = null,
+	str = null,
+	mp = null}).
