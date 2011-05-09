@@ -104,10 +104,10 @@ handle_cast({player_leave, Player}, Game) ->
     end;
 
 handle_cast({start_game, MapSize}, Game) ->
-    {T_Ma, U_Map} = ?GAMEPLAN:make_gameplan(MapSize, ), % Fixa storleken senare
-    UpdatedGame = Game#game{locked = 1, map = Map, tilelist = [], current_state = in_game},
-    starting_game(UpdatedGame),
-    {noreply, UpdatedGame}.
+    UpdatedGame = ?GAMEPLAN:make_gameplan(MapSize, Game), % Fixa storleken senare
+    UpdatedGame2 = UpdatedGame#game{locked = 1, current_state = in_game},
+    starting_game(UpdatedGame2),
+    {noreply, UpdatedGame2}.
 
 %Server calls and casts
 list_players(Game_pid) -> gen_server:call(Game_pid, list_players).
@@ -147,7 +147,7 @@ broadcastMsg(Game, Type) ->
 	start_game ->
 	    Fun = fun(X) -> 
 		    Socket = X#player.socket,
-		    ?P_HANDLER:sendMsg(Socket, {14, [Game#game.map, Game#game.tilelist]}) % Start game answer%DONT FORGET TO SEND LIST<TILE> WITH PRESET UNITS!
+		    ?P_HANDLER:sendMsg(Socket, {14, [Game#game.map, Game#game.tilemap]}) % Start game answer%DONT FORGET TO SEND LIST<TILE> WITH PRESET UNITS!
 	    end,
 	    lists:foreach(Fun, Players);
 

@@ -171,7 +171,7 @@ sendCity(Socket, City) ->
 
 sendUnit(Socket, Unit) ->
     sendString(Socket, Unit#unit.owner),
-    sendString(Socket, Unit#unit.type),
+    sendString(Socket, Unit#unit.str),
     sendInteger(Socket, Unit#unit.manpower).
 
 sendPerhaps(Socket, _Type, null) ->

@@ -153,7 +153,7 @@ game_wait({Header, List}, {Player, Game}) ->
 
 game_turn({Header, List}, {Player, Game}) -> %GLÖM EJ ATT UPPDATERA GAME i början av varje turn
     io:format("INNE I GAMETURN: ~p~n", [Player#player.name]),
-    ?P_HANDLER:sendMsg(Player#player.socket, {17, [Game#game.tilelist]}), %It's your turn GLÖM EJ ATT SKAPA TILEMAP I BÖRJAN
+    ?P_HANDLER:sendMsg(Player#player.socket, {17, [Game#game.tilemap]}), %It's your turn GLÖM EJ ATT SKAPA TILEMAP I BÖRJAN
     case Header of
 
 	15 -> %Move request

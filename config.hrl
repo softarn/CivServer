@@ -25,7 +25,7 @@
 	locked = null,
 	current_state = null, %States = game_lobby, in_game
 	map = null,
-	tilelist = null}).
+	tilemap = null}).
 
 -record(tile, {
 	position = null, %{X,Y}
