@@ -37,7 +37,7 @@
 
 -record(unit, {
 	owner = null, %String
-	type = null,
+	str = null,
 	name = null, %String
 	mp = null, %Integer
 	ap = null,
