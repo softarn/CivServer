@@ -39,8 +39,8 @@
 	owner = null, %String
 	name = null, %String
 	manpower = null, %Integer
-	att_point = null,
-	def_point = null,
+	att_points = null,
+	def_points = null,
 	range = null,
 	movement = null,
 	att_type = null,

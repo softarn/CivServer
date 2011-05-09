@@ -1,6 +1,8 @@
 -module(unit_attr).
 -export([get_attr/1,create_unit/1]).
 
+-include("config.hrl").
+
 create_unit(UnitType) ->
     case UnitType of
 	"Catapult" ->	#unit{name=catapult,manpower=100,att_points=12,def_points=1,range=2,movement=1,att_type=bombardment,move_type=ground};		
