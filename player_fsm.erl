@@ -160,8 +160,10 @@ game_turn({Header, List}, {Player, Game}) -> %GLÖM EJ ATT UPPDATERA GAME i bör
 	    PositionList = [List],
 	    case ?GAMESRV:move_unit(Game#game.game_pid, PositionList) of
 		{error, _Reason} ->
-		    skickafailmsg;
+		    ?P_HANDLER:sendFailMsg(Player#player.socket, 6, Header), % FailPacket "Invalid move"
+		    {next_state, game_turn, {Player, Game}};
 		{ok, UpdatedGame} ->
+		    ?P_HANDLER:sendMsg(Player#player.socket, {1, [Header]}), %Confirm'd
 		    {next_state, game_turn, {Player, UpdatedGame}}
 	    end;
 	16 -> %End of turn
