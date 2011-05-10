@@ -1,10 +1,10 @@
 import java.util.*;
 
 class TestKlient{
-	String name, ip = "130.229.157.246";
+	String name, ip = "chylis.dyndns-at-work.com";//"softarn.mine.nu";
 	Proxy p;
 	int port = 1234;
-	boolean loop = true;
+	boolean loop = true, lobby = true;
 	Scanner sc = new Scanner(System.in);
 	Scanner scan = new Scanner(System.in);
 
@@ -24,7 +24,7 @@ class TestKlient{
 		int what;
 
 		while(loop){
-			System.out.println("What you wanna do?\n1: connect\n2: list games\n3: host game\n4: start game\n5: join game\n0:quit");
+			System.out.println("What you wanna do?\n1: connect\n2: list games\n3: host game\n4: join game\n0:quit");
 			 what = sc.nextInt();
 
 			switch(what){
@@ -59,25 +59,17 @@ class TestKlient{
 					try{
 						returned = p.host();
 						System.out.println(returned.getHostName());
+						loop = false;
 					}
 					catch(FailedException fe){
 						System.out.println(fe);
 					}
-
 					break;
 
 				case 4:
 					try{
-						p.startGame();
-					}
-					catch(FailedException fe){
-						System.out.println(fe);
-					}
-					loop = false;
-					return;
-				case 5:
-					try{
 						p.joinGame(scan.next());
+						loop = false;
 					}
 					catch(FailedException fe){
 						System.out.println(fe);
@@ -86,21 +78,82 @@ class TestKlient{
 			}
 		}
 			
+		gameLobby();
 			
 
 	}
+	public void gameLobby(){
+		int choice;
+		while(lobby){
+			System.out.println("What you wanna do?\n1: Lock game\n2: Change civ\n4: Start game\n0: Leave lobby");
+			choice = sc.nextInt();
+			switch(choice){
+				   case 0:
+					   try{
+						p.leaveGame();
+						lobby = false;
+					   }
+					   catch(FailedException fe){
+						   System.out.println(fe);
+					   }
+					 break;
+				   case 1:
+					 try{
+						 System.out.println("Lock or unlock? (1 for lock, 0 for unlock)");
+						 if(sc.nextInt() == 1){
+							 p.lockGame(true);
+						 }
+						 else{
+							 p.lockGame(false);
+						 }
+					 }
+					 catch(FailedException fe){
+						 System.out.println(fe);
+					 }
+					 break;
 
+				case 2:
+					try{
+						System.out.println("What you wanna change to?");
+						String newCiv = scan.next();
+						p.changeCiv(newCiv);
+					}
+					catch(FailedException fe){
+						System.out.println(fe);
+					}
+					break;
+				case 4:
+					try{
+						p.startGame();
+						lobby = false;
+					}
+					catch(FailedException fe){
+						System.out.println(fe);
+					}
+					return;
+			}
+		}
+		mainMenu(name, port);
+	}
 
 	public void inGame(){
 		int what;
 		Result returned;
+		boolean continuous = true;
 
-		 while(true){
-				System.out.println("What you wanna do?\n1: list unitst\n2: move unit\n3: end turn\n0:quit");
+		 while(continuous){
+				System.out.println("What you wanna do?\n1: list units\n2: move unit\n3: end turn\n4: attack\n5: Build unit\n6: Build city\n0: leave game");
 			 what = sc.nextInt();
 			    switch(what){
 				   case 0:
-					 System.exit(0);
+					   try{
+						p.leaveGame();
+						continuous = false;
+					   }
+					   catch(FailedException fe){
+						   System.out.println(fe);
+					   }
+					 break;
 					
 				    case 1:
 				    //	try{
@@ -112,19 +165,79 @@ class TestKlient{
 					break;
 				    case 2:
 				    	try{
+						System.out.println("First starting x and y.");
 					    int xMove = sc.nextInt();
 					    int yMove = sc.nextInt();
+						System.out.println("Then the next tile x and y.");
+					    int xMoveTo = sc.nextInt();
+					    int yMoveTo = sc.nextInt();
+
 					   ArrayList<Integer> movement =  new ArrayList<Integer>();
 					   movement.add(xMove);
 					   movement.add(yMove);
+					   movement.add(xMoveTo);
+					   movement.add(yMoveTo);
 					    p.moveUnit(movement);
 					}
 					catch(FailedException fe){
 						System.out.println(fe);
 					}
 					break;
+
+				    case 3:
+					try{
+						p.endTurn();
+					}
+					catch(FailedException fe){
+						System.out.println(fe);
+					}
+					break;
+				    case 4:
+					try{
+						System.out.println("Attacker position X:");
+						int attX = sc.nextInt();
+						System.out.println("Attacker position Y:");
+						int attY = sc.nextInt();
+						System.out.println("Defender position X:");
+						int defX = sc.nextInt();
+						System.out.println("Defender position Y:");
+						int defY = sc.nextInt();
+
+						returned = p.combatRequest(attX, attY, defX, defY);
+						System.out.println("The attacker has " + returned.getAttackerLeft() + " manpower left.\nThe defender has " + returned.getDefenderLeft() + " manpower left");
+					}
+					catch(FailedException fe){
+						System.out.println(fe);
+					}
+					break;
+				case 5:
+					try{
+						System.out.println("Where is the unit built? (first x then y)");
+						int unitX = sc.nextInt();
+						int unitY = sc.nextInt();
+						System.out.println("What kind of unit is it?");
+						String unitType = scan.next();
+						p.madeUnit(unitX, unitY, unitType);
+					}
+					catch(FailedException fe){
+						System.out.println(fe);
+					}
+					break;
+				case 6:
+					try{
+						System.out.println("Where is the city built? (first x then y)");
+						int cityX = sc.nextInt();
+						int cityY = sc.nextInt();
+						System.out.println("Name of city?");
+						String cityName = scan.next();
+						p.builtCity(cityX, cityY, cityName);
+					}
+					catch(FailedException fe){
+						System.out.println(fe);
+					}
 			    }
 			 }
+		 mainMenu(name, port);
 
 	}
 
@@ -166,7 +279,7 @@ class TestKlient{
 
 		public void gameStarted(Result res){
 			System.out.println(res.getMap());
-			loop = false;
+			lobby = false;
 			int numberOfTiles = res.getNumberTiles();
 			for(int i=0; i<numberOfTiles; i++){
 				int tileXValue = res.getTileX(i);

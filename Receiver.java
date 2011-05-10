@@ -29,7 +29,7 @@ public class Receiver implements Runnable
 	{
 		while(getPacket() == null){}
 		Result toReturn = packet;
-        setPacket(null);
+       		setPacket(null);
 		if(!toReturn.getOk()){
 			throw new FailedException(toReturn.getRequestFail(), toReturn.getFailMsg());
 		}
