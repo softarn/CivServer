@@ -87,19 +87,13 @@ handle_call(stop, _From, State) ->
 % Returns the update game record
 handle_call({finished_turn, Player}, _From, Game) ->
    [Current | Rest] = Game#game.players,
-   case Current =:= Player of
-       true ->
-	   io:format("Current == Player");
-       false ->
-	   io:format("finished turn tog ut felaktig person! Current != player!")
-   end,
+
    case length(Game#game.players) of %Sätt aktuell spelare sist i listan
        1 -> 
 	   UpdatedPlayers = [Current]; 
        _ ->
 	   UpdatedPlayers = Rest ++ [Current]
    end, 
-   io:format("Updatedplayers from gameserv~p~n", [UpdatedPlayers]),
    UpdatedGame = Game#game{players = UpdatedPlayers},
    change_turn(UpdatedGame), %Nästa spelares tur
    {reply, UpdatedGame, UpdatedGame};
@@ -200,7 +194,8 @@ change_turn(Game) ->
     [First | _Rest] = Game#game.players,
     FSM = First#player.fsm_pid,
     ?P_HANDLER:sendMsg(First#player.socket, {17, [Game#game.tilemap]}), %It's your turn
-    ?P_FSM:enter_turn(FSM, Game).
+    ?P_FSM:enter_turn(FSM, Game),
+    io:format("It's now ~p's turn", [First#player.name]).
 
 % Updates the main server,
 % Broadcasts the "Game Session Information" packet to all players in the game
@@ -223,7 +218,8 @@ broadcastMsg(Game, Type) ->
 	start_game ->
 	    Fun = fun(X) -> 
 		    Socket = X#player.socket,
-		    ?P_HANDLER:sendMsg(Socket, {14, [Game#game.map, Game#game.tilemap]}) % Start game answer
+		    ?P_HANDLER:sendMsg(Socket, {14, [Game#game.map, Game#game.tilemap]}), % Start game answer
+		    io:format("Skickade kartan till ~p~n", [X#player.name])
 	    end,
 	    lists:foreach(Fun, Players);
 

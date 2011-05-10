@@ -102,29 +102,29 @@ readElement(Socket, "Column") -> % Lista av Column
 
 
 sendHeader(Socket, Header) ->
-    gen_tcp:send(Socket, <<Header?HEADER>>),
-    io:format("SendHeader sent: "),
-    io:format("~p\n", [Header]).
+    gen_tcp:send(Socket, <<Header?HEADER>>).
+    %io:format("SendHeader sent: "),
+    %io:format("~p\n", [Header]).
 
 sendString(Socket, List) ->
     NewList = List ++ "\0",
-    gen_tcp:send(Socket, NewList),
-    io:format("SendString sent: "),
-    io:format("~p\n", [NewList]).
+    gen_tcp:send(Socket, NewList).
+    %io:format("SendString sent: "),
+    %io:format("~p\n", [NewList]).
 
 sendPlayer(Socket, {Name, Civ}) ->
     sendString(Socket, Name),
     sendString(Socket, Civ).
 
 sendInteger(Socket, Int) ->
-    gen_tcp:send(Socket, <<Int?INTEGER>>),
-    io:format("SendInteger sent: "),
-    io:format("~p\n", [Int]).
+    gen_tcp:send(Socket, <<Int?INTEGER>>).
+    %io:format("SendInteger sent: "),
+    %io:format("~p\n", [Int]).
 
 sendBoolean(Socket, Bool) ->
-    gen_tcp:send(Socket, <<Bool?BOOLEAN>>),
-    io:format("SendBoolean sent: "),
-    io:format("~p\n", [Bool]).
+    gen_tcp:send(Socket, <<Bool?BOOLEAN>>).
+    %io:format("SendBoolean sent: "),
+    %io:format("~p\n", [Bool]).
 
 
 sendList(Socket, ElemType, List) ->
@@ -148,9 +148,9 @@ sendList(Socket, ElemType, List) ->
 	    [sendUnit(Socket, X) || X <- List];
 	_ ->
 	    io:format("Invalid ElemType in function sendList!")
-    end,       
-    io:format("SendList sent: "),
-    io:format("~p\n", [List]).
+    end.      
+    %io:format("SendList sent a list:~n").
+    %io:format("~p\n", [List]).
 
 sendTile(Socket, Tile) ->
     sendPosition(Socket, Tile#tile.position),
