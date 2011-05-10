@@ -27,8 +27,17 @@ public class Receiver implements Runnable
 
 	public Result getResult() throws FailedException
 	{
-		while(getPacket() == null){}
-		Result toReturn = packet;
+		while(getPacket() == null)
+		{
+			try
+			{
+				Thread.sleep(100);
+			}
+			catch(Throwable t){}
+
+		//	System.out.println("getResult()");
+		}
+		Result toReturn = getPacket();
        		setPacket(null);
 		if(!toReturn.getOk()){
 			throw new FailedException(toReturn.getRequestFail(), toReturn.getFailMsg());
@@ -62,11 +71,22 @@ public class Receiver implements Runnable
 	// Puts what it gets into an object of the Result class, which is then returned.
 	private void receive()
 	{
-		while(getPacket() != null){}
+		while(getPacket() != null)
+		{
+			try
+			{
+				Thread.sleep(100);
+			}
+			catch(Throwable t){}
+
+		//	System.out.println("receive()");
+		}
 		Result toReturn = new Result();
 		try
 		{
+		//	System.out.println("Waiting for header.");
 			int header = m_inStream.read();		// First the header.
+		//	System.out.println("Header: " + header);
 
 			// Header 3, welcome to the real world.
 			if(header == 3)

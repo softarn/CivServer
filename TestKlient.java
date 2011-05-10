@@ -4,11 +4,12 @@ class TestKlient{
 	String name, ip = "chylis.dyndns-at-work.com";//"softarn.mine.nu";
 	Proxy p;
 	int port = 1234;
-	boolean loop = true, lobby = true;
+	boolean loop = true, lobby = true, inGame = false;
 	Scanner sc = new Scanner(System.in);
 	Scanner scan = new Scanner(System.in);
 
 	public TestKlient(String name, int port){
+		p = new Proxy(ip, port, new MyPackLyss());
 		mainMenu(name,  port);
 	}
 
@@ -17,7 +18,6 @@ class TestKlient{
         this.name = name;
         this.port = port;
 
-		p = new Proxy(ip, port, new MyPackLyss());
 
 		Result returned;
 		
@@ -126,13 +126,20 @@ class TestKlient{
 					try{
 						p.startGame();
 						lobby = false;
+						inGame = true;
 					}
 					catch(FailedException fe){
 						System.out.println(fe);
 					}
-					return;
+					break;
+			}
+
+			if(inGame){
+				lobby = false;
+				inGame();
 			}
 		}
+		loop = true;
 		mainMenu(name, port);
 	}
 
@@ -217,7 +224,7 @@ class TestKlient{
 						int unitY = sc.nextInt();
 						System.out.println("What kind of unit is it?");
 						String unitType = scan.next();
-						p.madeUnit(unitX, unitY, unitType);
+						p.madeUnit(unitX, unitY, name, unitType, 100);
 					}
 					catch(FailedException fe){
 						System.out.println(fe);
@@ -237,6 +244,7 @@ class TestKlient{
 					}
 			    }
 			 }
+		 loop = true;
 		 mainMenu(name, port);
 
 	}
@@ -266,7 +274,7 @@ class TestKlient{
 		}
 
 		public void newTurn(Result res){
-			System.out.println(res.getSessions());
+			System.out.println("It's your turn now!");
 		}
 
 		public void lobbyUpdated(Result res){
@@ -284,26 +292,26 @@ class TestKlient{
 			for(int i=0; i<numberOfTiles; i++){
 				int tileXValue = res.getTileX(i);
 				int tileYValue = res.getTileY(i);
-			if(res.existUnit(i)){
-				String theOwner = res.getUnitOwner(i);
-				String theType = res.getUnitType(i);
-				System.out.println(theOwner + " " + theType + " x:" + tileXValue+ "y: "+ tileYValue);
-				int manPowerLeft = res.getUnitManPower(i);
-			}
-			if(res.existCity(i)){
-				String theOwner = res.getCityOwner(i);
-				String theName = res.getCityName(i);
-				List<String> buildings = res.getCityBuildings(i);
-				int amountCityUnits = res.getAmountCityUnits(i);
-				for(int j=0; j<amountCityUnits; j++){
-					String cityUnitOwner = res.getCityUnitOwner(i, j);
-					String cityUnitType = res.getCityUnitType(i, j);
-					int cityUnitManpower = res.getCityUnitManPower(i, j);
+				if(res.existUnit(i)){
+					String theOwner = res.getUnitOwner(i);
+					String theType = res.getUnitType(i);
+					System.out.println(theOwner + " " + theType + " x:" + tileXValue+ "y: "+ tileYValue);
+					int manPowerLeft = res.getUnitManPower(i);
 				}
+				if(res.existCity(i)){
+					String theOwner = res.getCityOwner(i);
+					String theName = res.getCityName(i);
+					List<String> buildings = res.getCityBuildings(i);
+					int amountCityUnits = res.getAmountCityUnits(i);
+					for(int j=0; j<amountCityUnits; j++){
+						String cityUnitOwner = res.getCityUnitOwner(i, j);
+						String cityUnitType = res.getCityUnitType(i, j);
+						int cityUnitManpower = res.getCityUnitManPower(i, j);
+					}
+				}
+				String improvement = res.getImprovement(i);
 			}
-		String improvement = res.getImprovement(i);
-		}
-		inGame();
+			inGame = true;
 		}
 
 		public void chatMessageReceived(Result res){
