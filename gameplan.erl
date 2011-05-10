@@ -48,15 +48,16 @@ create_unit(Map, {X, Y}, UnitType, Owner) -> %Adds a unit if the tile is vacant 
 	    NewTile = OldTile#tile{unit=NewUnit},
 	    update_tile(Map, NewTile, X, Y);
 	_ ->
-	    {error, occupied}    
+	    {error, "Occupied"}    
     end.
 
+%remove_unit(
 remove_unit(Map, X, Y) ->
     Tile = get_tile(Map, X, Y),
     NewTile = Tile#tile{unit = null},
     update_tile(Map, NewTile, X, Y).
 
-add_unit(Map,Unit, X, Y) ->
+add_unit(Map, Unit, X, Y) ->
     Tile = get_tile(Map, X, Y),
     case get_unit(Map, X, Y) of
 	null ->
