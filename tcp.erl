@@ -48,7 +48,6 @@ readList(Socket, ElemType) ->
 
 readList(_, 0, _, List) ->
     lists:reverse(List);
-
 readList(Socket, NumberOfElements, ElemType, List) ->
     Element = readElement(Socket, ElemType),
     readList(Socket, NumberOfElements-1, ElemType, [Element|List]).

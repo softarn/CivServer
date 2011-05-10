@@ -5,24 +5,24 @@
 
 create_unit(UnitType, Owner) ->
     case UnitType of
-	"Catapult" ->	#unit{str="Catapult",owner=Owner,name=catapult,mp=100};
-	"Trebuchet" ->	#unit{str="Trebuchet",owner=Owner,name=trebuchet,mp=100};
-	"Cannon" ->	#unit{str="Cannon",owner=Owner,name=cannon,mp=100};
-	"Archer" ->	#unit{str="Archer",owner=Owner,name=archer,mp=100};
-	"Musketeer" ->	#unit{str="Musketeer",owner=Owner,name=musketeer,mp=100};
+	"Catapult" ->	#unit{str="Catapult",	owner=Owner,	name=catapult,	mp=100};
+	"Trebuchet" ->	#unit{str="Trebuchet",	owner=Owner,	name=trebuchet,	mp=100};
+	"Cannon" ->	#unit{str="Cannon",	owner=Owner,	name=cannon,	mp=100};
+	"Archer" ->	#unit{str="Archer",	owner=Owner,	name=archer,	mp=100};
+	"Musketeer" ->	#unit{str="Musketeer",	owner=Owner,	name=musketeer,	mp=100};
 
-	"Phalanx" ->	#unit{str="Phalanx",owner=Owner,name=phalanx,mp=100};
-	"Legion" ->	#unit{str="Legion",owner=Owner,name=legion,mp=100};
-	"Infantry" ->	#unit{str="Infantry",owner=Owner,name=infantry,mp=100};
-	"Pikeman" ->	#unit{str="Pikeman",owner=Owner,name=pikeman, mp=100};
+	"Phalanx" ->	#unit{str="Phalanx",	owner=Owner,	name=phalanx,	mp=100};
+	"Legion" ->	#unit{str="Legion",	owner=Owner,	name=legion,	mp=100};
+	"Infantry" ->	#unit{str="Infantry",	owner=Owner,	name=infantry,	mp=100};
+	"Pikeman" ->	#unit{str="Pikeman",	owner=Owner,	name=pikeman,	mp=100};
 
-	"Cavalry" ->	#unit{str="Cavalry",owner=Owner,name=cavalry,mp=100};
-	"Knight" ->	#unit{str="Knight",owner=Owner,name=knight,mp=100};
-	"Crusader" ->	#unit{str="Crusader",owner=Owner,name=crusader,mp=100};
+	"Cavalry" ->	#unit{str="Cavalry",	owner=Owner,	name=cavalry,	mp=100};
+	"Knight" ->	#unit{str="Knight",	owner=Owner,	name=knight,	mp=100};
+	"Crusader" ->	#unit{str="Crusader",	owner=Owner,	name=crusader,	mp=100};
 
-	"Trireme" ->	#unit{str="Trireme",owner=Owner,name=trireme,mp=50};
-	"Galley" ->	#unit{str="Galley",owner=Owner,name=galley,mp=250};
-	"Caravel" ->	#unit{str="Caravel",owner=Owner,name=caravel,mp=100};
+	"Trireme" ->	#unit{str="Trireme",	owner=Owner,	name=trireme,	mp=50};
+	"Galley" ->	#unit{str="Galley",	owner=Owner,	name=galley,	mp=250};
+	"Caravel" ->	#unit{str="Caravel",	owner=Owner,	name=caravel,	mp=100};
 	_-> {error, invalid_unit}
     end.
 
