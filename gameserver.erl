@@ -179,7 +179,7 @@ starting_game(Game) ->
 
 
 % Arguments: The current game-record,
-% Takes the first player from the playerlist and changes its current FSM-state to "game_turn".			 %SKICKA ITS YOUR TURN???
+% Takes the first player from the playerlist and changes its current FSM-state to "game_turn".
 change_turn(Game) ->
     [First | _Rest] = Game#game.players,
     FSM = First#player.fsm_pid,

@@ -157,7 +157,7 @@ game_turn({Header, List}, {Player, Game}) -> %GLÖM EJ ATT UPPDATERA GAME i bör
     case Header of
 
 	15 -> %Move request
-	    PositionList = [List],
+	    [PositionList] = List,
 	    case ?GAMESRV:move_unit(Game#game.game_pid, PositionList) of
 		{error, _Reason} ->
 		    ?P_HANDLER:sendFailMsg(Player#player.socket, 6, Header), % FailPacket "Invalid move"
