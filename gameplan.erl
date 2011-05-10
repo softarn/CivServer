@@ -93,7 +93,8 @@ add_pos(UMap, X, Y, OrigSize) ->
     UpdatedUMap = setelement(X, UMap, UpdatedRow),
     add_pos(UpdatedUMap, X, Y-1, OrigSize). 
 
-
+% Arguments: Next position in the list, The current game
+% Checks if there is a unit at the starting position and returns {error, Reason} if there isnt, else returns {ok, UpdatedGame}
 make_move([{position, X, Y} | Tail], Game) ->
     case get_unit(Game#game.tilemap, X, Y) of
 	null ->
@@ -102,7 +103,12 @@ make_move([{position, X, Y} | Tail], Game) ->
 	    make_move(Tail, Game, Unit, {startpos, X, Y})
     end.
 
+% Arguments: [Ending position|Rest of pos], Current game, Unit to move, Starting pos
+% Checks if the positions are valid
+% if they are, places the unit on the requested ending position, removes the unit from the start position and returns the updated game record
+% else returns {error, Reason}
 make_move([{position, _EX, _EY}|Tail], Game, Unit, Start) when length(Tail) =/= 0 ->
+    %%DONT FORGET TO CHECK IF TILE IS OCCUPIED, IF TILE IS WATER ETC...
     make_move(Tail, Unit, Game, Start);
 make_move([{position, EX, EY}], Game, Unit, {startpos, SX, SY}) ->
     Unitmap = Game#game.tilemap,
