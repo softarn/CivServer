@@ -206,8 +206,7 @@ broadcastMsg(Game, Type) ->
 	start_game ->
 	    Fun = fun(X) -> 
 		    Socket = X#player.socket,
-		    TileList = lists:flatten(?GAMEPLAN:tuplemap_to_listmap(Game#game.tilemap)), %Gör om tuplemappen till en lista och skicka
-		    ?P_HANDLER:sendMsg(Socket, {14, [Game#game.map, TileList]}) % Start game answer
+		    ?P_HANDLER:sendMsg(Socket, {14, [Game#game.map, Game#game.tilemap]}) % Start game answer
 	    end,
 	    lists:foreach(Fun, Players);
 

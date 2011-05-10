@@ -98,13 +98,15 @@ sendMsg(Socket, {Header, List}) ->
 	    ?TCP:sendBoolean(Socket, Locked);				
 
 	14 -> %Start game answer, implement later
-	    [Map, TileList] = List,
+	    [Map, TL] = List,
+	    TileList = lists:flatten(?GAMEPLAN:tuplemap_to_listmap(TL)), %Gör om tuplemappen till en lista och skicka
 	    ?TCP:sendHeader(Socket, Header),
 	    ?TCP:sendList(Socket, "Column", Map),
 	    ?TCP:sendList(Socket, "Tile", TileList);
 
 	17 -> % It's your turn
-	    [TileList] = List,
+	    [TL] = List,
+	    TileList = lists:flatten(?GAMEPLAN:tuplemap_to_listmap(TL)), %Gör om tuplemappen till en lista och skicka
 	    ?TCP:sendHeader(Socket, 17), %It's your turn
 	    ?TCP:sendList(Socket, "Tile", TileList);
 	
