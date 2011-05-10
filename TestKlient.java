@@ -3,19 +3,18 @@ import java.util.*;
 class TestKlient{
 	String name, ip = "130.229.157.246";
 	Proxy p;
-	int port;
+	int port = 1234;
 	boolean loop = true;
 	Scanner sc = new Scanner(System.in);
 	Scanner scan = new Scanner(System.in);
 
-	public TestKlient(String name, String ip, int port){
-		mainMenu(name, ip, port);
+	public TestKlient(String name, int port){
+		mainMenu(name,  port);
 	}
 
-	public void mainMenu(String name, String ip, int port){
+	public void mainMenu(String name, int port){
 
         this.name = name;
-        this.ip = ip;
         this.port = port;
 
 		p = new Proxy(ip, port, new MyPackLyss());
@@ -104,9 +103,21 @@ class TestKlient{
 					 System.exit(0);
 					
 				    case 1:
+				    //	try{
+					        System.out.println("inte implementerat");  
+				//	}
+				//	catch(FailedException fe){
+				//		System.out.println(fe);
+				//	}
+					break;
+				    case 2:
 				    	try{
-					        returned = p.connect(name);
-					        System.out.println(returned.getOk());  
+					    int xMove = sc.nextInt();
+					    int yMove = sc.nextInt();
+					   ArrayList<Integer> movement =  new ArrayList<Integer>();
+					   movement.add(xMove);
+					   movement.add(yMove);
+					    p.moveUnit(movement);
 					}
 					catch(FailedException fe){
 						System.out.println(fe);
@@ -133,7 +144,7 @@ class TestKlient{
 
 	public static void main(String [] args){
         //Name, ip, port
-		TestKlient flum = new TestKlient(args[0], args[1], Integer.parseInt(args[2]));
+		TestKlient flum = new TestKlient(args[0], Integer.parseInt(args[1]));
 	}
 
 	private class MyPackLyss implements PacketListener{
@@ -179,6 +190,7 @@ class TestKlient{
 			}
 		String improvement = res.getImprovement(i);
 		}
+		inGame();
 		}
 
 		public void chatMessageReceived(Result res){
