@@ -12,19 +12,21 @@ make_gameplan(Size, Game) ->
     Players = Game#game.players,
     TerrainMatrix = ?TERGEN:generate(Size, Size),
     UnitMatrix = erlang:make_tuple(Size, erlang:make_tuple(Size, #tile{})),
+
     UpdUnitMatrix = add_pos(UnitMatrix, Size, Size, Size),
     NumberOfPlayers = length(Game#game.players),
+
     StartPos = ?START_POS:get_placement(NumberOfPlayers, TerrainMatrix),
     UpdatedUnitMatrix = assign_pos(Players, StartPos, UpdUnitMatrix),
     Game#game{map = TerrainMatrix, tilemap = UpdatedUnitMatrix}. 
-    
+
 % Arguments: List of Players to be assinged a starting position, List of positions {X, Y}, The Unit-map to be updated with units at starting positions
 % Adds a unit (currently a Knight) on the positions, one unit for each player
 % Returns the updated unit-map
 assign_pos([], [], UMap) ->
     UMap;
 assign_pos([Player|PlayerRest], [Pos|PosRest], UMap) ->
-    UpdatedUMap = create_unit(UMap, Pos, "Knight", Player#player.name),
+    {ok, UpdatedUMap} = create_unit(UMap, Pos, "Knight", Player#player.name),
     assign_pos(PlayerRest, PosRest, UpdatedUMap).
 
 % Arguments: Map to be updated, Tile to be inserted, Position of the tile to be replaced
@@ -44,32 +46,57 @@ create_unit(Map, {X, Y}, UnitType, Owner) -> %Adds a unit if the tile is vacant 
     case get_unit(Map, X, Y) of
 	null ->
 	    NewUnit = ?U_HANDLER:create_unit(UnitType, Owner),
-	    OldTile = get_tile(Map, X, Y),
-	    NewTile = OldTile#tile{unit=NewUnit},
-	    update_tile(Map, NewTile, X, Y);
+	    case get_tile(Map, X, Y) of
+		{ok, OldTile} ->
+		    NewTile = OldTile#tile{unit=NewUnit},
+		    {ok, update_tile(Map, NewTile, X, Y)};
+		{error, Reason} ->
+		    {error, Reason}
+	    end;
 	_ ->
 	    {error, occupied}    
     end.
-
+% Arguments: The map in which to remove a unit, Pos of the tile
+% Removes a unit from the tile at the given position
+% Returns the updated unit map
 remove_unit(Map, X, Y) ->
-    Tile = get_tile(Map, X, Y),
-    NewTile = Tile#tile{unit = null},
-    update_tile(Map, NewTile, X, Y).
-
-add_unit(Map,Unit, X, Y) ->
-    Tile = get_tile(Map, X, Y),
-    case get_unit(Map, X, Y) of
-	null ->
-	    NewTile = Tile#tile{unit=Unit},
+    case get_tile(Map, X, Y) of
+	{ok, Tile} ->
+	    NewTile = Tile#tile{unit = null},
 	    {ok, update_tile(Map, NewTile, X, Y)};
-	_ ->
-	    {error, "Already a unit on tile"}
+	{error, Reason} ->
+	    {error, Reason}
     end.
 
+% Arguments: Map, Unit to be added, position
+% Adds a unit to the position if the position is vacant, returns {ok, Updated-unit-map}
+% If the position is occupied - returns {error, "Already a unit on tile"}
+add_unit(Map,Unit, X, Y) ->
+    case get_tile(Map, X, Y) of
+	{ok, Tile} ->
+	    case get_unit(Map, X, Y) of
+		null ->
+		    NewTile = Tile#tile{unit=Unit},
+		    {ok, update_tile(Map, NewTile, X, Y)};
+		_ ->
+		    {error, "Already a unit on tile"}
+	    end;
+	{error, Reason} ->
+	    {error, Reason}
+    end.
+
+
 % Arguments: The map to extract the tile from, Position of the tile to be extracted
-% Fetches the tile at position X,Y
-get_tile(Map, X, Y) -> %Returns a tile
-    element(Y, element(X, Map)).
+% Fetches the tile at position X,Y if it is in the map, else returns {error, Reason}
+%Returns {ok, Tile}
+get_tile(Map, X, Y) ->
+    if 
+	(X > size(Map)) or (Y > size(element(1, Map))) or
+	(X < 1) or (Y < 1)		->
+	    {error, "Out of bounds"};
+	true -> %else..
+	    {ok, element(Y, element(X, Map))}
+    end.
 
 %Returns the unit on the tile at position X,Y or null if there is no unit
 get_unit(Map, X, Y) -> 
@@ -77,7 +104,7 @@ get_unit(Map, X, Y) ->
     Tile#tile.unit.
 
 tuplemap_to_listmap(Tuple) ->
-	[tuple_to_list(Column)|| Column <- tuple_to_list(Tuple)].
+    [tuple_to_list(Column)|| Column <- tuple_to_list(Tuple)].
 
 
 % Arguments: UnitMap to update positions to, Size of X, Y, and original size of map (same as X and Y)
@@ -112,11 +139,15 @@ make_move([{position, _EX, _EY}|Tail], Game, Unit, Start) when length(Tail) =/= 
     make_move(Tail, Unit, Game, Start);
 make_move([{position, EX, EY}], Game, Unit, {startpos, SX, SY}) ->
     Unitmap = Game#game.tilemap,
-    NewUnitmap = remove_unit(Unitmap, SX, SY),
-    case add_unit(NewUnitmap, Unit, EX, EY) of
-	{ok, Map} -> 
-	    io:format("Moved unit ~p from {~p,~p} to {~p,~p}~n", [Unit#unit.str, SX,SY, EX, EY]),
-	    {ok, Game#game{tilemap = Map}};
-	{error, Reason} -> 
+    case remove_unit(Unitmap, SX, SY) of
+	{ok, NewUnitmap} ->
+	    case add_unit(NewUnitmap, Unit, EX, EY) of
+		{ok, Map} -> 
+		    io:format("Moved unit ~p from {~p,~p} to {~p,~p}~n", [Unit#unit.str, SX,SY, EX, EY]),
+		    {ok, Game#game{tilemap = Map}};
+		{error, Reason} -> 
+		    {error, Reason}
+	    end;
+	{error, Reason} ->
 	    {error, Reason}
     end.

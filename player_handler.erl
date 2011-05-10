@@ -56,6 +56,11 @@ recv(Socket, FSM) ->
 	16 -> % End of turn
 	    [];
 
+	23 -> %Spawned
+	    Pos = ?TCP:readElement(Socket, "Position"),
+	    Unit = ?TCP:readElement(Socket, "Unit"),
+	    [Pos, Unit];
+
 	24 -> %Exit game
 	    []
     end,

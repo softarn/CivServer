@@ -93,7 +93,13 @@ handle_call({finished_turn, Player}, _From, Game) ->
        false ->
 	   io:format("finished turn tog ut felaktig person! Current != player!")
    end,
-   UpdatedPlayers = Rest ++ Current, %Sätt aktuell spelare sist i listan
+   case length(Game#game.players) of %Sätt aktuell spelare sist i listan
+       1 -> 
+	   UpdatedPlayers = [Current]; 
+       _ ->
+	   UpdatedPlayers = Rest ++ [Current]
+   end, 
+   io:format("Updatedplayers from gameserv~p~n", [UpdatedPlayers]),
    UpdatedGame = Game#game{players = UpdatedPlayers},
    change_turn(UpdatedGame), %Nästa spelares tur
    {reply, UpdatedGame, UpdatedGame};
@@ -101,6 +107,15 @@ handle_call({finished_turn, Player}, _From, Game) ->
 handle_call({move_unit, PosList}, _From, Game) ->
     case ?GAMEPLAN:make_move(PosList, Game) of
 	{ok, UpdatedGame} ->
+	    {reply, {ok, UpdatedGame}, UpdatedGame};
+	{error, Reason} ->
+	    {reply, {error, Reason}, Game}
+    end;
+
+handle_call({create_unit, {X, Y}, UnitType, Owner}, _From, Game) ->
+    case ?GAMEPLAN:create_unit(Game#game.tilemap, {X, Y}, UnitType, Owner) of
+	{ok, UpdatedUnitMap} ->
+	    UpdatedGame = Game#game{tilemap = UpdatedUnitMap},
 	    {reply, {ok, UpdatedGame}, UpdatedGame};
 	{error, Reason} ->
 	    {reply, {error, Reason}, Game}
@@ -157,6 +172,7 @@ is_locked(Game_pid) -> gen_server:call(Game_pid, is_locked).
 stop(Game_pid) -> gen_server:call(Game_pid, stop).
 finished_turn(Game_pid, Player) -> gen_server:call(Game_pid, {finished_turn, Player}).
 move_unit(Game_pid, PosList) -> gen_server:call(Game_pid, {move_unit, PosList}).
+create_unit(Game_pid, {X,Y}, UnitType, Owner) -> gen_server:call(Game_pid, {create_unit, {X, Y}, UnitType, Owner}).
 player_leave(Game_pid, Player) -> gen_server:cast(Game_pid, {player_leave, Player}).
 start_game(Game_pid, MapSize) -> gen_server:cast(Game_pid, {start_game, MapSize}).
 
@@ -183,6 +199,7 @@ starting_game(Game) ->
 change_turn(Game) ->
     [First | _Rest] = Game#game.players,
     FSM = First#player.fsm_pid,
+    ?P_HANDLER:sendMsg(First#player.socket, {17, [Game#game.tilemap]}), %It's your turn
     ?P_FSM:enter_turn(FSM, Game).
 
 % Updates the main server,
