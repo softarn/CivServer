@@ -114,6 +114,9 @@ make_move([{position, EX, EY}], Game, Unit, {startpos, SX, SY}) ->
     Unitmap = Game#game.tilemap,
     NewUnitmap = remove_unit(Unitmap, SX, SY),
     case add_unit(NewUnitmap, Unit, EX, EY) of
-	{ok, Map} -> {ok, Game#game{tilemap = Map}};
-	{error, Reason} -> {error, Reason}
+	{ok, Map} -> 
+	    io:format("Moved unit ~p from {~p,~p} to {~p,~p}~n", [Unit#unit.str, SX,SY, EX, EY]),
+	    {ok, Game#game{tilemap = Map}};
+	{error, Reason} -> 
+	    {error, Reason}
     end.
