@@ -216,7 +216,7 @@ getFailMsg(FailureType) ->
 	5 ->
 	    Msg = "Occupied tile";
 	6 ->
-	    Msg = "No movement left";
+	    Msg = "Invalid move";
 	7 ->
 	    Msg = "Invalid tile";
 	8 ->

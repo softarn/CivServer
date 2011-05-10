@@ -111,7 +111,7 @@ terminate(_Reason, _State) ->
 
 %% If the leaving player is host and game is in game_lobby:
     %Removes the player that left from the game,
-    %Broadcasts Packet 25 (Game closed) to the remaining players
+    %Broadcasts Packet 25 (Game closed) to the remaining players and puts their state into "server_lobby"
     %Tells the main server to remove this game
     %Kills itself
 %%Else
