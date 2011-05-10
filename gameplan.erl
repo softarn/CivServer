@@ -80,3 +80,21 @@ add_pos(UMap, X, Y, OrigSize) ->
     add_pos(UpdatedUMap, X, Y-1, OrigSize). 
 
 
+make_move([{position, X, Y} | Tail], Game) ->
+    case get_unit(Game#game.tilemap, X, Y) of
+	null ->
+	    {error, "No unit at starting position"};
+	Unit ->
+	    check_move(Tail, Unit, Game, {startpos, X, Y})
+    end.
+
+check_move([{position, EX, EY}], Unit, Game, {startpos, SX, SY}) ->
+    Unitmap = Game#game.tilemap,
+    OldTile = get_tile(Unitmap, SX, SY},
+    UpdOldTile = OldTile#tile{unit = null},
+    update_tile(Unitmap, UpdOldTile, SX, SY),
+
+    EndTile = get_tile(Unitmap, EX, EY),
+    NewTile = EndTile#tile{unit = Unit},
+    update_tile(Unitmap, UpdNewTile, SX, SY);
+    

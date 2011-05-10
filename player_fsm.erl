@@ -157,9 +157,13 @@ game_turn({Header, List}, {Player, Game}) -> %GLÖM EJ ATT UPPDATERA GAME i bör
     case Header of
 
 	15 -> %Move request
-	    Positions = [List],
-	    %?GAMESRV:move_unit(Game#game.game_pid, Positions),
-	    {next_state, game_turn, {Player, Game}};
+	    PositionList = [List],
+	    case ?GAMESRV:move_unit(Game#game.game_pid, PositionList) of
+		{error, Reason} ->
+		    skickafailmsg;
+		{ok, UpdatedGame} ->
+		    {next_state, game_turn, {Player, UpdatedGame}}
+	    end;
 	16 -> %End of turn
 	    ?P_HANDLER:sendMsg(Player#player.socket, {1, [Header]}), %Confirm'd
 	    ?GAMESRV:finished_turn(Game#game.game_pid, Player),

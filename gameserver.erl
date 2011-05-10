@@ -98,6 +98,14 @@ handle_call({finished_turn, Player}, _From, Game) ->
    change_turn(UpdatedGame), %Nästa spelares tur
    {reply, UpdatedGame, UpdatedGame}.
 
+handle_call({move_unit, PosList}, _From, Game) ->
+    case ?GAMEPLAN:make_move(PosList, Game) of
+	{ok, UpdatedGame} ->
+	    {reply, {ok, UpdatedGame}, UpdatedGame};
+	{error, Reason} ->
+	    {reply, {error, Reason}, Game}
+    end.
+
 terminate(Reason, State) ->
     ok.
 
@@ -148,6 +156,7 @@ player_join(Game_pid, Player) -> gen_server:call(Game_pid, {player_join, Player}
 is_locked(Game_pid) -> gen_server:call(Game_pid, is_locked).
 stop(Game_pid) -> gen_server:call(Game_pid, stop).
 finished_turn(Game_pid, Player) -> gen_server:call(Game_pid, {finished_turn, Player}).
+move_unit(Game_pid, PosList) -> gen_server:call(Game_pid, {move_unit, PosList}).
 player_leave(Game_pid, Player) -> gen_server:cast(Game_pid, {player_leave, Player}).
 start_game(Game_pid, MapSize) -> gen_server:cast(Game_pid, {start_game, MapSize}).
 
