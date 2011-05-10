@@ -96,7 +96,7 @@ handle_call({finished_turn, Player}, _From, Game) ->
    UpdatedPlayers = Rest ++ Current, %Sätt aktuell spelare sist i listan
    UpdatedGame = Game#game{players = UpdatedPlayers},
    change_turn(UpdatedGame), %Nästa spelares tur
-   {reply, UpdatedGame, UpdatedGame}.
+   {reply, UpdatedGame, UpdatedGame};
 
 handle_call({move_unit, PosList}, _From, Game) ->
     case ?GAMEPLAN:make_move(PosList, Game) of
@@ -106,7 +106,7 @@ handle_call({move_unit, PosList}, _From, Game) ->
 	    {reply, {error, Reason}, Game}
     end.
 
-terminate(Reason, State) ->
+terminate(_Reason, _State) ->
     ok.
 
 %% If the leaving player is host and game is in game_lobby:

@@ -143,7 +143,7 @@ game_lobby({Header, List}, {Player, Game}) ->
 
     end. %end case header
 
-game_wait({Header, List}, {Player, Game}) ->
+game_wait({Header, _List}, {Player, Game}) ->
     io:format("INNE I INGAME: ~p~n", [Player#player.name]),
     case Header of
 	_ ->
@@ -159,7 +159,7 @@ game_turn({Header, List}, {Player, Game}) -> %GLÖM EJ ATT UPPDATERA GAME i bör
 	15 -> %Move request
 	    PositionList = [List],
 	    case ?GAMESRV:move_unit(Game#game.game_pid, PositionList) of
-		{error, Reason} ->
+		{error, _Reason} ->
 		    skickafailmsg;
 		{ok, UpdatedGame} ->
 		    {next_state, game_turn, {Player, UpdatedGame}}
@@ -178,7 +178,7 @@ game_turn({Header, List}, {Player, Game}) -> %GLÖM EJ ATT UPPDATERA GAME i bör
     end.
 
 
-handle_event(Msg, StateName, {Player, Game}) ->
+handle_event(Msg, _StateName, {Player, _Game}) ->
     case Msg of
 	{game_wait, UpdatedGame} ->
 	    {next_state, game_wait, {Player, UpdatedGame}};
@@ -190,7 +190,7 @@ handle_event(Msg, StateName, {Player, Game}) ->
 	    {next_state, game_turn, {Player, UpdatedGame}}
     end.
 
-terminate(Reason, StateName, StateData) ->
+terminate(Reason, _StateName, _StateData) ->
     io:format("~p~n", [Reason]).
 
 %Event sending functions

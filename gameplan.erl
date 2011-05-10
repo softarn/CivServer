@@ -27,13 +27,20 @@ assign_pos([Player|PlayerRest], [Pos|PosRest], UMap) ->
     UpdatedUMap = add_unit(UMap, Pos, "Knight", Player#player.name),
     assign_pos(PlayerRest, PosRest, UpdatedUMap).
 
+% Arguments: Map to be updated, Tile to be inserted, Position of the tile to be replaced
+% Replaces the tile at position X,Y with the new tile
+% Returns the updated unit-map
+update_tile(Map, Tile, X, Y) -> %Returns a updated version of the map
+    UpdatedRow = setelement(Y, element(X, Map), Tile),
+    setelement(X, Map, UpdatedRow).
+
 % Arguments: Map to add unit to, Position where to add unit, Type of the unit, Owner of the unit,
 % If the Position is vacant:
 %   Creates a new tile with the unit and replaces the old tile,
 %   Returns the updated unit-map
 % Else
 %   Returns {error, occupied}
-add_unit(Map, {X, Y}, UnitType, Owner) -> %Adds a unit if the tile is vacant and returns a updated map, else returns {error, occupied}.
+create_unit(Map, {X, Y}, UnitType, Owner) -> %Adds a unit if the tile is vacant and returns a updated map, else returns {error, occupied}.
     case get_unit(Map, X, Y) of
 	null ->
 	    NewUnit = ?U_HANDLER:create_unit(UnitType, Owner),
@@ -44,18 +51,20 @@ add_unit(Map, {X, Y}, UnitType, Owner) -> %Adds a unit if the tile is vacant and
 	    {error, occupied}    
     end.
 
-
-% Arguments: Map to be updated, Tile to be inserted, Position of the tile to be replaced
-% Replaces the tile at position X,Y with the new tile
-% Returns the updated unit-map
-update_tile(Map, Tile, X, Y) -> %Returns a updated version of the map
-    UpdatedRow = setelement(Y, element(X, Map), Tile),
-    setelement(X, Map, UpdatedRow).
-
 remove_unit(Map, X, Y) ->
     Tile = get_tile(Map, X, Y),
     NewTile = Tile#tile{unit = null},
     update_tile(Map, NewTile, X, Y).
+
+add_unit(Map,Unit, X, Y) ->
+    Tile = get_tile(Map, X, Y),
+    case get_unit(Map, X, Y) of
+	null ->
+	    NewTile = Tile#tile{unit=Unit},
+	    {ok, update_tile(Map, NewTile, X, Y)};
+	_ ->
+	    {error, "Already a unit on tile"}
+    end.
 
 % Arguments: The map to extract the tile from, Position of the tile to be extracted
 % Fetches the tile at position X,Y
@@ -90,16 +99,15 @@ make_move([{position, X, Y} | Tail], Game) ->
 	null ->
 	    {error, "No unit at starting position"};
 	Unit ->
-	    check_move(Tail, Unit, Game, {startpos, X, Y})
+	    make_move(Tail, Game, Unit, {startpos, X, Y})
     end.
 
-check_move([{position, EX, EY}], Unit, Game, {startpos, SX, SY}) ->
+make_move([{position, _EX, _EY}|Tail], Game, Unit, Start) when length(Tail) =/= 0 ->
+    make_move(Tail, Unit, Game, Start);
+make_move([{position, EX, EY}], Game, Unit, {startpos, SX, SY}) ->
     Unitmap = Game#game.tilemap,
-    OldTile = get_tile(Unitmap, SX, SY},
-    UpdOldTile = OldTile#tile{unit = null},
-    update_tile(Unitmap, UpdOldTile, SX, SY),
-
-    EndTile = get_tile(Unitmap, EX, EY),
-    NewTile = EndTile#tile{unit = Unit},
-    update_tile(Unitmap, UpdNewTile, SX, SY);
-    
+    NewUnitmap = remove_unit(Unitmap, SX, SY),
+    case add_unit(NewUnitmap, Unit, EX, EY) of
+	{ok, Map} -> {ok, Game#game{tilemap = Map}};
+	{error, Reason} -> {error, Reason}
+    end.
