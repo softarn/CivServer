@@ -52,6 +52,11 @@ update_tile(Map, Tile, X, Y) -> %Returns a updated version of the map
     UpdatedRow = setelement(Y, element(X, Map), Tile),
     setelement(X, Map, UpdatedRow).
 
+remove_unit(Map, X, Y) ->
+    Tile = get_tile(Map, X, Y),
+    NewTile = Tile#tile{unit = null},
+    update_tile(Map, NewTile, X, Y).
+
 % Arguments: The map to extract the tile from, Position of the tile to be extracted
 % Fetches the tile at position X,Y
 get_tile(Map, X, Y) -> %Returns a tile
