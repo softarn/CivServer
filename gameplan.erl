@@ -54,7 +54,7 @@ create_unit(Map, {X, Y}, UnitType, Owner) -> %Adds a unit if the tile is vacant 
 		    {error, Reason}
 	    end;
 	_ ->
-	    {error, occupied}    
+	    {error, "Occupied"}    
     end.
 % Arguments: The map in which to remove a unit, Pos of the tile
 % Removes a unit from the tile at the given position
