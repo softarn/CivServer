@@ -85,7 +85,7 @@ handle_call(stop, _From, State) ->
 % Takes the first element of the game's playerlist (the current player) and puts it last in the list,
 % Changes the next players state to "game_turn",
 % Returns the update game record
-handle_call({finished_turn, Player}, _From, Game) ->
+handle_call(finished_turn, _From, Game) ->
    [Current | Rest] = Game#game.players,
 
    case length(Game#game.players) of %Sätt aktuell spelare sist i listan
@@ -113,7 +113,16 @@ handle_call({create_unit, {X, Y}, UnitType, Owner}, _From, Game) ->
 	    {reply, {ok, UpdatedGame}, UpdatedGame};
 	{error, Reason} ->
 	    {reply, {error, Reason}, Game}
-    end.
+    end;
+
+handle_call({attack_unit, {AttX, AttY}, {DefX, DefY}}, _From, Game) ->
+	case ?GAMEPLAN:attack_unit(Game#game.tilemap, {AttX, AttY}, {DefX, DefY}) of
+	    {ok, UpdatedUnitMap, {RemAttMp, RemDefMp}} ->
+		UpdatedGame = Game#game{tilemap = UpdatedUnitMap},
+		{reply, {ok, UpdatedGame, {RemAttMp, RemDefMp}}, UpdatedGame};
+	    {error, Reason} ->
+		{reply, {error, Reason}, Game}
+	end.
 
 terminate(_Reason, _State) ->
     ok.
@@ -164,9 +173,10 @@ change_civ(Game_pid, Player) -> gen_server:call(Game_pid, {change_civ, Player}).
 player_join(Game_pid, Player) -> gen_server:call(Game_pid, {player_join, Player}).
 is_locked(Game_pid) -> gen_server:call(Game_pid, is_locked).
 stop(Game_pid) -> gen_server:call(Game_pid, stop).
-finished_turn(Game_pid, Player) -> gen_server:call(Game_pid, {finished_turn, Player}).
+finished_turn(Game_pid) -> gen_server:call(Game_pid, finished_turn).
 move_unit(Game_pid, PosList) -> gen_server:call(Game_pid, {move_unit, PosList}).
 create_unit(Game_pid, {X,Y}, UnitType, Owner) -> gen_server:call(Game_pid, {create_unit, {X, Y}, UnitType, Owner}).
+attack_unit(Game_pid, {AttX, AttY}, {DefX, DefY}) -> gen_server:call(Game_pid, {attack_unit, {AttX, AttY}, {DefX, DefY}}).
 player_leave(Game_pid, Player) -> gen_server:cast(Game_pid, {player_leave, Player}).
 start_game(Game_pid, MapSize) -> gen_server:cast(Game_pid, {start_game, MapSize}).
 

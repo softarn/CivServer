@@ -36,6 +36,24 @@ update_tile(Map, Tile, X, Y) -> %Returns a updated version of the map
     UpdatedRow = setelement(Y, element(X, Map), Tile),
     setelement(X, Map, UpdatedRow).
 
+% Arguments: Map to be updated, Unit to be updated, Pos of unit
+% If unit does not exist returns {error, Reason},
+% Else if Pos of unit is out of bounds returns {error, Reason}
+% Else returns {ok, UpdatedUnitMap} with the new unit at the position
+update_unit(Map, Unit, X, Y) ->
+    case get_unit(Map, X, Y) of
+	null ->
+	    {error, "Invalid tile"};
+	_OldUnit ->
+	    case get_tile(Map, X, Y) of
+		{ok, OldTile} ->
+		    NewTile = OldTile#tile{unit = Unit},
+		    {ok, update_tile(Map, NewTile, X, Y)};
+		{error, Reason} ->
+		    {error, Reason}
+	    end
+    end.
+
 % Arguments: Map to add unit to, Position where to add unit, Type of the unit, Owner of the unit,
 % If the Position is vacant:
 %   Creates a new tile with the unit and replaces the old tile,
@@ -151,3 +169,49 @@ make_move([{position, EX, EY}], Game, Unit, {startpos, SX, SY}) ->
 	{error, Reason} ->
 	    {error, Reason}
     end.
+
+
+% Arguments: Unitmap, AttackPos, DefPos
+% Attacks from Attackpos to Def pos,
+% If an error occurs, such as Positions out of bounds, no units at positions or units out of range(soon to be implemented) - returns {error, Reason}
+% Else - returns {ok, UpdatedUnitMap, {Remaining Attack Manpower, Remaining Defense Manpower}} (e.g {ok, UnitMap, {Int, Int}})
+attack_unit(UnitMap, {AttX, AttY}, {DefX, DefY}) -> %GLÖM EJ RANGEKOLL
+    AttackUnit = get_unit(UnitMap, AttX, AttY),
+    DefUnit = get_unit(UnitMap, DefX, DefY),
+    AttackTile = get_tile(UnitMap, AttX, AttY),
+    DefTile = get_tile(UnitMap, DefX, DefY),
+
+    if 
+	(AttackUnit =:= null) or (DefUnit =:= null) ->
+	    {error, "Invalid tile"};
+	(AttackTile =:= {error, "Out of bounds"}) or (DefTile =:= {error, "Out of bounds"}) ->
+	    {error, "Out of bounds"};
+%get_range({X1,Y1},{X2,Y2})->
+%	Z1 = X1 - Y1,		
+%	Z2 = X2 - Y2,		
+%	erlang:max(erlang:max(dif(X1,X2),dif(Y1,Y2)),dif(Z1,Z2)).
+%dif(X1,X2)->
+%	erlang:max(X1,X2) - erlang:min (X1,X2).
+
+
+	true -> %else
+	    {RemAttackMp, RemDefMp} = ?COMBAT:combat(AttackUnit#unit.name, AttackUnit#unit.mp, DefUnit#unit.name, DefUnit#unit.mp),
+	    if
+		(RemAttackMp =< 0) and (RemDefMp =< 0) ->
+		    {ok, FirstUpdatedUnitMap} = remove_unit(UnitMap, AttX, AttY), 
+		    {ok, SecondUpdatedUnitMap} = remove_unit(FirstUpdatedUnitMap, DefX, DefY),
+		    {ok, SecondUpdatedUnitMap, {RemAttackMp, RemDefMp}};
+		(RemAttackMp =< 0) ->
+		    {ok, UpdatedUnitMap} = remove_unit(UnitMap, AttX, AttY),
+		    {ok, UpdatedUnitMap, {RemAttackMp, RemDefMp}};
+		(RemDefMp =< 0) ->
+		    {ok, UpdatedUnitMap} = remove_unit(UnitMap, DefX, DefY),
+		    {ok, UpdatedUnitMap, {RemAttackMp, RemDefMp}};
+		true -> %else
+		    UpdAttackUnit = AttackUnit#unit{mp = RemAttackMp},
+		    UpdDefUnit = DefUnit#unit{mp = RemDefMp},
+		    {ok, FirstUpdatedUnitMap} = update_unit(UnitMap, UpdAttackUnit, AttX, AttY), 
+		    {ok, SecondUpdatedUnitMap} = update_unit(FirstUpdatedUnitMap, UpdDefUnit, DefX, DefY),
+		    {ok, SecondUpdatedUnitMap, {RemAttackMp, RemDefMp}}
+	    end
+    end.	    

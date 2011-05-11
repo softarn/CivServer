@@ -57,6 +57,11 @@ recv(Socket, FSM) ->
 	16 -> % End of turn
 	    [];
 
+	18 -> %Combat request
+	    AttPos = ?TCP:readElement(Socket, "Position"),
+	    DefPos = ?TCP:readElement(Socket, "Position"),
+	    [AttPos, DefPos];
+
 	23 -> %Spawned
 	    Pos = ?TCP:readElement(Socket, "Position"),
 	    Unit = ?TCP:readElement(Socket, "Unit"),
@@ -115,6 +120,12 @@ sendMsg(Socket, {Header, List}) ->
 	    TileList = lists:flatten(?GAMEPLAN:tuplemap_to_listmap(TL)), %Gör om tuplemappen till en lista och skicka
 	    ?TCP:sendHeader(Socket, 17), %It's your turn
 	    ?TCP:sendList(Socket, "Tile", TileList);
+
+	19 -> %Combat result
+	    [RemAttMp, RemDefMp] = List,
+	    ?TCP:sendHeader(Socket, 19),
+	    ?TCP:sendInteger(Socket, RemAttMp),
+	    ?TCP:sendInteger(Socket, RemDefMp);
 	
 	25 -> % Game Closed
 	    ?TCP:sendHeader(Socket, 25)
