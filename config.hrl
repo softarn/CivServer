@@ -8,6 +8,7 @@
 -define(GAMEPLAN, gameplan).
 -define(START_POS, player_place).
 -define(U_HANDLER, unit_attr).
+-define(COMBAT, combat_eval).
 
 -record(player,{
 	start_pos = null, %{X,Y}
