@@ -144,7 +144,7 @@ game_lobby({Header, List}, {Player, Game}) ->
     end. %end case header
 
 game_wait({Header, _List}, {Player, Game}) ->
-    io:format("INNE I INGAME: ~p~n", [Player#player.name]),
+    io:format("INNE I GAMEWAIT: ~p~n", [Player#player.name]),
     case Header of
 	_ ->
 	    ?P_HANDLER:sendFailMsg(Player#player.socket, -1, Header), % FailPacket "invalid state"
