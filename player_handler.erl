@@ -68,7 +68,11 @@ recv(Socket, FSM) ->
 	    [Pos, Unit];
 
 	24 -> %Exit game
+	    [];
+	
+	_ ->
 	    []
+
     end,
 
     Packet = {Header, RestOfMsg},
