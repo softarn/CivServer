@@ -69,7 +69,7 @@ handle_call({change_civ, UpdatedPlayer}, _From, Game) ->
 % Returns the updated game record
 handle_call({player_join, Player}, _From, Game) ->
     UpdatedGame = Game#game{players = [Player | Game#game.players]}, %
-    io:format("Added player ~p~n", [Player]), %Glöm ej felkontroll ifall player existerar!
+    io:format("Added player ~p~n", [Player#player.name]), %Glöm ej felkontroll ifall player existerar!
     update_game(UpdatedGame),
     {reply, UpdatedGame, UpdatedGame};
 
