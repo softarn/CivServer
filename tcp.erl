@@ -102,9 +102,9 @@ readElement(Socket, "Column") -> % Lista av Column
 
 
 sendHeader(Socket, Header) ->
-    gen_tcp:send(Socket, <<Header?HEADER>>).
-    %io:format("SendHeader sent: "),
-    %io:format("~p\n", [Header]).
+    gen_tcp:send(Socket, <<Header?HEADER>>),
+    io:format("SendHeader sent: "),
+    io:format("~p\n", [Header]).
 
 sendString(Socket, List) ->
     NewList = List ++ "\0",

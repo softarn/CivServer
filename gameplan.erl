@@ -195,7 +195,7 @@ attack_unit(UnitMap, {AttX, AttY}, {DefX, DefY}) -> %GLÖM EJ RANGEKOLL
 
 
 	true -> %else
-	    {RemAttackMp, RemDefMp} = ?COMBAT:combat(AttackUnit#unit.name, AttackUnit#unit.mp, DefUnit#unit.name, DefUnit#unit.mp),
+	    {RemAttackMp, RemDefMp} = ?COMBAT:combat(AttackUnit#unit.str, AttackUnit#unit.mp, DefUnit#unit.str, DefUnit#unit.mp),
 	    if
 		(RemAttackMp =< 0) and (RemDefMp =< 0) ->
 		    {ok, FirstUpdatedUnitMap} = remove_unit(UnitMap, AttX, AttY), 

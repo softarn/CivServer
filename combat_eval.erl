@@ -18,13 +18,15 @@
 -export([combat/4]).
 
 combat(Attacker, AtkMP, Defender, DefMp) ->
-	case element(6, unit_attr:get_attr(list_to_atom(Attacker))) of
+    AttStr = string:to_lower(Attacker),
+    DefStr = string:to_lower(Defender),
+    case element(6, unit_attr:get_attr(list_to_atom(AttStr))) of
 		assault ->
-			assault_combat(list_to_atom(Attacker), AtkMP, list_to_atom(Defender), DefMp);
+		    assault_combat(list_to_atom(AttStr), AtkMP, list_to_atom(DefStr), DefMp);
 		range ->
-			ranged_combat(list_to_atom(Attacker), AtkMP, DefMp);
+			ranged_combat(list_to_atom(AttStr), AtkMP, DefMp);
 		bombardment ->
-			bombard_combat(list_to_atom(Attacker), AtkMP, DefMp)
+			bombard_combat(list_to_atom(AttStr), AtkMP, DefMp)
 	end.
 	
 assault_combat(Atk, AtkMP, Def, DefMP) ->
