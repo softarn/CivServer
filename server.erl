@@ -2,15 +2,15 @@
 -behaviour(gen_server).
 
 -compile(export_all).
--export([start_link/1, init/1]).
+-export([start/1, init/1]).
 -export([add_player/1]).
 
 -include("config.hrl").
 
 %Startup
-start_link(Port) ->
+start(Port) ->
     % 1: Locally registered servername, 2: Callback module, 3: Arguments, 4: Options
-    gen_server:start_link({local, ?SERVER}, ?MODULE, Port, []). 
+    gen_server:start({local, ?SERVER}, ?MODULE, Port, []). 
 init(Port) ->
     spawn(con_handler, start, [Port]),
     {ok, {[], []}}. %LoopData/State (Games, Players)
@@ -49,7 +49,7 @@ handle_call(list_games, _From, {Games, Players}) ->
 		0 ->
 		    G#game.name;
 		_ ->
-		    "#" ++ G#game.name ++ "# Game locked"
+		    G#game.name
 	    end
     end,
     GameList = [FormatName(Game) || Game <- Games, Game#game.current_state =:= game_lobby],
