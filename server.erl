@@ -72,10 +72,10 @@ handle_call({add_player, Player}, _From, {Games, Players}) ->
 
     case lists:any(Pfun, ListOfPlayerNames) of 
 	true ->	   
-	    io:format("Playername already exists ~w~n",[Player]),
+	    io:format("Playername already exists ~p~n",[Player]),
 	    {reply, false, {Games, Players}};
 	false ->	   
-	    io:format("Added player ~w~n", [Player]),
+	    io:format("Added player ~p~n", [Player]),
 	    {reply, true, {Games, [Player|Players]}}
     end;
 

@@ -69,7 +69,7 @@ handle_call({change_civ, UpdatedPlayer}, _From, Game) ->
 % Returns the updated game record
 handle_call({player_join, Player}, _From, Game) ->
     UpdatedGame = Game#game{players = [Player | Game#game.players]}, %
-    io:format("Added player ~w~n", [Player]), %Glöm ej felkontroll ifall player existerar!
+    io:format("Added player ~p~n", [Player]), %Glöm ej felkontroll ifall player existerar!
     update_game(UpdatedGame),
     {reply, UpdatedGame, UpdatedGame};
 
@@ -81,21 +81,11 @@ handle_call(is_locked, _From, Game) ->
 handle_call(stop, _From, State) ->
     {stop, normal, shutdown_ok, State};
 
-% Arguments: The player who finished his/her turn,
 % Takes the first element of the game's playerlist (the current player) and puts it last in the list,
 % Changes the next players state to "game_turn",
 % Returns the update game record
 handle_call(finished_turn, _From, Game) ->
-   [Current | Rest] = Game#game.players,
-
-   case length(Game#game.players) of %Sätt aktuell spelare sist i listan
-       1 -> 
-	   UpdatedPlayers = [Current]; 
-       _ ->
-	   UpdatedPlayers = Rest ++ [Current]
-   end, 
-   UpdatedGame = Game#game{players = UpdatedPlayers},
-   change_turn(UpdatedGame), %Nästa spelares tur
+   UpdatedGame = change_turn(Game), %Nästa spelares tur
    {reply, UpdatedGame, UpdatedGame};
 
 handle_call({move_unit, PosList}, _From, Game) ->
@@ -163,8 +153,8 @@ handle_cast({player_leave, Player}, Game) ->
 handle_cast({start_game, MapSize}, Game) ->
     UpdatedGame = ?GAMEPLAN:make_gameplan(MapSize, Game), % Fixa storleken senare
     UpdatedGame2 = UpdatedGame#game{locked = 1, current_state = in_game}, %Glöm ej att göra t_map till list
-    starting_game(UpdatedGame2),
-    {noreply, UpdatedGame2}.
+    UpdatedGame3 = starting_game(UpdatedGame2),
+    {noreply, UpdatedGame3}.
 
 %Server calls and casts
 list_players(Game_pid) -> gen_server:call(Game_pid, list_players).
@@ -185,7 +175,8 @@ start_game(Game_pid, MapSize) -> gen_server:cast(Game_pid, {start_game, MapSize}
 % Updates the main server with the game-status,
 % broadcasts the "Start game answer" packet to the game's players (this includes sending the terrainmap and unitmap),
 % puts all the game's player's FSM-states into the "game_wait" state
-% puts the first player in the playerlist into the "game_turn" state
+% puts the second first player in the playerlist into the "game_turn" state
+% Returns the updatedgame record (with the updated playerlist from change_turn).
 starting_game(Game) ->
     ?SERVER:update_game(Game),
     broadcastMsg(Game, start_game),
@@ -199,13 +190,26 @@ starting_game(Game) ->
 
 
 % Arguments: The current game-record,
-% Takes the first player from the playerlist and changes its current FSM-state to "game_turn".
+% Puts the head of the playerlist last and updates the game with the new list,
+% Takes the first player from the updated playerlist, sends its your turn and changes its current FSM-state to "game_turn".
+% Returns the updated game record
 change_turn(Game) ->
-    [First | _Rest] = Game#game.players,
-    FSM = First#player.fsm_pid,
-    ?P_HANDLER:sendMsg(First#player.socket, {17, [Game#game.tilemap]}), %It's your turn
+
+   [ToBeLast | Rest] = Game#game.players,
+
+   case length(Game#game.players) of %Sätt aktuell spelare sist i listan
+       1 -> 
+	   UpdatedPlayers = Game#game.players; 
+       _ ->
+	   UpdatedPlayers = Rest ++ [ToBeLast]
+   end, 
+    UpdatedGame = Game#game{players = UpdatedPlayers},
+    ToBeNext = hd(UpdatedPlayers),
+    FSM = ToBeNext#player.fsm_pid,
+    ?P_HANDLER:sendMsg(ToBeNext#player.socket, {17, [Game#game.tilemap]}), %It's your turn
     ?P_FSM:enter_turn(FSM, Game),
-    io:format("It's now ~p's turn", [First#player.name]).
+    io:format("It's now ~p's turn", [ToBeNext#player.name]),
+    UpdatedGame.
 
 % Updates the main server,
 % Broadcasts the "Game Session Information" packet to all players in the game
