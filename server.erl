@@ -49,7 +49,7 @@ handle_call(list_games, _From, {Games, Players}) ->
 		0 ->
 		    G#game.name;
 		_ ->
-		    "#" ++ G#game.name ++ "# Game locked"
+		    G#game.name
 	    end
     end,
     GameList = [FormatName(Game) || Game <- Games, Game#game.current_state =:= game_lobby],

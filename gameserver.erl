@@ -143,13 +143,13 @@ handle_cast({player_leave, Player}, Game) ->
 	    UpdatedGame = Game#game{players = Game#game.players -- [Player]},
 	    broadcastMsg(UpdatedGame, game_close),
 	    ?SERVER:remove_game(UpdatedGame),
-	    {stop, "Host left the game", UpdatedGame};
+	    {stop, normal, "Host left the game", UpdatedGame};
 	false ->
 	    UpdatedGame = Game#game{players = Game#game.players -- [Player]},
 	    case UpdatedGame#game.players of
 		[] -> %Game is empty
 		    ?SERVER:remove_game(UpdatedGame),
-		    {stop, "All players have left - game is empty", UpdatedGame};
+		    {stop, normal, "All players have left - game is empty", UpdatedGame};
 		_ ->
 		    update_game(UpdatedGame),
 		    {noreply, UpdatedGame}
