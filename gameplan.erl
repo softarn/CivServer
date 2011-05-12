@@ -67,6 +67,7 @@ create_unit(Map, {X, Y}, UnitType, Owner) -> %Adds a unit if the tile is vacant 
 	    case get_tile(Map, X, Y) of
 		{ok, OldTile} ->
 		    NewTile = OldTile#tile{unit=NewUnit},
+		    io:format("Created a ~p at {~p,~p}~n", [UnitType, X, Y]),
 		    {ok, update_tile(Map, NewTile, X, Y)};
 		{error, Reason} ->
 		    {error, Reason}
