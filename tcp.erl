@@ -18,14 +18,14 @@ readHeader(Socket) -> % Tar ut den första byten och tolkar som Headern utifrån
 
 readBoolean(Socket) -> % Tar ut den första byten och tolkar som boolean utifrån protokollet. 
     {ok, <<Byte?BOOLEAN>>} = gen_tcp:recv(Socket, 1),
-    io:format("Read the following boolean: "),
-    io:format("~w\n", [Byte]),
+%    io:format("Read the following boolean: "),
+%    io:format("~w\n", [Byte]),
     Byte.
 
 readInteger(Socket) ->% Tar ut de första 4 bytes och tolkar som Integer utifrån protokollet. 
     {ok, <<Integer?INTEGER>>} = gen_tcp:recv(Socket, 4),
-    io:format("Read the following integer: "),
-    io:format("~w\n", [Integer]),
+%    io:format("Read the following integer: "),
+%    io:format("~w\n", [Integer]),
     Integer.
 
 readString(Socket) ->% Tar ut bytes tills /0 påträffas, tolkar sedan som String utifrån protokollet
@@ -35,8 +35,8 @@ readString(Socket, List) ->
     {ok, <<Char?CHARACTER>>} = gen_tcp:recv(Socket, 1),
     case Char of
 	0 ->
-	    io:format("Read the following string: "),
-	    io:format("~p\n", [lists:reverse(List)]),
+%	    io:format("Read the following string: "),
+%	    io:format("~p\n", [lists:reverse(List)]),
 	    lists:reverse(List);
 	_ ->
 	    readString(Socket, [Char|List])
