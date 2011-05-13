@@ -25,13 +25,15 @@
 
 -module(ter_gen).
 -export([generate/2]).
--define(WATER_FACTOR, 8).		% Decrease for more water, and vice versa.
+-define(WATER_FACTOR, 6).		% Decrease for more water, and vice versa.
 -define(LANDTYPE_FACTOR, 5).	% Decrease for higher terrain homogeneity, and vice versa.
 
 %% Returns a matrix (a list containing lists) representing a randomly
 %% generated terrain map, with the given width and height.
 %% This is the only method you need to call.
+
 generate(Width,Height) when is_number(Width), is_number(Height)->
+	random:seed(now()),
 	TheMap = generate_ocean(create_map(Width, Height)),
 	% Water = check_map(Width, Height, TheMap, Width, Height, 0),
 	% case Water > ______ of
