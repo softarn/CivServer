@@ -25,7 +25,7 @@
 
 -module(ter_gen).
 -export([generate/2]).
--define(WATER_FACTOR, 6).		% Decrease for more water, and vice versa.
+-define(WATER_FACTOR, 7).		% Decrease for more water, and vice versa.
 -define(LANDTYPE_FACTOR, 5).	% Decrease for higher terrain homogeneity, and vice versa.
 
 %% Returns a matrix (a list containing lists) representing a randomly

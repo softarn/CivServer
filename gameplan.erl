@@ -44,6 +44,8 @@ update_unit(Map, Unit, X, Y) ->
     case get_unit(Map, X, Y) of
 	null ->
 	    {error, "Invalid tile"};
+	{error, Reason} ->
+	    {error, Reason};
 	_OldUnit ->
 	    case get_tile(Map, X, Y) of
 		{ok, OldTile} ->
@@ -63,17 +65,21 @@ update_unit(Map, Unit, X, Y) ->
 create_unit(Map, {X, Y}, UnitType, Owner) -> %Adds a unit if the tile is vacant and returns a updated map, else returns {error, occupied}.
     case get_unit(Map, X, Y) of
 	null ->
-	    NewUnit = ?U_HANDLER:create_unit(UnitType, Owner),
-	    case get_tile(Map, X, Y) of
-		{ok, OldTile} ->
-		    NewTile = OldTile#tile{unit=NewUnit},
-		    io:format("Created a ~p at {~p,~p}~n", [UnitType, X, Y]),
-		    {ok, update_tile(Map, NewTile, X, Y)};
-		{error, Reason} ->
-		    {error, Reason}
+	    case ?U_HANDLER:create_unit(UnitType, Owner) of
+		{error, invalid_unit} ->
+		    {error, "Invalid unit type"};
+		NewUnit ->
+		    case get_tile(Map, X, Y) of
+			{ok, OldTile} ->
+			    NewTile = OldTile#tile{unit=NewUnit},
+			    io:format("Created a ~p at {~p,~p}~n", [UnitType, X, Y]),
+			    {ok, update_tile(Map, NewTile, X, Y)};
+			{error, Reason} ->
+			    {error, Reason}
+		    end
 	    end;
 	_ ->
-	    {error, "Occupied"}    
+	    {error, "Invalid tile"}    
     end.
 % Arguments: The map in which to remove a unit, Pos of the tile
 % Removes a unit from the tile at the given position
@@ -98,7 +104,7 @@ add_unit(Map,Unit, X, Y) ->
 		    NewTile = Tile#tile{unit=Unit},
 		    {ok, update_tile(Map, NewTile, X, Y)};
 		_ ->
-		    {error, "Already a unit on tile"}
+		    {error, "Invalid tile"}
 	    end;
 	{error, Reason} ->
 	    {error, Reason}
@@ -117,10 +123,17 @@ get_tile(Map, X, Y) ->
 	    {ok, element(Y, element(X, Map))}
     end.
 
-%Returns the unit on the tile at position X,Y or null if there is no unit
+%If the X and Y is in the map-range -Returns the unit on the tile at position X,Y or null if there is no unit
+% Else returns {error, Reason}
 get_unit(Map, X, Y) -> 
-    Tile = element(Y, element(X, Map)),
-    Tile#tile.unit.
+    if 
+	(X > size(Map)) or (Y > size(element(1, Map))) or
+	(X < 1) or (Y < 1)		->
+	    {error, "Out of bounds"};
+	true -> %else..
+	    Tile = element(Y, element(X, Map)),
+	    Tile#tile.unit
+    end.
 
 tuplemap_to_listmap(Tuple) ->
     [tuple_to_list(Column)|| Column <- tuple_to_list(Tuple)].
@@ -143,6 +156,8 @@ add_pos(UMap, X, Y, OrigSize) ->
 % Checks if there is a unit at the starting position and returns {error, Reason} if there isnt, else returns {ok, UpdatedGame}
 make_move([{position, X, Y} | Tail], Game) ->
     case get_unit(Game#game.tilemap, X, Y) of
+	{error, Reason} ->
+	    {error, Reason};
 	null ->
 	    {error, "No unit at starting position"};
 	Unit ->
@@ -185,6 +200,8 @@ attack_unit(UnitMap, {AttX, AttY}, {DefX, DefY}) -> %GLÖM EJ RANGEKOLL
     if 
 	(AttackUnit =:= null) or (DefUnit =:= null) ->
 	    {error, "Invalid tile"};
+	(AttackUnit =:= {error, "Out of bounds"}) or (DefUnit =:= {error, "Out of bounds"}) ->
+	    {error, "Out of bounds"};
 	(AttackTile =:= {error, "Out of bounds"}) or (DefTile =:= {error, "Out of bounds"}) ->
 	    {error, "Out of bounds"};
 %get_range({X1,Y1},{X2,Y2})->
