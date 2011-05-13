@@ -165,7 +165,7 @@ namespace proxy
 	template <> void Serializer::get(protocol::StartGameAnswer &sga)
 	{
 		get(sga.mapData);
-		get(sga.resetUnits);
+		get(sga.presetUnits);
 	}
 
 	template <> void Serializer::get(protocol::ItsYourTurn &iyt)

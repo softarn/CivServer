@@ -49,7 +49,7 @@ namespace proxy
 
 		void connect(const std::string &address, unsigned short port);
 		void stop();
-		bool isOpen();
+		bool isOpen() const;
 
 
 		template <typename T>

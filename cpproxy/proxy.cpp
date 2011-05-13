@@ -244,6 +244,28 @@ namespace proxy
 		confirmPacket(*packet, protocol::Header::MESSAGE_FOR_YOU_SIR);
 	}
 
+	void Proxy::spawnUnit(int x, int y, const std::string &owner, const std::string &unitType, int manpower)
+	{
+		// Send a message
+		m_networkManager.send<uint8_t>(protocol::Header::SPAWN_UNIT);
+
+		// Send position
+		m_networkManager.send(x);
+		m_networkManager.send(y);
+
+		// Send unit
+		m_networkManager.send(owner);
+		m_networkManager.send(unitType);
+		m_networkManager.send(manpower);
+
+
+		// Receive the answer
+		std::auto_ptr<protocol::Packet> packet = m_networkManager.receivePacket();
+
+		// which must be a confirmation
+		confirmPacket(*packet, protocol::Header::SPAWN_UNIT);
+	}
+
 
 	void tryPacket(const protocol::Packet &packet, uint8_t header)
 	{

@@ -9,9 +9,8 @@
 	#define ECONNREFUSED WSAECONNREFUSED
 	#define ENOTCONN WSAENOTCONN
 	#define ENOTSOCK WSAENOTSOCK
-	#ifdef _MSC_VER
-		typedef int socklen_t;
-	#endif
+
+	typedef int socklen_t;
 #else
 	// Else we should use berkeley sockets
 	#include <sys/socket.h>

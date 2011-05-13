@@ -19,8 +19,15 @@ namespace proxy
 
 	void SocketStream::read(uint8_t *data, unsigned int len)
 	{
-		if(m_socket.recv(reinterpret_cast<char *>(data), len) < len)
-			throw SocketError("Could not recv with SocketStream");
+		int retval = m_socket.recv(reinterpret_cast<char *>(data), len);
+		while(retval < len)
+		{
+			int extra = m_socket.recv(reinterpret_cast<char *>(data+retval), len-retval);
+			if(extra == 0)
+				throw SocketError("Remote got pissed");
+			retval += extra;
+		}
+
 	}
 
 }

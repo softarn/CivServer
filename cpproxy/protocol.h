@@ -38,6 +38,7 @@ namespace proxy
 				COMBAT_REQUEST = 18,
 				COMBAT_RESULT = 19,
 				MESSAGE_FOR_YOU_SIR = 20,
+				SPAWN_UNIT = 23,
 				EXIT_GAME = 24,
 				GAME_CLOSED = 25
 			};
@@ -126,7 +127,7 @@ namespace proxy
 		struct StartGameAnswer : DestructablePacket
 		{
 			std::vector< std::vector<std::string> > mapData;
-			std::vector<Tile> resetUnits;
+			std::vector<Tile> presetUnits;
 		};
 
 		struct ItsYourTurn : DestructablePacket

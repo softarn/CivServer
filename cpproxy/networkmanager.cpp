@@ -81,7 +81,7 @@ namespace proxy
 			}
 			catch(SocketError &e)
 			{
-				std::cout << "Connection closed\n";
+				std::cout << "Connection closed: " << e.what() << "\n";
 				m_running = false;
 			}
 
@@ -101,7 +101,7 @@ namespace proxy
 		m_running = false;
 	}
 
-	bool NetworkManager::isOpen()
+	bool NetworkManager::isOpen() const
 	{
 		return isRunning();
 	}

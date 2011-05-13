@@ -92,7 +92,7 @@ namespace proxy
 #endif
 	}
 
-	bool Thread::isRunning()
+	bool Thread::isRunning() const
 	{
 		return m_running;
 	}

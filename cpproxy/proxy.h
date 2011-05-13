@@ -46,6 +46,7 @@ namespace proxy
 		protocol::CombatResult combat(int fromX, int fromY, int toX, int toY);
 		void endTurn();
 		void sendMessage(const std::string &to, const std::string &message);
+		void spawnUnit(int x, int y, const std::string &owner, const std::string &unitType, int manpower);
 	};
 
 }

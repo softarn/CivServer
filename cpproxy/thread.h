@@ -35,7 +35,7 @@ namespace proxy
 
 		void start();
 		void join();
-		bool isRunning();
+		bool isRunning() const;
 	};
 }
 
