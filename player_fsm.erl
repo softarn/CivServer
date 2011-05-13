@@ -68,7 +68,7 @@ server_lobby({Header, List}, {Player, Game}) ->
 		    ?P_HANDLER:sendMsg(Player#player.socket, {9, [HostName]}), %Join answer
 		    JoinGame = ?GAMESRV:player_join(NewGame#game.game_pid, Player),
 		    {next_state, game_lobby, {Player, JoinGame}}
-	end;
+	    end;
 
 	8 -> %Join request
 	    [GameName] = List,
@@ -146,6 +146,12 @@ game_lobby({Header, List}, {Player, Game}) ->
 game_wait({Header, _List}, {Player, Game}) ->
     io:format("INNE I GAMEWAIT: ~p~n", [Player#player.name]),
     case Header of
+
+	24 -> %Exit game request
+	    ?GAMESRV:player_leave(Game#game.game_pid, Player),
+	    ?P_HANDLER:sendMsg(Player#player.socket, {1, [Header]}), %Confirm'd
+	    {next_state, server_lobby, {Player, null}};
+
 	_ ->
 	    ?P_HANDLER:sendFailMsg(Player#player.socket, -1, Header), % FailPacket "invalid state"
 	    {next_state, game_wait, {Player, Game}}
@@ -158,8 +164,9 @@ game_turn({Header, List}, {Player, Game}) -> %GLÖM EJ ATT UPPDATERA GAME i bör
 	15 -> %Move request
 	    [PositionList] = List,
 	    case ?GAMESRV:move_unit(Game#game.game_pid, PositionList) of
-		{error, _Reason} ->
+		{error, Reason} ->
 		    ?P_HANDLER:sendFailMsg(Player#player.socket, 6, Header), % FailPacket "Invalid move"
+		    io:format("Error! ~p~n", [Reason]),
 		    {next_state, game_turn, {Player, Game}};
 		{ok, UpdatedGame} ->
 		    ?P_HANDLER:sendMsg(Player#player.socket, {1, [Header]}), %Confirm'd
@@ -191,13 +198,19 @@ game_turn({Header, List}, {Player, Game}) -> %GLÖM EJ ATT UPPDATERA GAME i bör
 		{error, _Reason} ->
 		    ?P_HANDLER:sendFailMsg(Player#player.socket, 7, Header), % FailPacket "Invalid tile"
 		    {next_state, game_turn, {Player, Game}}
-		end;
-	    _ ->
-		?P_HANDLER:sendFailMsg(Player#player.socket, -1, Header), % FailPacket "invalid state"
-		{next_state, game_turn, {Player, Game}}
-	end.
+	    end;
 
-    handle_event(Msg, _StateName, {Player, _Game}) ->
+	24 -> %Exit game request
+	    ?GAMESRV:player_leave(Game#game.game_pid, Player),
+	    ?P_HANDLER:sendMsg(Player#player.socket, {1, [Header]}), %Confirm'd
+	    {next_state, server_lobby, {Player, null}};
+
+	_ ->
+	    ?P_HANDLER:sendFailMsg(Player#player.socket, -1, Header), % FailPacket "invalid state"
+	    {next_state, game_turn, {Player, Game}}
+    end.
+
+handle_event(Msg, _StateName, {Player, _Game}) ->
     case Msg of
 	{game_wait, UpdatedGame} ->
 	    {next_state, game_wait, {Player, UpdatedGame}};

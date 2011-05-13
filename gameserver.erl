@@ -136,7 +136,21 @@ handle_cast({player_leave, Player}, Game) ->
 	    io:format("Shutting down game after ~p left~n",[Player#player.name]),
 	    {stop, normal, UpdatedGame};
 	false ->
-	    UpdatedGame = Game#game{players = Game#game.players -- [Player]},
+	    if
+		(Game#game.current_state =:= in_game) and (hd(Game#game.players) =:= Player) -> % In_game and current turn = player that left
+		    if
+			(length(Game#game.players) =/= 1) ->
+			    NextPlayerTurnGame = change_turn(Game), %Change turn
+			    UpdatedGame = NextPlayerTurnGame#game{players = NextPlayerTurnGame#game.players -- [Player]}; %Remove player
+			true ->
+			   UpdatedGame = Game#game{players = Game#game.players -- [Player]}
+		    end;
+
+		true ->
+		    UpdatedGame = Game#game{players = Game#game.players -- [Player]}
+
+	    end,
+
 	    case UpdatedGame#game.players of
 		[] -> %Game is empty
 		    ?SERVER:remove_game(UpdatedGame),

@@ -94,6 +94,7 @@ readElement(Socket, "Player") -> % Lista av Player
 readElement(Socket, "Position") -> % Lista av Position
     X = readInteger(Socket)+1,
     Y = readInteger(Socket)+1,
+    io:format("Läste positionen {~p,~p}~n", [X, Y]),
     {position, X, Y};
 
 readElement(Socket, "Column") -> % Lista av Column
