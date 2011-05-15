@@ -143,7 +143,7 @@ handle_cast({player_leave, Player}, Game) ->
 			    NextPlayerTurnGame = change_turn(Game), %Change turn
 			    UpdatedGame = NextPlayerTurnGame#game{players = NextPlayerTurnGame#game.players -- [Player]}; %Remove player
 			true ->
-			   UpdatedGame = Game#game{players = Game#game.players -- [Player]}
+			   UpdatedGame = Game#game{players = []}
 		    end;
 
 		true ->
@@ -168,7 +168,7 @@ handle_cast({player_leave, Player}, Game) ->
 % Returns the updated game record
 handle_cast({start_game, MapSize}, Game) ->
     UpdatedGame = ?GAMEPLAN:make_gameplan(MapSize, Game), % Fixa storleken senare
-    UpdatedGame2 = UpdatedGame#game{locked = 1, current_state = in_game}, %Glöm ej att göra t_map till list
+    UpdatedGame2 = UpdatedGame#game{locked = 1, current_state = in_game},
     UpdatedGame3 = starting_game(UpdatedGame2),
     {noreply, UpdatedGame3}.
 
@@ -222,8 +222,8 @@ change_turn(Game) ->
     UpdatedGame = Game#game{players = UpdatedPlayers},
     ToBeNext = hd(UpdatedPlayers),
     FSM = ToBeNext#player.fsm_pid,
-    ?P_HANDLER:sendMsg(ToBeNext#player.socket, {17, [Game#game.tilemap]}), %It's your turn
-    ?P_FSM:enter_turn(FSM, Game),
+    ?P_HANDLER:sendMsg(ToBeNext#player.socket, {17, [UpdatedGame#game.tilemap]}), %It's your turn
+    ?P_FSM:enter_turn(FSM, UpdatedGame),
     io:format("It's now ~p's turn", [ToBeNext#player.name]),
     UpdatedGame.
 

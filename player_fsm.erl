@@ -174,8 +174,8 @@ game_turn({Header, List}, {Player, Game}) -> %GLÖM EJ ATT UPPDATERA GAME i bör
 	    end;
 	16 -> %End of turn
 	    ?P_HANDLER:sendMsg(Player#player.socket, {1, [Header]}), %Confirm'd
-	    ?GAMESRV:finished_turn(Game#game.game_pid),
-	    {next_state, game_wait, {Player, Game}};
+	    UpdatedGame = ?GAMESRV:finished_turn(Game#game.game_pid),
+	    {next_state, game_wait, {Player, UpdatedGame}};
 	18 -> %Combat request
 	    [{position, AttX, AttY}, {position, DefX, DefY}] = List,
 

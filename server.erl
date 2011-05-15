@@ -67,7 +67,7 @@ handle_call({add_player, Player}, _From, {Games, Players}) ->
 
     ListOfPlayerNames = [NewPlayer#player.name || NewPlayer <- Players],
     Pfun = fun(P) ->
-	    Player#player.name == P
+	    Player#player.name =:= P
     end,
 
     case lists:any(Pfun, ListOfPlayerNames) of 
