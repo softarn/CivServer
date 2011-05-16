@@ -18,7 +18,7 @@ base_placement(0,_,_,_,Dict)->
 base_placement(Player,Map,Width,Height,Dict)->
 	X = random:uniform(Width),
 	Y = random:uniform(Height),
-	case element(X,element(Y,Map)) of
+	case element(Y,element(X,Map)) of
 	"Sea"-> 
 		base_placement(Player,Map,Width,Height,Dict);
 	"Ocean"-> 
