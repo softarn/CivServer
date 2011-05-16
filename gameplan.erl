@@ -169,9 +169,18 @@ make_move([{position, X, Y} | Tail], Game) ->
 % if they are, places the unit on the requested ending position, removes the unit from the start position and returns the updated game record
 % else returns {error, Reason}
 make_move([{position, EX, EY}| Tail], Game, Unit, Start) when length(Tail) =/= 0 ->
-    %%DONT FORGET TO CHECK IF TILE IS OCCUPIED, IF TILE IS WATER ETC...
-
-    make_move(Tail, Game, Unit, Start);
+    NextPos = get_tile(Game#game.tilemap, EX, EY),
+    case NextPos of
+	{error, "Out of bounds"} ->
+	    {error, "Out of bounds"};
+	{ok, Tile} ->
+	    if
+		(Tile#tile.unit =/= null)-> % AND WATER...
+		    {error, "Occupied tile in the way"};
+		true ->
+		    make_move(Tail, Game, Unit, Start)
+	    end
+    end;
 
 make_move([{position, EX, EY}], Game, Unit, {startpos, SX, SY}) ->
     Unitmap = Game#game.tilemap,
@@ -193,7 +202,9 @@ make_move([{position, EX, EY}], Game, Unit, {startpos, SX, SY}) ->
 % Attacks from Attackpos to Def pos,
 % If an error occurs, such as Positions out of bounds, no units at positions or units out of range(soon to be implemented) - returns {error, Reason}
 % Else - returns {ok, UpdatedUnitMap, {Remaining Attack Manpower, Remaining Defense Manpower}} (e.g {ok, UnitMap, {Int, Int}})
-attack_unit(UnitMap, {AttX, AttY}, {DefX, DefY}) -> %GLÖM EJ RANGEKOLL
+attack_unit(UnitMap, TerrainMap, {AttX, AttY}, {DefX, DefY}) -> %GLÖM EJ RANGEKOLL
+    AttTerrain = lists:nth(AttY, lists:nth(AttX, TerrainMap)),
+    DefTerrain = lists:nth(DefY, lists:nth(DefX, TerrainMap)),
     AttackUnit = get_unit(UnitMap, AttX, AttY),
     DefUnit = get_unit(UnitMap, DefX, DefY),
     AttackTile = get_tile(UnitMap, AttX, AttY),
@@ -215,7 +226,8 @@ attack_unit(UnitMap, {AttX, AttY}, {DefX, DefY}) -> %GLÖM EJ RANGEKOLL
 
 
 	true -> %else
-	    {RemAttackMp, RemDefMp} = ?COMBAT:combat(AttackUnit#unit.str, AttackUnit#unit.mp, DefUnit#unit.str, DefUnit#unit.mp),
+	    {RemAttackMp, RemDefMp} = ?COMBAT:combat(AttackUnit#unit.str, AttackUnit#unit.mp, AttTerrain, DefUnit#unit.str, DefUnit#unit.mp, DefTerrain),
+	    io:format("~p with ~p manpower on ~p-terrain attacked ~p with ~p manpower on ~p-terrain", [AttackUnit#unit.str, AttackUnit#unit.mp, AttTerrain, DefUnit#unit.str, DefUnit#unit.mp, DefTerrain]),
 	    if
 		(RemAttackMp =< 0) and (RemDefMp =< 0) ->
 		    {ok, FirstUpdatedUnitMap} = remove_unit(UnitMap, AttX, AttY), 

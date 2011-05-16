@@ -106,7 +106,7 @@ handle_call({create_unit, {X, Y}, UnitType, Owner}, _From, Game) ->
     end;
 
 handle_call({attack_unit, {AttX, AttY}, {DefX, DefY}}, _From, Game) ->
-	case ?GAMEPLAN:attack_unit(Game#game.tilemap, {AttX, AttY}, {DefX, DefY}) of
+	case ?GAMEPLAN:attack_unit(Game#game.tilemap, Game#game.map, {AttX, AttY}, {DefX, DefY}) of
 	    {ok, UpdatedUnitMap, {RemAttMp, RemDefMp}} ->
 		UpdatedGame = Game#game{tilemap = UpdatedUnitMap},
 		{reply, {ok, UpdatedGame, {RemAttMp, RemDefMp}}, UpdatedGame};
