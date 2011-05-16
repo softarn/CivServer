@@ -168,9 +168,11 @@ make_move([{position, X, Y} | Tail], Game) ->
 % Checks if the positions are valid
 % if they are, places the unit on the requested ending position, removes the unit from the start position and returns the updated game record
 % else returns {error, Reason}
-make_move([{position, _EX, _EY}|Tail], Game, Unit, Start) when length(Tail) =/= 0 ->
+make_move([{position, EX, EY}| Tail], Game, Unit, Start) when length(Tail) =/= 0 ->
     %%DONT FORGET TO CHECK IF TILE IS OCCUPIED, IF TILE IS WATER ETC...
-    make_move(Tail, Unit, Game, Start);
+
+    make_move(Tail, Game, Unit, Start);
+
 make_move([{position, EX, EY}], Game, Unit, {startpos, SX, SY}) ->
     Unitmap = Game#game.tilemap,
     case remove_unit(Unitmap, SX, SY) of
