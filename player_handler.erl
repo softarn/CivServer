@@ -15,6 +15,8 @@ init(Socket, FSM_Pid) ->
 		    gen_tcp:close(Socket),
 		    ok; %Remove playaah
 		_ ->
+		    ?SERVER:rm_player({socket, Socket}),
+		    gen_tcp:close(Socket),
 		    io:format("Caught error in player_handler: ~p\n", [X])
 	    end
     end.
