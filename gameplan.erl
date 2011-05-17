@@ -227,18 +227,22 @@ attack_unit(UnitMap, TerrainMap, {AttX, AttY}, {DefX, DefY}) -> %GLÖM EJ RANGEK
 
 	true -> %else
 	    {RemAttackMp, RemDefMp} = ?COMBAT:combat(AttackUnit#unit.str, AttackUnit#unit.mp, AttTerrain, DefUnit#unit.str, DefUnit#unit.mp, DefTerrain),
-	    io:format("~p with ~p manpower on ~p-terrain from {~p,~p} attacked ~p with ~p manpower on ~p-terrain on {~p,~p}", [AttackUnit#unit.str, AttackUnit#unit.mp, AttTerrain, AttX, AttY, DefUnit#unit.str, DefUnit#unit.mp, DefTerrain, DefX, DefY]),
+	    io:format("~p with ~p manpower on ~p-terrain from {~p,~p} attacked ~p with ~p manpower on ~p-terrain on {~p,~p}. Result Attacker: ~p mp left, Defender: ~p mp left", [AttackUnit#unit.str, AttackUnit#unit.mp, AttTerrain, AttX, AttY, DefUnit#unit.str, DefUnit#unit.mp, DefTerrain, DefX, DefY, RemAttackMp, RemDefMp]),
 	    if
 		(RemAttackMp =< 0) and (RemDefMp =< 0) ->
 		    {ok, FirstUpdatedUnitMap} = remove_unit(UnitMap, AttX, AttY), 
 		    {ok, SecondUpdatedUnitMap} = remove_unit(FirstUpdatedUnitMap, DefX, DefY),
 		    {ok, SecondUpdatedUnitMap, {RemAttackMp, RemDefMp}};
 		(RemAttackMp =< 0) ->
-		    {ok, UpdatedUnitMap} = remove_unit(UnitMap, AttX, AttY),
-		    {ok, UpdatedUnitMap, {RemAttackMp, RemDefMp}};
+		    UpdDefUnit = DefUnit#unit{mp = RemDefMp},
+		    {ok, FirstUpdatedUnitMap} = remove_unit(UnitMap, AttX, AttY),
+		    {ok, SecondUpdatedUnitMap} = update_unit(FirstUpdatedUnitMap, UpdDefUnit, DefX, DefY), 
+		    {ok, SecondUpdatedUnitMap, {RemAttackMp, RemDefMp}};
 		(RemDefMp =< 0) ->
-		    {ok, UpdatedUnitMap} = remove_unit(UnitMap, DefX, DefY),
-		    {ok, UpdatedUnitMap, {RemAttackMp, RemDefMp}};
+		    UpdAttackUnit = AttackUnit#unit{mp = RemAttackMp},
+		    {ok, FirstUpdatedUnitMap} = remove_unit(UnitMap, DefX, DefY),
+		    {ok, SecondUpdatedUnitMap} = update_unit(FirstUpdatedUnitMap, UpdAttackUnit, AttX, AttY), 
+		    {ok, SecondUpdatedUnitMap, {RemAttackMp, RemDefMp}};
 		true -> %else
 		    UpdAttackUnit = AttackUnit#unit{mp = RemAttackMp},
 		    UpdDefUnit = DefUnit#unit{mp = RemDefMp},
