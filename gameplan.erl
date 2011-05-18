@@ -209,6 +209,46 @@ make_move([{position, EX, EY}], Game, Unit, {startpos, SX, SY}) ->
 	    {error, Reason}
     end.
 
+insert_unit({position, FX, FY}, {position, TX, TY}, Game) ->
+    UnitMap = Game#game.tilemap,
+    FromUnit = get_unit(UnitMap, FX, FY),
+    Endtile = get_tile(UnitMap, TX, TY),
+
+    if 
+	(FromUnit =:= null) or (FromUnit =:= {error, "Out of bounds"}) or (Endtile =:= {error, "Out of bounds"}) ->
+	    {error, "Invalid tile"};
+	
+	(Endtile#tile.city =/= null) ->
+	    enter_city(FX, FY, TX, TY, UnitMap);
+	
+	(Endtile#tile.unit =/= null) ->
+	    EndUnit = Endtile#tile.unit,
+	    case EndUnit#unit.name of
+		trireme ->
+		    enter_ship(FX, FY, EndUnit);
+		galley ->
+		    enter_ship(FX, FY, EndUnit);
+		caravel ->
+		    enter_ship(FromUnit, EndUnit);
+		siege_tower ->
+		    enter_tower(FromUnit, EndUnit);
+		_ ->
+		    {error, "Invalid tile"}
+	    end
+    end.
+    
+enter_city({FX, FY}, {TX, TY}, UnitMap) ->
+    OldCity = get_city(UnitMap, TX, TY),
+    OldUnits = OldCity#city.units,
+    EnteringUnit = get_unit(UnitMap, FX, FY),
+    UpdatedCity = OldCity#city{units = OldUnits ++ [EnteringUnit]},
+
+
+enter_ship(FUnit, EUnit) ->
+    ok.
+enter_tower(FUnit, EUnit) ->
+    ok.
+
 
 % Arguments: Unitmap, AttackPos, DefPos
 % Attacks from Attackpos to Def pos,
