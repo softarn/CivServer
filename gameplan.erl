@@ -83,7 +83,7 @@ create_unit(Map, {X, Y}, UnitType, Owner) -> %Adds a unit if the tile is vacant 
     end.
 % Arguments: The map in which to remove a unit, Pos of the tile
 % Removes a unit from the tile at the given position
-% Returns the updated unit map
+% Returns {ok, updated unit map}
 remove_unit(Map, X, Y) ->
     case get_tile(Map, X, Y) of
 	{ok, Tile} ->
@@ -209,45 +209,48 @@ make_move([{position, EX, EY}], Game, Unit, {startpos, SX, SY}) ->
 	    {error, Reason}
     end.
 
-insert_unit({position, FX, FY}, {position, TX, TY}, Game) ->
-    UnitMap = Game#game.tilemap,
+insert_unit(UnitMap, {FX, FY}, {TX, TY}, Owner) ->
     FromUnit = get_unit(UnitMap, FX, FY),
-    Endtile = get_tile(UnitMap, TX, TY),
+    {ok, Endtile} = get_tile(UnitMap, TX, TY),
 
     if 
 	(FromUnit =:= null) or (FromUnit =:= {error, "Out of bounds"}) or (Endtile =:= {error, "Out of bounds"}) ->
 	    {error, "Invalid tile"};
 	
 	(Endtile#tile.city =/= null) ->
-	    enter_city(FX, FY, TX, TY, UnitMap);
+	    enter_city(UnitMap, {FX, FY}, {TX, TY});
 	
 	(Endtile#tile.unit =/= null) ->
 	    EndUnit = Endtile#tile.unit,
 	    case EndUnit#unit.name of
 		trireme ->
-		    enter_ship(FX, FY, EndUnit);
+		    enter_ship(UnitMap, {FX, FY}, {TX, TY});
 		galley ->
-		    enter_ship(FX, FY, EndUnit);
+		    enter_ship(UnitMap, {FX, FY}, {TX, TY});
 		caravel ->
-		    enter_ship(FromUnit, EndUnit);
+		    enter_ship(UnitMap, {FX, FY}, {TX, TY});
 		siege_tower ->
-		    enter_tower(FromUnit, EndUnit);
+		    enter_tower(UnitMap, {FX, FY}, {TX, TY});
 		_ ->
 		    {error, "Invalid tile"}
 	    end
     end.
     
-enter_city({FX, FY}, {TX, TY}, UnitMap) ->
+enter_city(UnitMap, {FX, FY}, {TX, TY}) ->
     OldCity = get_city(UnitMap, TX, TY),
     OldUnits = OldCity#city.units,
     EnteringUnit = get_unit(UnitMap, FX, FY),
     UpdatedCity = OldCity#city{units = OldUnits ++ [EnteringUnit]},
+    {ok, UpdatedUnitMap1} = remove_unit(UnitMap, FX, FY),
+    {ok, OldTile} = get_tile(UpdatedUnitMap1, TX, TY),
+    UpdatedTile = OldTile#tile{city = UpdatedCity},
+    UpdatedUnitMap2 = update_tile(UpdatedUnitMap1, UpdatedTile, TX, TY),
+    {ok, UpdatedUnitMap2}.
 
-
-enter_ship(FUnit, EUnit) ->
+enter_ship(UnitMap, {FX, FY}, {TX, TY}) ->
     ok.
-enter_tower(FUnit, EUnit) ->
-    ok.
+enter_tower(UnitMap, {FX, FY}, {TX, TY}) ->
+    enter_ship.
 
 
 % Arguments: Unitmap, AttackPos, DefPos
@@ -259,8 +262,8 @@ attack_unit(UnitMap, TerrainMap, {AttX, AttY}, {DefX, DefY}) -> %GLÖM EJ RANGEK
     DefTerrain = lists:nth(DefY, lists:nth(DefX, TerrainMap)),
     AttackUnit = get_unit(UnitMap, AttX, AttY),
     DefUnit = get_unit(UnitMap, DefX, DefY),
-    AttackTile = get_tile(UnitMap, AttX, AttY),
-    DefTile = get_tile(UnitMap, DefX, DefY),
+    {ok, AttackTile} = get_tile(UnitMap, AttX, AttY),
+    {ok, DefTile} = get_tile(UnitMap, DefX, DefY),
 
     if 
 	(AttackUnit =:= null) or (DefUnit =:= null) ->
@@ -308,7 +311,7 @@ attack_unit(UnitMap, TerrainMap, {AttX, AttY}, {DefX, DefY}) -> %GLÖM EJ RANGEK
 
 build_city(UnitMap, {X, Y}, CityName, CityOwner) ->
     Settler = get_unit(UnitMap, X, Y),
-    Tile = get_tile(UnitMap, X, Y), 
+    {ok, Tile} = get_tile(UnitMap, X, Y), 
     ExistingCity = get_city(UnitMap, X, Y),
     
     if
@@ -322,7 +325,7 @@ build_city(UnitMap, {X, Y}, CityName, CityOwner) ->
 	true -> %else
 	   City = #city{name = CityName, owner = CityOwner},
 	   UpdatedTile = Tile#tile{city = City},
-	   UpdatedUnitMap1 = remove_unit(UnitMap, X, Y),
+	   {ok, UpdatedUnitMap1} = remove_unit(UnitMap, X, Y),
 	   UpdatedUnitMap2 = update_tile(UpdatedUnitMap1, UpdatedTile, X, Y), 
 	   {ok, UpdatedUnitMap2}
    end.

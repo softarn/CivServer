@@ -76,7 +76,18 @@ recv(Socket, FSM) ->
 
 	24 -> %Exit game
 	    [];
-	
+
+	26 ->
+	    FromPos = ?TCP:readElement(Socket, "Position"),
+	    ToPos = ?TCP:readElement(Socket, "Position"),
+	    [FromPos, ToPos];
+
+	28 ->
+	    ContainerPos = ?TCP:readElement(Socket, "Position"),
+	    UnitType = ?TCP:readString(Socket),
+	    ManPower = ?TCP:readInteger(Socket),
+	    ToPlacePos = ?TCP:readElement(Socket, "Position"),
+	    [ContainerPos, UnitType, ManPower, ToPlacePos];
 	_ ->
 	    []
 

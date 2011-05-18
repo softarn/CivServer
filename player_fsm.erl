@@ -217,6 +217,20 @@ game_turn({Header, List}, {Player, Game}) -> %GLÖM EJ ATT UPPDATERA GAME i bör
 	    ?P_HANDLER:sendMsg(Player#player.socket, {1, [Header]}), %Confirm'd
 	    {next_state, server_lobby, {Player, null}};
 
+	26 -> %Enter city/ship/tower "Enter the dragon..."
+	    [{position, FX, FY}, {position, TX, TY}] = List,
+	    case ?GAMESRV:insert_unit(Game#game.game_pid, {FX, FY}, {TX, TY}, Player#player.name) of
+		{ok, UpdatedGame} ->
+		    ?P_HANDLER:sendMsg(Player#player.socket, {1, [Header]}), %Confirmd
+		    {next_state, game_turn, {Player, UpdatedGame}};
+		{error, _Reason} ->
+		    ?P_HANDLER:sendFailMsg(Player#player.socket, 7, Header), %Failpacket invalid tile
+		    {next_state, game_turn, {Player, Game}} 
+		end;
+
+	28 -> %Exit city/ship/tower, "Exit dragon"
+	    ok;
+
 	_ ->
 	    ?P_HANDLER:sendFailMsg(Player#player.socket, -1, Header), % FailPacket "invalid state"
 	    {next_state, game_turn, {Player, Game}}

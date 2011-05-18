@@ -114,14 +114,23 @@ handle_call({build_city, {X, Y}, CityName, CityOwner}, _From, Game) ->
 	    {reply, {error, Reason}, Game}
     end;
 
+handle_call({insert_unit, {FX, FY}, {TX, TY}, Owner}, _From, Game) ->
+    case ?GAMEPLAN:insert_unit(Game#game.tilemap, {FX, FY}, {TX, TY}, Owner) of
+	{ok, UpdatedUnitMap} ->
+	    UpdatedGame = Game#game{tilemap = UpdatedUnitMap},
+	    {reply, {ok, UpdatedGame}, UpdatedGame};
+	{error, Reason} ->
+	    {reply, {error, Reason}, Game}
+    end;
+
 handle_call({attack_unit, {AttX, AttY}, {DefX, DefY}}, _From, Game) ->
-	case ?GAMEPLAN:attack_unit(Game#game.tilemap, Game#game.map, {AttX, AttY}, {DefX, DefY}) of
-	    {ok, UpdatedUnitMap, {RemAttMp, RemDefMp}} ->
-		UpdatedGame = Game#game{tilemap = UpdatedUnitMap},
-		{reply, {ok, UpdatedGame, {RemAttMp, RemDefMp}}, UpdatedGame};
-	    {error, Reason} ->
-		{reply, {error, Reason}, Game}
-	end.
+    case ?GAMEPLAN:attack_unit(Game#game.tilemap, Game#game.map, {AttX, AttY}, {DefX, DefY}) of
+	{ok, UpdatedUnitMap, {RemAttMp, RemDefMp}} ->
+	    UpdatedGame = Game#game{tilemap = UpdatedUnitMap},
+	    {reply, {ok, UpdatedGame, {RemAttMp, RemDefMp}}, UpdatedGame};
+	{error, Reason} ->
+	    {reply, {error, Reason}, Game}
+    end.
 
 terminate(_Reason, _State) ->
     ok.
@@ -192,9 +201,11 @@ finished_turn(Game_pid) -> gen_server:call(Game_pid, finished_turn).
 move_unit(Game_pid, PosList) -> gen_server:call(Game_pid, {move_unit, PosList}).
 create_unit(Game_pid, {X,Y}, UnitType, Owner) -> gen_server:call(Game_pid, {create_unit, {X, Y}, UnitType, Owner}).
 build_city(Game_pid, {X,Y}, CityName, CityOwner) -> gen_server:call(Game_pid, {build_city, {X,Y}, CityName, CityOwner}).
+insert_unit(Game_pid, {FX, FY}, {TX, TY}, Owner) -> gen_server:call(Game_pid, {insert_unit, {FX, FY}, {TX, TY}, Owner}).
 attack_unit(Game_pid, {AttX, AttY}, {DefX, DefY}) -> gen_server:call(Game_pid, {attack_unit, {AttX, AttY}, {DefX, DefY}}).
 player_leave(Game_pid, Player) -> gen_server:cast(Game_pid, {player_leave, Player}).
 start_game(Game_pid, MapSize) -> gen_server:cast(Game_pid, {start_game, MapSize}).
+
 
 %Internal functions
 
