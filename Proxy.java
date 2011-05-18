@@ -237,23 +237,6 @@ public class Proxy
 		}
 	}
 
-	public Result builtImprovement(int x, int y, String improvement) throws FailedException
-	{
-		try
-		{
-			Packet toSend = new Packet((byte)22);
-			toSend.add(x);
-			toSend.add(y);
-			toSend.add(improvement);
-			send(toSend);
-			return receiver.getResult();
-		}
-		catch(FailedException fe)
-		{
-			throw fe;
-		}
-	}
-
 	public Result madeUnit(int x, int y, String owner, String type, int manPower) throws FailedException
 	{
 		try
@@ -285,6 +268,24 @@ public class Proxy
 			throw fe;
 		}
 	}
+
+    public Result insertUnit(int fromX, int fromY, int destX, int destY) throws FailedException
+    {
+		try
+		{
+			Packet toSend = new Packet((byte)26);
+			toSend.add(fromX);
+			toSend.add(fromY);
+			toSend.add(destX);
+			toSend.add(destY);
+			send(toSend);
+			return receiver.getResult();
+		}
+		catch(FailedException fe)
+		{
+			throw fe;
+		}
+    }
 
 	// Method to test sending and receiving lists.
 	private Result listTest(int x, int y) throws FailedException
