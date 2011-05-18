@@ -104,8 +104,8 @@ class Result{
 		cityUnits.add(new Unit(owner, type, manPower));
 	}
 
-	public void setCity(String owner, String name, List<String> buildings){
-		temp.addCity(new City(owner, name, buildings, cityUnits));
+	public void setCity(String owner, String name){
+		temp.addCity(new City(owner, name, cityUnits));
 	}
 
 	public void setImprovement(String name){
@@ -244,10 +244,6 @@ class Result{
 		return ((Tile)updatedTiles.get(n)).getCity().getName();
 	}
 
-	public List<String> getCityBuildings(int n){
-		return ((Tile)updatedTiles.get(n)).getCity().getBuildings();
-	}
-
 	public int getAmountCityUnits(int n){
 		return ((Tile)updatedTiles.get(n)).getCity().getAmountUnits();
 	}
@@ -301,13 +297,11 @@ class Result{
 
 	private class City{
 		private String owner, name;
-		private List<String> buildings;
 		private List<Unit> units;
 
-		public City(String owner, String name, List<String> buildings, List<Unit> units){
+		public City(String owner, String name, List<Unit> units){
 			this.owner = owner;
 			this.name = name;
-			this.buildings = buildings;
 			this.units = units;
 		}
 
@@ -319,22 +313,16 @@ class Result{
 			return name;
 		}
 
-		public List<String> getBuildings(){
-			return buildings;
-		}
-
 		public int getAmountUnits(){
 			return units.size();
 		}
-
-		
 
 		public Unit getUnit(int n){
 			return units.get(n);
 		}
 
 		public String toString(){
-			return "City name: " + name + "\nCity owner: " + owner + "\nBuildings in city: " + buildings + "\nUnits in city: " + units + "\n";
+			return "City name: " + name + "\nCity owner: " + owner + "\nUnits in city: " + units + "\n";
 		}
 	}
 

@@ -301,7 +301,6 @@ class TestKlient{
 				if(res.existCity(i)){
 					String theOwner = res.getCityOwner(i);
 					String theName = res.getCityName(i);
-					List<String> buildings = res.getCityBuildings(i);
 					int amountCityUnits = res.getAmountCityUnits(i);
 					for(int j=0; j<amountCityUnits; j++){
 						String cityUnitOwner = res.getCityUnitOwner(i, j);

@@ -360,9 +360,7 @@ public class Receiver implements Runnable
 			{
 				toAddTo.addCityUnit(receiveString(), receiveString(), receiveInt());
 			}
-			size = receiveInt();
-			ArrayList<String> buildings = receiveListString(size);
-			toAddTo.setCity(owner, receiveString(), buildings);
+			toAddTo.setCity(owner, receiveString());
 		}
 		toAddTo.addUpdatedTile();
 	}
