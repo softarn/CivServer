@@ -31,13 +31,11 @@
 -record(tile, {
 	position = null, %{X,Y}
 	unit = null, %unitrecord
-	improvement = null,
 	city = null}). %cityrecord
 
 -record(city, {
 	owner = null, %String
-	units = null,	% [Units]
-	buildings = null,
+	units = [],	% [Units]
 	name = null}). %String
 
 -record(unit_info, {
