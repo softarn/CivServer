@@ -111,6 +111,8 @@ add_unit(Map,Unit, X, Y) ->
     end.
 
 
+
+
 % Arguments: The map to extract the tile from, Position of the tile to be extracted
 % Fetches the tile at position X,Y if it is in the map, else returns {error, Reason}
 %Returns {ok, Tile}
@@ -133,6 +135,16 @@ get_unit(Map, X, Y) ->
 	true -> %else..
 	    Tile = element(Y, element(X, Map)),
 	    Tile#tile.unit
+    end.
+
+get_city(Map, X, Y) -> 
+    if 
+	(X > size(Map)) or (Y > size(element(1, Map))) or
+	(X < 1) or (Y < 1)		->
+	    {error, "Out of bounds"};
+	true -> %else..
+	    Tile = element(Y, element(X, Map)),
+	    Tile#tile.city
     end.
 
 tuplemap_to_listmap(Tuple) ->
@@ -251,3 +263,26 @@ attack_unit(UnitMap, TerrainMap, {AttX, AttY}, {DefX, DefY}) -> %GLÖM EJ RANGEK
 		    {ok, SecondUpdatedUnitMap, {RemAttackMp, RemDefMp}}
 	    end
     end.	    
+
+
+
+build_city(UnitMap, {X, Y}, CityName, CityOwner) ->
+    Settler = get_unit(UnitMap, X, Y),
+    Tile = get_tile(UnitMap, X, Y), 
+    ExistingCity = get_city(UnitMap, X, Y),
+    
+    if
+	(Settler =:= {error, "Out of bounds"}) or (Settler#unit.name =/= settler) ->
+	    {error, "Invalid tile"};
+	(ExistingCity =:= {error, "Out of bounds"}) or (ExistingCity =/= null) ->
+	    {error, "Invalid tile"};
+	(Tile =:= {error, "Out of bounds"}) ->
+	    {error, "Out of bounds"};
+	
+	true -> %else
+	   City = #city{name = CityName, owner = CityOwner},
+	   UpdatedTile = Tile#tile{city = City},
+	   UpdatedUnitMap1 = remove_unit(UnitMap, X, Y),
+	   UpdatedUnitMap2 = update_tile(UpdatedUnitMap1, UpdatedTile, X, Y), 
+	   {ok, UpdatedUnitMap2}
+   end.

@@ -156,7 +156,7 @@ sendList(Socket, ElemType, List) ->
 sendTile(Socket, Tile) ->
     sendPosition(Socket, Tile#tile.position),
     sendPerhaps(Socket, "Unit", Tile#tile.unit),
-    sendPerhaps(Socket, "City", Tile#tile.city),
+    sendPerhaps(Socket, "City", Tile#tile.city), %UPPDATERA PROTOKOLLET OCH TA BORT ONÖDIGA RECORDATTRIBUT
     sendPerhaps(Socket, "String", Tile#tile.improvement).
 
 sendPosition(Socket, {X, Y}) ->

@@ -189,6 +189,18 @@ game_turn({Header, List}, {Player, Game}) -> %GLÖM EJ ATT UPPDATERA GAME i bör
 	    end;
 	20 -> %Message for you sir
 	    {next_state, game_turn, {Player, Game}};
+
+	21 -> %Built city
+	    [{position, X, Y}, CityName] = List,
+	    case ?GAMESRV:build_city(Game#game.game_pid, {X, Y}, CityName, Player#player.name) of
+		{ok, UpdatedGame} ->
+		    ?P_HANDLER:sendMsg(Player#player.socket, {1, [Header]}), %confirmd
+		    {next_state, game_turn, {Player, UpdatedGame}};
+		{error, _Reason} ->
+		    ?P_HANDLER:sendFailMsg(Player#player.socket, 7, Header), % FailPacket "Invalid tile"
+		    {next_state, game_turn, {Player, Game}}
+	    end;
+	    
 	23 -> %Spawnd
 	    [{position, X, Y}, {unit, Owner, UnitType, _Manpower}] = List,
 	    case ?GAMESRV:create_unit(Game#game.game_pid, {X, Y}, UnitType, Owner) of
