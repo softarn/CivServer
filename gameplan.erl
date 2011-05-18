@@ -253,6 +253,75 @@ enter_tower(UnitMap, {FX, FY}, {TX, TY}) ->
     enter_ship.
 
 
+extract_unit(UnitMap, {CX, CY}, UnitType, MP, Owner, {TX, TY}) ->
+    CTile = get_tile(UnitMap, CX, CY),
+    ToPlace = get_unit(UnitMap, TX, TY),
+    
+    if
+	(ToPlace =/= null) or (ToPlace =:= {error, "Out of bounds"}) ->
+	    {error, "Invalid tile"};
+
+	true -> % else
+
+	    case CTile of
+		{error, "Out of bounds"} ->
+		    {error, "Out of bounds"};
+
+		{ok, ContainerTile} ->
+		    if
+			(ContainerTile#tile.city =/= null) ->
+			    leave_city(UnitMap, {CX, CY}, UnitType, MP, {TX, TY});
+
+			(ContainerTile#tile.unit =/= null) ->
+			  
+			    ContainerType = ContainerTile#tile.unit,
+
+			    case ContainerType#unit.name of
+				trireme ->
+				    ok;%leave_ship(UnitMap, {FX, FY}, {TX, TY});
+				galley ->
+				    ok;%leave_ship(UnitMap, {FX, FY}, {TX, TY});
+				caravel ->
+				    ok;%leave_ship(UnitMap, {FX, FY}, {TX, TY});
+				siege_tower ->
+				    ok;%leave_tower(UnitMap, {FX, FY}, {TX, TY});
+				_ ->
+				    {error, "Invalid tile"}
+			    end
+		    end
+	    end
+    end.
+			
+leave_city(UnitMap, {CX, CY}, UnitType, MP, {TX, TY}) ->
+    OldCity = get_city(UnitMap, CX, CY),
+    OldCityList = OldCity#city.units,
+    
+    Find_Unit = fun(UR) ->
+	(UR#unit.str =:= UnitType) and (UR#unit.mp =:= MP)
+    end,
+
+    MatchingUnits = lists:filter(Find_Unit, OldCityList),
+
+    case length(MatchingUnits) of
+	0 ->
+	    io:format("Unit not found"),
+	    _TheUnit = {error, "Unit not found"};
+	_ ->
+	    io:format("Units found"),
+	    TheUnit = hd(MatchingUnits), %hitta unit
+	    UpdatedCityList = lists:delete(TheUnit, OldCityList), %ta bort från staden
+	    UpdatedCity = OldCity#city{units = UpdatedCityList}, %uppdatera staden
+	    OldCityTile = get_tile(UnitMap, CX, CY), 
+	    UpdatedCityTile = OldCityTile#tile{city = UpdatedCity}, %skapa ny tile med uppdaterade staden på
+	    UpdatedUnitMap1 = update_tile(UnitMap, UpdatedCityTile, CX, CY), %uppdatera tilen där staden stod med den nya tilen
+
+	    OldUnitTile = get_tile(UpdatedUnitMap1, TX, TY), %hämta tilen där enheten ska placeras
+	    UpdatedUnitTile = OldUnitTile#tile{unit = TheUnit}, % skapa ny tile med enheten på
+	    UpdatedUnitMap2 = update_tile(UpdatedUnitMap1, UpdatedUnitTile, TX, TY), %uppdatera tilen där enheten ska stå med den nya tilen
+	    {ok, UpdatedUnitMap2}
+    end.
+
+
 % Arguments: Unitmap, AttackPos, DefPos
 % Attacks from Attackpos to Def pos,
 % If an error occurs, such as Positions out of bounds, no units at positions or units out of range(soon to be implemented) - returns {error, Reason}
