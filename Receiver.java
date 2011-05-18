@@ -84,9 +84,7 @@ public class Receiver implements Runnable
 		Result toReturn = new Result();
 		try
 		{
-		//	System.out.println("Waiting for header.");
 			int header = m_inStream.read();		// First the header.
-		//	System.out.println("Header: " + header);
 
 			// Header 3, welcome to the real world.
 			if(header == 3)
@@ -229,14 +227,17 @@ public class Receiver implements Runnable
 	// Läser in ett heltal från inStream:en.
 	private int receiveInt()
 	{
-		byte[] toParse = new byte[4];
-		try
-		{
-			m_inStream.read(toParse);
-		}catch(IOException e)
-		{
-			e.printStackTrace();
-		}
+        byte[] toParse = new byte[4];
+        for(int i = 0; i < 4; i++)
+        {
+            try
+            {
+                toParse[i] += m_inStream.read();
+            }catch(IOException e)
+            {
+                e.printStackTrace();
+            }
+        }
 		int toReturn = ((int)toParse[0]<<24)
 				+(makeInt(toParse[1])<<16)
 				+(makeInt(toParse[2])<<8)
@@ -344,7 +345,9 @@ public class Receiver implements Runnable
 	// Method to receive a tile from the server.
 	private void receiveTile(Result toAddTo)
 	{
-		toAddTo.setUpdatedTile(receiveInt(), receiveInt());
+        int f = receiveInt();
+        int s = receiveInt();
+		toAddTo.setUpdatedTile(f, s);
 		if(receiveBool())
 		{
 			toAddTo.setUnit(receiveString(), receiveString(), receiveInt());
@@ -360,10 +363,6 @@ public class Receiver implements Runnable
 			size = receiveInt();
 			ArrayList<String> buildings = receiveListString(size);
 			toAddTo.setCity(owner, receiveString(), buildings);
-		}
-		if(receiveBool())
-		{
-			toAddTo.setImprovement(receiveString());
 		}
 		toAddTo.addUpdatedTile();
 	}
