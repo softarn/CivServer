@@ -83,7 +83,7 @@ create_unit(Map, {X, Y}, UnitType, Owner) -> %Adds a unit if the tile is vacant 
     end.
 % Arguments: The map in which to remove a unit, Pos of the tile
 % Removes a unit from the tile at the given position
-% Returns {ok, updated unit map}
+%% Returns {ok, updated unit map}
 remove_unit(Map, X, Y) ->
     case get_tile(Map, X, Y) of
 	{ok, Tile} ->
