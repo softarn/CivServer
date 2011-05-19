@@ -96,12 +96,12 @@ class Result{
 		temp = new Tile(new Position(x, y));
 	}
 
-	public void setUnit(String owner, String type, int manPower){
-		temp.addUnit(new Unit(owner, type, manPower));
+	public void setUnit(Unit unit){
+		temp.addUnit(unit);
 	}
 
-	public void addCityUnit(String owner, String type, int manPower){
-		cityUnits.add(new Unit(owner, type, manPower));
+	public void addCityUnit(Unit unit){
+		cityUnits.add(unit);
 	}
 
 	public void setCity(String owner, String name){
@@ -267,33 +267,6 @@ class Result{
 	// Här slutar getters.
 	// --------------------------------------------
 	// Här under är nestlade klasser för ytterligare containers!
-	
-	private class Unit{
-		private String owner, type;
-		private int manPower;
-
-		public Unit(String owner, String type, int manPower){
-			this.owner = owner;
-			this.type = type;
-			this.manPower = manPower;
-		}
-
-		public String getOwner(){
-			return owner;
-		}
-
-		public String getType(){
-			return type;
-		}
-
-		public int getManPower(){
-			return manPower;
-		}
-
-		public String toString(){
-			return "Unit type: " + type + "\nUnit owner: " + owner + "\nUnit manpower: " + manPower + "\n";
-		}
-	}
 
 	private class City{
 		private String owner, name;
