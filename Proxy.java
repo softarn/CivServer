@@ -6,7 +6,7 @@ public class Proxy
 {
 	private Socket 		m_clientSocket;
 	private OutputStream 	m_outStream;
-	private final int	protocolVersion = 2;
+	private final int	protocolVersion = 3;
 	private Receiver	receiver;
 	
 	public Proxy(String host, int port, PacketListener pl)
@@ -307,7 +307,7 @@ public class Proxy
 	}
     }
 
-    public result disbandUnit(int px, int py) throws FailedException
+    public Result disbandUnit(int px, int py) throws FailedException
     {
 	    try
 	    {
