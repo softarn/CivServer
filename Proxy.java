@@ -342,24 +342,4 @@ public class Proxy
 		}
 	}
 
-	public static void main(String [] args)
-	{
-	//	Proxy k = new Proxy("130.237.238.239", 1234);//130.229.128.72", 1234);
-		/*
-		Packet test = new Packet((byte)2);
-		test.add(0);
-		test.add("Kalle");
-		k.send(test, true);
-		*/
-	/*	ArrayList<Integer> skaMed = new ArrayList<Integer>();
-		skaMed.add(1);
-		skaMed.add(3);
-		skaMed.add(1);
-		skaMed.add(4);
-		skaMed.add(2);
-		skaMed.add(5);
-		skaMed.add(3);
-		skaMed.add(5);
-	*///	System.out.println(k.listTest(14,13));
-	}
 }
