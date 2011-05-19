@@ -209,7 +209,15 @@ make_move([{position, EX, EY}], Game, Unit, {startpos, SX, SY}) ->
 	    {error, Reason}
     end.
 
-insert_unit(UnitMap, {FX, FY}, {TX, TY}, Owner) ->
+%Arguments: Unitmap, FromX, FromY, ToX, ToY, Owner of unit to be inserted
+% Returns error if:
+    % -there is no unit at FX, FY
+    % -FX, FY or TX,TY isnt on the map
+    % -If the unit at TX,TY isnt a "containerunit" or a city
+%Else Checks:
+    %if TX,TY contains a City, and then calls enter city (Returns {ok, UpdatedUnitMap}
+    %if TX,TY contains a "containerunit" of type trireme, galley, caravel or siegetower, and then calls enter_Unittype (returns {ok, UpdatedUnitMap}
+insert_unit(UnitMap, {FX, FY}, {TX, TY}) ->
     FromUnit = get_unit(UnitMap, FX, FY),
     {ok, Endtile} = get_tile(UnitMap, TX, TY),
 
@@ -233,27 +241,59 @@ insert_unit(UnitMap, {FX, FY}, {TX, TY}, Owner) ->
 		    enter_tower(UnitMap, {FX, FY}, {TX, TY});
 		_ ->
 		    {error, "Invalid tile"}
-	    end
+	    end;
+
+	true ->
+	    {error, "Invalid tile"}
     end.
-    
+   
+%Arguments: UnitMap, FromX, FromY, ToX, ToY
+% If the unitowner is not the cityowner - returns {error, "Permission denied"} 
+%Else
+% Gets the city at TX,To and adds the unit at FX, FY to the city's unitlist,
+% Removes the unit from FX, FY and updates the tile at TX, TY with the updated city
+%Returns {ok, UpdatedUnitMap}
 enter_city(UnitMap, {FX, FY}, {TX, TY}) ->
     OldCity = get_city(UnitMap, TX, TY),
     OldUnits = OldCity#city.units,
     EnteringUnit = get_unit(UnitMap, FX, FY),
-    UpdatedCity = OldCity#city{units = OldUnits ++ [EnteringUnit]},
-    {ok, UpdatedUnitMap1} = remove_unit(UnitMap, FX, FY),
-    {ok, OldTile} = get_tile(UpdatedUnitMap1, TX, TY),
-    UpdatedTile = OldTile#tile{city = UpdatedCity},
-    UpdatedUnitMap2 = update_tile(UpdatedUnitMap1, UpdatedTile, TX, TY),
-    {ok, UpdatedUnitMap2}.
+    case EnteringUnit#unit.owner =:= OldCity#city.owner of
+     true ->	
+	 UpdatedCity = OldCity#city{units = OldUnits ++ [EnteringUnit]},
+	 {ok, UpdatedUnitMap1} = remove_unit(UnitMap, FX, FY),
+	 {ok, OldTile} = get_tile(UpdatedUnitMap1, TX, TY),
+	 UpdatedTile = OldTile#tile{city = UpdatedCity},
+	 UpdatedUnitMap2 = update_tile(UpdatedUnitMap1, UpdatedTile, TX, TY),
+	 {ok, UpdatedUnitMap2};
+     false ->
+	 {error, "Permission denied"}
+ end.
 
 enter_ship(UnitMap, {FX, FY}, {TX, TY}) ->
-    ok.
+    OldShip = get_unit(UnitMap, TX, TY),
+    OldUnits = OldShip#unit.units,
+    EnteringUnit = get_unit(UnitMap, FX, FY),
+    case EnteringUnit#unit.owner =:= OldShip#unit.owner of
+     true ->	
+	 UpdatedShip = OldShip#unit{units = OldUnits ++ [EnteringUnit]},
+	 {ok, UpdatedUnitMap1} = remove_unit(UnitMap, FX, FY),
+	 {ok, OldTile} = get_tile(UpdatedUnitMap1, TX, TY),
+	 UpdatedTile = OldTile#tile{unit = UpdatedShip},
+	 UpdatedUnitMap2 = update_tile(UpdatedUnitMap1, UpdatedTile, TX, TY),
+	 {ok, UpdatedUnitMap2};
+     false ->
+	 {error, "Permission denied"}
+ end.
+
 enter_tower(UnitMap, {FX, FY}, {TX, TY}) ->
-    enter_ship.
+    enter_ship(UnitMap, {FX, FY}, {TX, TY}).
 
-
-extract_unit(UnitMap, {CX, CY}, UnitType, MP, Owner, {TX, TY}) ->
+%Arguments: Unitmap, ContainerX, ContainerY, Unittype, Manpower, ToX, ToY,
+% Returns {eror, Reason} if:
+% -the ToX,ToY-tile is occupied or out of bounds
+% -the Containertile is out of bounds, not a "containerunit" nor a city
+% else calls on leave_ContainerType method and returns {ok, UpdatedUnitMap}
+extract_unit(UnitMap, {CX, CY}, UnitType, MP, {TX, TY}) ->
     CTile = get_tile(UnitMap, CX, CY),
     ToPlace = get_unit(UnitMap, TX, TY),
     
@@ -270,54 +310,81 @@ extract_unit(UnitMap, {CX, CY}, UnitType, MP, Owner, {TX, TY}) ->
 		{ok, ContainerTile} ->
 		    if
 			(ContainerTile#tile.city =/= null) ->
-			    leave_city(UnitMap, {CX, CY}, UnitType, MP, {TX, TY});
+			    leave_container(UnitMap, {CX, CY}, UnitType, MP, {TX, TY}, city);
 
 			(ContainerTile#tile.unit =/= null) ->
-			  
-			    ContainerType = ContainerTile#tile.unit,
-
-			    case ContainerType#unit.name of
+			    ContainerType = (ContainerTile#tile.unit)#unit.name,
+			    case ContainerType of
 				trireme ->
-				    ok;%leave_ship(UnitMap, {FX, FY}, {TX, TY});
+				    leave_container(UnitMap, {CX, CY}, UnitType, MP, {TX, TY}, unit);
 				galley ->
-				    ok;%leave_ship(UnitMap, {FX, FY}, {TX, TY});
+				    leave_container(UnitMap, {CX, CY}, UnitType, MP, {TX, TY}, unit);
 				caravel ->
-				    ok;%leave_ship(UnitMap, {FX, FY}, {TX, TY});
+				    leave_container(UnitMap, {CX, CY}, UnitType, MP, {TX, TY}, unit);
 				siege_tower ->
-				    ok;%leave_tower(UnitMap, {FX, FY}, {TX, TY});
+				    leave_container(UnitMap, {CX, CY}, UnitType, MP, {TX, TY}, unit);
 				_ ->
 				    {error, "Invalid tile"}
-			    end
+			    end;
+
+			true ->
+			    {error, "Invalid tile"}
+
 		    end
 	    end
     end.
 			
-leave_city(UnitMap, {CX, CY}, UnitType, MP, {TX, TY}) ->
-    OldCity = get_city(UnitMap, CX, CY),
-    OldCityList = OldCity#city.units,
+%Arguments: UnitMap, CityX,CityY, UnitType, manpower, ToX, ToY
+%%filters the buildinglist and checks the length.
+% if the length is:
+    % 0 ->
+    % returns {error, "Unit not found"}
+
+    % Anything else ->
+    % Gets the head of the list (of identical units) which is the unit that wants to exit
+    % Deletes the unit from the citylist and updates the tile with the new city,
+    % Gets the tile where to place the exiting unit and places it there and updates the unitmap with the tile
+    % returns {ok, UpdatedUnitMap}
+leave_container(UnitMap, {CX, CY}, UnitType, MP, {TX, TY}, Type) ->
+    case Type of
+	city ->
+	    OldContainer = get_city(UnitMap, CX, CY),
+	    OldList = OldContainer#city.units;
+	unit ->
+	    OldContainer = get_unit(UnitMap, CX, CY),
+	    OldList = OldContainer#unit.units
+    end,
     
     Find_Unit = fun(UR) ->
 	(UR#unit.str =:= UnitType) and (UR#unit.mp =:= MP)
     end,
 
-    MatchingUnits = lists:filter(Find_Unit, OldCityList),
+    MatchingUnits = lists:filter(Find_Unit, OldList),
 
     case length(MatchingUnits) of
 	0 ->
 	    io:format("Unit not found"),
-	    _TheUnit = {error, "Unit not found"};
+	    {error, "Unit not found"};
 	_ ->
 	    io:format("Units found"),
 	    TheUnit = hd(MatchingUnits), %hitta unit
-	    UpdatedCityList = lists:delete(TheUnit, OldCityList), %ta bort från staden
-	    UpdatedCity = OldCity#city{units = UpdatedCityList}, %uppdatera staden
-	    OldCityTile = get_tile(UnitMap, CX, CY), 
-	    UpdatedCityTile = OldCityTile#tile{city = UpdatedCity}, %skapa ny tile med uppdaterade staden på
-	    UpdatedUnitMap1 = update_tile(UnitMap, UpdatedCityTile, CX, CY), %uppdatera tilen där staden stod med den nya tilen
+	    UpdatedList = lists:delete(TheUnit, OldList), %ta bort från containern 
+	    {ok, OldTile} = get_tile(UnitMap, CX, CY), 
+	    
+	    if 
+		(Type =:= city) ->
+		    UpdatedContainer = OldContainer#city{units = UpdatedList}, %uppdatera containern 
+		    UpdatedTile = OldTile#tile{city = UpdatedContainer}; %skapa ny tile med uppdaterade staden på
+		(Type =:= unit) ->
+		    UpdatedContainer = OldContainer#unit{units = UpdatedList}, %uppdatera containern 
+		    UpdatedTile = OldTile#tile{unit = UpdatedContainer} %skapa ny tile med uppdaterade staden på
+	    end,
+	    
+	    UpdatedUnitMap1 = update_tile(UnitMap, UpdatedTile, CX, CY), %uppdatera tilen där staden stod med den nya tilen
 
-	    OldUnitTile = get_tile(UpdatedUnitMap1, TX, TY), %hämta tilen där enheten ska placeras
-	    UpdatedUnitTile = OldUnitTile#tile{unit = TheUnit}, % skapa ny tile med enheten på
-	    UpdatedUnitMap2 = update_tile(UpdatedUnitMap1, UpdatedUnitTile, TX, TY), %uppdatera tilen där enheten ska stå med den nya tilen
+	    {ok, OldToTile} = get_tile(UpdatedUnitMap1, TX, TY), %hämta tilen där enheten ska placeras
+	    UpdatedToTile = OldToTile#tile{unit = TheUnit}, % skapa ny tile med enheten på
+	    UpdatedUnitMap2 = update_tile(UpdatedUnitMap1, UpdatedToTile, TX, TY), %uppdatera tilen där enheten ska stå med den nya tilen
 	    {ok, UpdatedUnitMap2}
     end.
 

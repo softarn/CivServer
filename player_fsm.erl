@@ -219,7 +219,7 @@ game_turn({Header, List}, {Player, Game}) -> %GLÖM EJ ATT UPPDATERA GAME i bör
 
 	26 -> %Enter city/ship/tower "Enter the dragon..."
 	    [{position, FX, FY}, {position, TX, TY}] = List,
-	    case ?GAMESRV:insert_unit(Game#game.game_pid, {FX, FY}, {TX, TY}, Player#player.name) of
+	    case ?GAMESRV:insert_unit(Game#game.game_pid, {FX, FY}, {TX, TY}) of
 		{ok, UpdatedGame} ->
 		    ?P_HANDLER:sendMsg(Player#player.socket, {1, [Header]}), %Confirmd
 		    {next_state, game_turn, {Player, UpdatedGame}};
@@ -230,7 +230,7 @@ game_turn({Header, List}, {Player, Game}) -> %GLÖM EJ ATT UPPDATERA GAME i bör
 
 	28 -> %Exit city/ship/tower, "Exit dragon"
 	    [{position, CX, CY}, UnitType, MP, {position, TX, TY}] = List,
-	    case ?GAMESRV:extract_unit(Game#game.game_pid, {CX, CY}, UnitType, MP, Player#player.name, {TX, TY}) of
+	    case ?GAMESRV:extract_unit(Game#game.game_pid, {CX, CY}, UnitType, MP, {TX, TY}) of
 		{ok, UpdatedGame} ->
 		    ?P_HANDLER:sendMsg(Player#player.socket, {1, [Header]}),
 		    {next_state, game_turn, {Player, UpdatedGame}};

@@ -114,8 +114,8 @@ handle_call({build_city, {X, Y}, CityName, CityOwner}, _From, Game) ->
 	    {reply, {error, Reason}, Game}
     end;
 
-handle_call({insert_unit, {FX, FY}, {TX, TY}, Owner}, _From, Game) ->
-    case ?GAMEPLAN:insert_unit(Game#game.tilemap, {FX, FY}, {TX, TY}, Owner) of
+handle_call({insert_unit, {FX, FY}, {TX, TY}}, _From, Game) ->
+    case ?GAMEPLAN:insert_unit(Game#game.tilemap, {FX, FY}, {TX, TY}) of
 	{ok, UpdatedUnitMap} ->
 	    UpdatedGame = Game#game{tilemap = UpdatedUnitMap},
 	    {reply, {ok, UpdatedGame}, UpdatedGame};
@@ -123,8 +123,8 @@ handle_call({insert_unit, {FX, FY}, {TX, TY}, Owner}, _From, Game) ->
 	    {reply, {error, Reason}, Game}
     end;
 
-handle_call({extract_unit, {CX, CY}, UnitType, MP, Owner, {TX, TY}}, _From, Game) ->
-    case ?GAMEPLAN:extract_unit(Game#game.tilemap, {CX, CY}, UnitType, MP, Owner, {TX, TY}) of
+handle_call({extract_unit, {CX, CY}, UnitType, MP, {TX, TY}}, _From, Game) ->
+    case ?GAMEPLAN:extract_unit(Game#game.tilemap, {CX, CY}, UnitType, MP, {TX, TY}) of
 	{ok, UpdatedUnitMap} ->
 	    UpdatedGame = Game#game{tilemap = UpdatedUnitMap},
 	    {reply, {ok, UpdatedGame}, UpdatedGame};
@@ -211,8 +211,8 @@ finished_turn(Game_pid) -> gen_server:call(Game_pid, finished_turn).
 move_unit(Game_pid, PosList) -> gen_server:call(Game_pid, {move_unit, PosList}).
 create_unit(Game_pid, {X,Y}, UnitType, Owner) -> gen_server:call(Game_pid, {create_unit, {X, Y}, UnitType, Owner}).
 build_city(Game_pid, {X,Y}, CityName, CityOwner) -> gen_server:call(Game_pid, {build_city, {X,Y}, CityName, CityOwner}).
-insert_unit(Game_pid, {FX, FY}, {TX, TY}, Owner) -> gen_server:call(Game_pid, {insert_unit, {FX, FY}, {TX, TY}, Owner}).
-extract_unit(Game_pid, {CX, CY}, UnitType, MP, Owner, {TX, TY}) -> gen_server:call(Game_pid, {extract_unit, {CX, CY}, UnitType, MP, Owner, {TX, TY}}).
+insert_unit(Game_pid, {FX, FY}, {TX, TY}) -> gen_server:call(Game_pid, {insert_unit, {FX, FY}, {TX, TY}}).
+extract_unit(Game_pid, {CX, CY}, UnitType, MP, {TX, TY}) -> gen_server:call(Game_pid, {extract_unit, {CX, CY}, UnitType, MP, {TX, TY}}).
 attack_unit(Game_pid, {AttX, AttY}, {DefX, DefY}) -> gen_server:call(Game_pid, {attack_unit, {AttX, AttY}, {DefX, DefY}}).
 player_leave(Game_pid, Player) -> gen_server:cast(Game_pid, {player_leave, Player}).
 start_game(Game_pid, MapSize) -> gen_server:cast(Game_pid, {start_game, MapSize}).
