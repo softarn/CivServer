@@ -1,5 +1,7 @@
+package proxy;
 
-public class Buffer
+
+class Buffer
 {
 	private byte[] m_data;
 	

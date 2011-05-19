@@ -1,3 +1,5 @@
+package proxy;
+
 import java.util.*;
 import java.io.*;
 import java.net.*;
@@ -19,220 +21,202 @@ public class Receiver implements Runnable
 
 	public void run()
 	{
-		while(true)
+		try
 		{
-			receive();
+			while(true)
+			{
+				receive();
+			}
+		}
+		catch(IOException e)
+		{
+			e.printStackTrace();
 		}
 	}
 
-	public Result getResult()
+	public Result getResult() throws FailedException
 	{
-		while(packet == null){}
-		Result toReturn = packet;
-		packet = null;
+		while(getPacket() == null)
+		{
+			try
+			{
+				Thread.sleep(100);
+			}
+			catch(Throwable t){}
+
+		//	System.out.println("getResult()");
+		}
+		Result toReturn = getPacket();
+       		setPacket(null);
+		if(!toReturn.getOk()){
+			throw new FailedException(toReturn.getRequestFail(), toReturn.getFailMsg());
+		}
 		return toReturn;
 	}
 
+    private synchronized void setPacket(Result res){
+        packet = res;
+    }
+
+    private synchronized Result getPacket(){
+        return packet;
+    }
+
 	// Sends the packet.
-	private void send(Packet p)
+	private void send(Packet p) throws IOException
 	{
-		try
-		{
-			m_outStream.write(p.getBuffer());
-			m_outStream.flush();
-		} 
-		catch (IOException ioe)
-		{
-			ioe.printStackTrace();
-		}
+		m_outStream.write(p.getBuffer());
+		m_outStream.flush();
 	}
 
 	// Waits for an answer from the server and parses what it gets.
 	// Puts what it gets into an object of the Result class, which is then returned.
-	private void receive()
+	private void receive() throws IOException
 	{
-		while(packet != null){}
-		Result toReturn = new Result();
-		try
+		while(getPacket() != null)
 		{
-			int header = m_inStream.read();		// First the header.
-
-			// Header 3, welcome to the real world.
-			if(header == 3)
+			try
 			{
-				toReturn.addOk(true);
-				toReturn.addOkMsg("Welcome to the Real World");
-				packet = toReturn;
+				Thread.sleep(100);
 			}
-
-			// Header 0, fail'd.
-			else if(header == 0)
-			{
-				toReturn.addOk(false);
-				toReturn.addFailNumber(receiveInt());
-				toReturn.addRequestFail(m_inStream.read());
-				toReturn.addFailMsg(receiveString());
-				packet = toReturn;
-			}
-
-			// Header 1, the confirm'd, but right now we receive a string for testing purposes.
-			else if(header == 1)
-			{
-				toReturn.addRequestOk(m_inStream.read());
-				toReturn.addOk(true);
-				packet = toReturn;
-			}
+			catch(Throwable t){}
+		}
 		
-			// Header 4, a ping and answers directly with a pong.
-			else if(header == 4)
-			{
-				receiveBool();
-				Packet toSend = new Packet((byte)4);
-				toSend.add(true);
-				send(toSend);
-			}	
-	
-			// Header 6, listGameAnswer, returns a list of games.
-			else if(header == 6)
-			{
-				int size = receiveInt();
-				toReturn.addSessions(receiveListString(size));
-				packet = toReturn;
-			}
+		Result toReturn = new Result();
 
-			// Header 9, Join answer, returns what game you are connected to.
-			else if(header == 9)
-			{
-				toReturn.addOk(true);
-				toReturn.addName(receiveString());
-				packet = toReturn;
-			}
-
-			// Header 10, Game session info, returns all the other players and if the game is locked.
-			else if(header == 10)
-			{
-				toReturn.setupPlayers();
-				int size = receiveInt();
-				for(int i=0; i<size; i++)
-				{
-					toReturn.addPlayer(receiveString(), receiveString());
-				}
-				toReturn.addLocked(receiveBool());
-
-				pl.lobbyUpdated(toReturn);
-				
-			}
-
-			// Header 14, Start game answer, receives the map and hopefully returns it.
-			else if(header == 14)
-			{
-				toReturn.addMap(receiveListList(receiveInt()));
-
-				pl.gameStarted(toReturn);
-			}
-
-			// Header 16, Tile Update, this one needs more work.
-			else if(header == 16)
-			{
-				toReturn.setupTiles();
-				int size = receiveInt();
-				for(int i=0; i<size; i++)
-				{
-					receiveTile(toReturn);
-				}
-
-				pl.newTurn(toReturn);
-			}
-
-			// Test
-			else if(header == 99)
-			{
-				int size = receiveInt();
-				toReturn.addSessions(receiveListString(size));
-			packet = toReturn;
-			}
-
-			// Testing perhaps
-			else if(header == 101)
-			{
-				if(receiveBool())
-				{
-					System.out.println(receiveString());
-				}
-			packet = toReturn;
-			}
-	
-		}catch(IOException e)
+		// Receive the header
+		switch(receiveByte())
 		{
-			e.printStackTrace();
-		}	
+		// Header 3, welcome to the real world.
+		case 3:
+			toReturn.addOk(true);
+			setPacket(toReturn);
+			break;
+
+		// Header 0, fail'd.
+		case 0:
+			toReturn.addOk(false);
+			toReturn.addRequestFail(receiveByte());
+			toReturn.addFailMsg(receiveString());
+			setPacket(toReturn);
+			break;
+
+		// Header 1, the confirm'd, but right now we receive a string for testing purposes.
+		case 1:
+			toReturn.addRequestOk(receiveByte());
+			toReturn.addOk(true);
+			setPacket(toReturn);
+			break;
+	
+		// Header 4, a ping and answers directly with a pong.
+		case 4:
+			receiveBool();
+			Packet toSend = new Packet((byte)4);
+			toSend.add(true);
+			send(toSend);
+			break;
+
+		// Header 6, listGameAnswer, returns a list of games.
+		case 6:
+			toReturn.addSessions(receiveStringList());
+			setPacket(toReturn);
+			break;
+
+		// Header 9, Join answer, returns what game you are connected to.
+		case 9:
+			toReturn.addOk(true);
+			toReturn.addHostName(receiveString());
+			setPacket(toReturn);
+			break;
+
+		// Header 10, Game session info, returns all the other players and if the game is locked.
+		case 10:
+			pl.lobbyUpdated(receiveGameSessionInformation());
+			break;
+
+		// Header 14, Start game answer, receives the map and hopefully returns it.
+		case 14:
+			pl.gameStarted(receiveGameBoard());
+			break;
+
+		// Header 17, It's your turn, receives a list of updated tiles.
+		case 17:
+			pl.newTurn(receiveTileList());
+			break;
+
+		// Header 19, Combat result, receives what's left of the fighting units.
+		case 19:
+			toReturn.addAttackerLeft(receiveInt());
+			toReturn.addDefenderLeft(receiveInt());
+
+			setPacket(toReturn);
+			break;
+
+		// Header 20, Message for you, sir!, receives a chat message.
+		case 20:
+			{
+				String sender = receiveString();
+				String message = receiveString();
+
+				pl.chatMessageReceived(new ChatMessage(sender ,message));
+			}
+			break;
+		
+		// Header 25, game was closed
+		case 25:
+			pl.gameClosed();
+			break;
+		}
+	
+	}
+	
+	
+	private int receiveByte() throws IOException
+	{
+		int b = m_inStream.read();
+		if(b < 0)
+			throw new IOException("InputStream.read returned a negative value");
+		
+		return b;
+	}
+	
+	// Method for reading a boolean from the inputStream.
+	private boolean receiveBool() throws IOException
+	{
+		return receiveByte() != 0;
 	}
 
 	// Läser in ett heltal från inStream:en.
-	private int receiveInt()
+	private int receiveInt() throws IOException
 	{
-		byte[] toParse = new byte[4];
-		try
-		{
-			m_inStream.read(toParse);
-		}catch(IOException e)
-		{
-			e.printStackTrace();
-		}
-		int toReturn = ((int)toParse[0]<<24)
-				+(makeInt(toParse[1])<<16)
-				+(makeInt(toParse[2])<<8)
-				+(makeInt(toParse[3]));
+		int toReturn = 0;
+		
+		for(int i = 0; i < 4; ++i)
+			toReturn |= receiveByte() << (8 * (3 - i));
+		
 		return toReturn;
-	}
-
-	// Gör om 4 bytes till ett heltal.
-	private int makeInt(byte b)
-	{
-		if((int)b < 0)
-		{
-			return ((int)b)+256;
-		}
-		else
-		{
-			return (int)b;
-		}
 	}
 	
 	// To receive Strings from the server.
-	private String receiveString() 
+	private String receiveString()  throws IOException
 	{
 		String toReturn = "";
 		for(;;)
 		{
-			try
-			{
-				int chara = m_inStream.read();
-				if(chara == -1)
-				{
-					break;
-				}
-				else if(chara == 0)
-				{
-					break;
-				}
-				else
-				{
-					toReturn+=(char)chara;
-				}
-			}catch(IOException e)
-			{
-				e.printStackTrace();
-			}
+			int chara = receiveByte();
+			if(chara == 0)
+				break;
+
+			toReturn += (char)chara;
 		}
 		return toReturn;
 	}
 
 	// Läser in en lista av heltal och returnerar den.
-	private ArrayList<Integer> receiveListInteger(int size)
+	private ArrayList<Integer> receiveIntegerList(int size) throws IOException
 	{
 		ArrayList<Integer> toReturn = new ArrayList<Integer>();
-		for(int i=0; i<size; i++)
+		for(int i = 0; i < size; ++i)
 		{
 			toReturn.add(receiveInt());
 		}
@@ -240,11 +224,11 @@ public class Receiver implements Runnable
 	}
 	
 	// Läser in en lista av strängar och returnerar den.
-	
-	private ArrayList<String> receiveListString(int size)
+	private ArrayList<String> receiveStringList() throws IOException
 	{
+		int size = receiveInt();
 		ArrayList<String> toReturn = new ArrayList<String>();
-		for(int i=0; i<size; i++)
+		for(int i = 0; i < size; ++i)
 		{
 			toReturn.add(receiveString());
 		}
@@ -252,61 +236,90 @@ public class Receiver implements Runnable
 	}
 
 	// Läser in en lista av listor av strängar, 2D-lista av strängar.
-	private ArrayList<ArrayList<String>> receiveListList(int size)
+	private ArrayList<ArrayList<String>> receiveStringMatrix() throws IOException
 	{
+		int size = receiveInt();
 		ArrayList<ArrayList<String>> toReturn = new ArrayList<ArrayList<String>>();
-		for(int i=0; i<size; i++)
+		for(int i = 0; i < size; ++i)
 		{
-			int nextSize = receiveInt();
-			toReturn.add(receiveListString(nextSize));
+			toReturn.add(receiveStringList());
 		}
 		return toReturn;
 	}
 
-	// Method for reading a boolean from the inputStream.
-	private boolean receiveBool()
+	
+	private ArrayList<Tile> receiveTileList() throws IOException
 	{
-		boolean bool = false;
-		int boolVal = 0;
-		try
+		int size = receiveInt();
+		ArrayList<Tile> toReturn = new ArrayList<Tile>();
+		for(int i = 0; i < size; ++i)
 		{
-			boolVal = m_inStream.read();
+			toReturn.add(receiveTile());
 		}
-		catch(IOException e)
+		return toReturn;
+	}
+	
+	private List<Unit> receiveUnitList() throws IOException
+	{
+		int size = receiveInt();
+		List<Unit> unitList = new ArrayList<Unit>();
+		for(int i = 0; i < size; ++i)
 		{
-			e.printStackTrace();
+			String owner = receiveString();
+			String unitType = receiveString();
+			int manpower = receiveInt();
+			Unit unit = new Unit(owner, unitType, manpower, receiveUnitList());
+			unitList.add(unit);
 		}
-		if(boolVal != 0)
-		{
-			bool = true;
-		}
-		return bool;
+		
+		return unitList;
 	}
 
 	// Method to receive a tile from the server.
-	private void receiveTile(Result toAddTo)
+	private Tile receiveTile() throws IOException
 	{
-		toAddTo.setUpdatedTile(receiveInt(), receiveInt());
-		if(receiveBool())
-		{
-			toAddTo.setUnit(receiveString(), receiveString(), receiveInt());
-		}
+        int x = receiveInt();
+        int y = receiveInt();
+        Unit unit = null;
+        City city = null;
+        
 		if(receiveBool())
 		{
 			String owner = receiveString();
-			int size = receiveInt();
-			for(int i=0; i<size; i++)
-			{
-				toAddTo.addCityUnit(receiveString(), receiveString(), receiveInt());
-			}
-			size = receiveInt();
-			ArrayList<String> buildings = receiveListString(size);
-			toAddTo.setCity(owner, receiveString(), buildings);
+			String unitType = receiveString();
+			int manpower = receiveInt();
+			unit = new Unit(owner, unitType, manpower, receiveUnitList());
 		}
+
 		if(receiveBool())
 		{
-			toAddTo.setImprovement(receiveString());
+			String owner = receiveString();
+			List<Unit> unitList = receiveUnitList();
+			String name = receiveString();
+			
+			city = new City(owner, unitList, name);
 		}
-		toAddTo.addUpdatedTile();
+		
+		return new Tile(x, y, unit, city);
+	}
+	
+	private GameSessionInformation receiveGameSessionInformation() throws IOException
+	{
+		int size = receiveInt();
+		List<Player> playerList = new LinkedList<Player>();
+		for(int i = 0; i < size; ++i)
+		{
+			Player player = new Player(receiveString(), receiveString());
+			playerList.add(player);
+		}
+		
+		return new GameSessionInformation(playerList, receiveBool());
+	}
+	
+	private GameBoard receiveGameBoard() throws IOException
+	{
+		ArrayList<ArrayList<String>> terrainData = receiveStringMatrix();
+		List<Tile> tileList = receiveTileList();
+		return new GameBoard(terrainData, tileList);
 	}
 }

@@ -1,15 +1,20 @@
+package proxy;
+
 import java.util.*;
 
-class Result{
+class Result
+{
 	
 	// Här är medlemsvariabler som ska kunna returneras.
-	private boolean ok, locked;
-	private String okMsg, failMsg, name;
-	private List sessions, players, map, updatedTiles;
-	private int size, requestFail, failNumber, requestOk;
+	private boolean ok = true, locked;
+	private String failMsg, hostName, chatMessage, chatName, fromWhom;
+	private List<String> sessions;
+	private List<Player> players;
+	private List<Tile> updatedTiles;
+	private int requestFail, requestOk, attackerLeft, defenderLeft;
 
 	// Här är medlemsvariabler som bara är hjälpvariabler till vissa metoder.
-	private List cityUnits = new ArrayList<Unit>();
+	private List<Unit> cityUnits = new ArrayList<Unit>();
 	private Tile temp;
 
 	public Result(){
@@ -30,44 +35,45 @@ class Result{
 
 	// Sen så kommer strängar.
 
-	public void addOkMsg(String msg){
-		okMsg = msg;
-	}
-
 	public void addFailMsg(String msg){
 		failMsg = msg;
 	}
 
-	public void addName(String name){
-		this.name = name;
+	public void addHostName(String name){
+		hostName = name;
+	}
+
+	public void addChatMessage(String message){
+		chatMessage = message;
+	}
+
+	public void addFromWhom(String name){
+		fromWhom = name;
 	}
 
 	// Här nedan är det för listor.
 	
-	public void addSessions(List sessions){
+	public void addSessions(List<String> sessions){
 		this.sessions = sessions;
 	}
 
-	public void addMap(List map){
-		this.map = map;
-	}
 
 	// Och sist heltal.
-
-	public void addSize(int size){
-		this.size = size;
-	}
 
 	public void addRequestFail(int requestFail){
 		this.requestFail = requestFail;
 	}
 
-	public void addFailNumber(int failNumber){
-		this.failNumber = failNumber;
-	}
-
 	public void addRequestOk(int requestOK){
 		this.requestOk = requestOk;
+	}
+
+	public void addAttackerLeft(int attLeft){
+		attackerLeft = attLeft;
+	}
+
+	public void addDefenderLeft(int defLeft){
+		defenderLeft = defLeft;
 	}
 
 	// Sets för komplexa strukturer.
@@ -100,8 +106,8 @@ class Result{
 		cityUnits.add(new Unit(owner, type, manPower));
 	}
 
-	public void setCity(String owner, String name, List<String> buildings){
-		temp.addCity(new City(owner, name, buildings, cityUnits));
+	public void setCity(String owner, String name){
+		temp.addCity(new City(owner, name, cityUnits));
 	}
 
 	public void setImprovement(String name){
@@ -128,44 +134,44 @@ class Result{
 
 	// Sen Strängar.
 
-	public String getOkMsg(){
-		return okMsg;
-	}
-
 	public String getFailMsg(){
 		return failMsg;
 	}
 
-	public String getName(){
-		return name;
+	public String getHostName(){
+		return hostName;
+	}
+
+	public String getChatMessage(){
+		return chatName;
+	}
+
+	public String getChatFromWhom(){
+		return fromWhom;
 	}
 
 	// Under finns getters för listor.
 
-	public List getSessions(){
+	public List<String> getSessions(){
 		return sessions;
 	}
 
-	public List getMap(){
-		return map;
-	}
-
 	// Här kommer getters för heltal.
-
-	public int getSize(){
-		return size;
-	}
 
 	public int getRequestFail(){
 		return requestFail;
 	}
 
-	public int getFailNumber(){
-		return failNumber;
-	}
-
 	public int getRequestOk(){
 		return requestOk;
+	}
+
+	public int getAttackerLeft(){
+		return attackerLeft;
+	}
+
+	public int getDefenderLeft(){
+		return defenderLeft;
 	}
 
 	// Här under kommer det att finnas getters för dom mer komplexa strukturerna.
@@ -236,10 +242,6 @@ class Result{
 		return ((Tile)updatedTiles.get(n)).getCity().getName();
 	}
 
-	public List<String> getCityBuildings(int n){
-		return ((Tile)updatedTiles.get(n)).getCity().getBuildings();
-	}
-
 	public int getAmountCityUnits(int n){
 		return ((Tile)updatedTiles.get(n)).getCity().getAmountUnits();
 	}
@@ -293,13 +295,11 @@ class Result{
 
 	private class City{
 		private String owner, name;
-		private List<String> buildings;
 		private List<Unit> units;
 
-		public City(String owner, String name, List<String> buildings, List<Unit> units){
+		public City(String owner, String name, List<Unit> units){
 			this.owner = owner;
 			this.name = name;
-			this.buildings = buildings;
 			this.units = units;
 		}
 
@@ -311,22 +311,16 @@ class Result{
 			return name;
 		}
 
-		public List<String> getBuildings(){
-			return buildings;
-		}
-
 		public int getAmountUnits(){
 			return units.size();
 		}
-
-		
 
 		public Unit getUnit(int n){
 			return units.get(n);
 		}
 
 		public String toString(){
-			return "City name: " + name + "\nCity owner: " + owner + "\nBuildings in city: " + buildings + "\nUnits in city: " + units + "\n";
+			return "City name: " + name + "\nCity owner: " + owner + "\nUnits in city: " + units + "\n";
 		}
 	}
 
