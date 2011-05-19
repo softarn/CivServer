@@ -1,6 +1,6 @@
 -define(TCP, tcp).
 -define(P_HANDLER, player_handler).
--define(P_VERSION, 2).
+-define(P_VERSION, 3).
 -define(SERVER, server).
 -define(GAMESRV, gameserver).
 -define(TERGEN, ter_gen).
@@ -52,4 +52,5 @@
 	owner = null,
 	name = null,
 	str = null,
+	units = [],
 	mp = null}).
