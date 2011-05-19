@@ -269,18 +269,38 @@ public class Proxy
 		}
 	}
 
-    public Result insertUnit(int fromX, int fromY, int destX, int destY) throws FailedException
+    public Result insertUnit(int fromX, int fromY, int toX, int toY) throws FailedException
     {
 		try
 		{
 			Packet toSend = new Packet((byte)26);
 			toSend.add(fromX);
 			toSend.add(fromY);
-			toSend.add(destX);
-			toSend.add(destY);
+			toSend.add(toX);
+			toSend.add(toY);
 			send(toSend);
 			return receiver.getResult();
 		}
+		catch(FailedException fe)
+		{
+			throw fe;
+		}
+    }
+
+    public Result moveOutUnit(int fromX, int fromY, String type, int mp, int toX, toY) throws FailedException
+    {
+        try
+        {
+			Packet toSend = new Packet((byte)28);
+			toSend.add(fromX);
+			toSend.add(fromY);
+            toSend.add(type);
+            toSend.add(mp);
+			toSend.add(toX);
+			toSend.add(toY);
+			send(toSend);
+			return receiver.getResult();
+        }
 		catch(FailedException fe)
 		{
 			throw fe;
