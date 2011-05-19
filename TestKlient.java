@@ -1,7 +1,7 @@
 import java.util.*;
 
 class TestKlient{
-	String name, ip = "localhost"; //"chylis.dyndns-at-work.com";//"softarn.mine.nu";
+	String name, ip = "chylis.dyndns-at-work.com"; //"chylis.dyndns-at-work.com";//"softarn.mine.nu";
 	Proxy p;
 	int port = 1234;
 	boolean loop = true, lobby = true, inGame = false;
