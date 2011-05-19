@@ -287,7 +287,7 @@ public class Proxy
 		}
     }
 
-    public Result moveOutUnit(int fromX, int fromY, String type, int mp, int toX, toY) throws FailedException
+    public Result moveOutUnit(int fromX, int fromY, String type, int mp, int toX, int toY) throws FailedException
     {
         try
         {
