@@ -88,6 +88,11 @@ recv(Socket, FSM) ->
 	    ManPower = ?TCP:readInteger(Socket),
 	    ToPlacePos = ?TCP:readElement(Socket, "Position"),
 	    [ContainerPos, UnitType, ManPower, ToPlacePos];
+
+	29 -> %Disband unit
+	    Pos = ?TCP:readElement(Socket, "Position"),
+	    [Pos];
+
 	_ ->
 	    []
 

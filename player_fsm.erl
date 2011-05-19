@@ -202,7 +202,7 @@ game_turn({Header, List}, {Player, Game}) -> %GLÖM EJ ATT UPPDATERA GAME i bör
 	    end;
 	    
 	23 -> %Spawnd
-	    [{position, X, Y}, {unit, Owner, UnitType, _Manpower}] = List,
+	    [{position, X, Y}, {unit, Owner, UnitType, _Manpower, _Units}] = List,
 	    case ?GAMESRV:create_unit(Game#game.game_pid, {X, Y}, UnitType, Owner) of
 		{ok, UpdatedGame} ->
 		    ?P_HANDLER:sendMsg(Player#player.socket, {1, [Header]}), %Confirm'd
@@ -231,6 +231,17 @@ game_turn({Header, List}, {Player, Game}) -> %GLÖM EJ ATT UPPDATERA GAME i bör
 	28 -> %Exit city/ship/tower, "Exit dragon"
 	    [{position, CX, CY}, UnitType, MP, {position, TX, TY}] = List,
 	    case ?GAMESRV:extract_unit(Game#game.game_pid, {CX, CY}, UnitType, MP, {TX, TY}) of
+		{ok, UpdatedGame} ->
+		    ?P_HANDLER:sendMsg(Player#player.socket, {1, [Header]}),
+		    {next_state, game_turn, {Player, UpdatedGame}};
+		{error, _Reason} ->
+		    ?P_HANDLER:sendFailMsg(Player#player.socket, 7, Header), %Failpacket invalid tile
+		    {next_state, game_turn, {Player, Game}}
+	    end;
+
+	29 -> %Disband unit
+	    [{position, X, Y}] = List,
+	    case ?GAMESRV:disband_unit(Game#game.game_pid, {X, Y}, Player#player.name) of
 		{ok, UpdatedGame} ->
 		    ?P_HANDLER:sendMsg(Player#player.socket, {1, [Header]}),
 		    {next_state, game_turn, {Player, UpdatedGame}};

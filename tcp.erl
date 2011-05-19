@@ -77,7 +77,8 @@ readElement(Socket, "Unit") ->
     Owner = readString(Socket),
     UnitType = readString(Socket),
     ManPower = readInteger(Socket),
-    {unit, Owner, UnitType, ManPower};
+    Units = readList(Socket, "Unit"),
+    {unit, Owner, UnitType, ManPower, Units};
 
 readElement(Socket, "City") ->
     Owner = readString(Socket),
@@ -169,7 +170,8 @@ sendCity(Socket, City) ->
 sendUnit(Socket, Unit) ->
     sendString(Socket, Unit#unit.owner),
     sendString(Socket, Unit#unit.str),
-    sendInteger(Socket, Unit#unit.mp).
+    sendInteger(Socket, Unit#unit.mp),
+    sendList(Socket, "Unit", Unit#unit.units).
 
 sendPerhaps(Socket, _Type, null) ->
     sendBoolean(Socket, 0);
