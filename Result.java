@@ -9,7 +9,7 @@ class Result{
 	private int requestFail, requestOk, attackerLeft, defenderLeft;
 
 	// Här är medlemsvariabler som bara är hjälpvariabler till vissa metoder.
-	private List cityUnits = new ArrayList<Unit>();
+	private List<Unit> cityUnits = new ArrayList<Unit>();
 	private Tile temp;
 
 	public Result(){
@@ -226,6 +226,10 @@ class Result{
 	public int getUnitManPower(int n){
 		return ((Tile)updatedTiles.get(n)).getUnit().getManPower();
 	}
+
+    public List<Unit> getUnitUnits(int n){
+        return ((Tile)updatedTiles.get(n)).getUnit().getUnits();
+    }
 
 	public boolean existCity(int n){
 		if(((Tile)updatedTiles.get(n)).getCity() != null){

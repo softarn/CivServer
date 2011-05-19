@@ -3,7 +3,7 @@ import java.util.*;
 public class Unit{
     private String owner, type;
     private int manPower;
-    private List units;
+    private List<Unit> units;
 
     public Unit(String owner, String type, int manPower, List<Unit> units){
         this.owner = owner;
@@ -22,6 +22,10 @@ public class Unit{
 
     public int getManPower(){
         return manPower;
+    }
+
+    public List<Unit> getUnits(){
+        return units;
     }
 
     public String toString(){
