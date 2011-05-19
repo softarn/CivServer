@@ -21,7 +21,6 @@ public class Proxy
 
 			recvThread.start();
 			
-		//	System.out.println("[+] Connected to server \""+ host +"\" on port "+ port);
 		}
 		catch(UnknownHostException e)
 		{
@@ -237,7 +236,8 @@ public class Proxy
 		}
 	}
 
-	public Result madeUnit(int x, int y, String owner, String type, int manPower) throws FailedException
+	public Result madeUnit(int x, int y, String owner, String type,
+           int manPower) throws FailedException
 	{
 		try
 		{
@@ -287,7 +287,8 @@ public class Proxy
 		}
     }
 
-    public Result moveOutUnit(int fromX, int fromY, String type, int mp, int toX, int toY) throws FailedException
+    public Result moveOutUnit(int fromX, int fromY, String type, int mp,
+           int toX, int toY) throws FailedException
     {
         try
         {
