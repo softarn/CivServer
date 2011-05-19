@@ -77,14 +77,14 @@ readElement(Socket, "Unit") ->
     Owner = readString(Socket),
     UnitType = readString(Socket),
     ManPower = readInteger(Socket),
-    {unit, Owner, UnitType, ManPower};
+    Units = readList(Socket, "Unit"),
+    {unit, Owner, UnitType, ManPower, Units};
 
 readElement(Socket, "City") ->
     Owner = readString(Socket),
     UnitList = readList(Socket, "String"),
-    Buildings = readList(Socket, "String"),
     Name = readString(Socket),
-    {city, Owner, UnitList, Buildings, Name};
+    {city, Owner, UnitList, Name};
 
 readElement(Socket, "Player") -> % Lista av Player
     Name = readString(Socket),
@@ -150,14 +150,13 @@ sendList(Socket, ElemType, List) ->
 	_ ->
 	    io:format("Invalid ElemType in function sendList!")
     end.      
-    %io:format("SendList sent a list:~n").
+    %io:format("SendList sent a list:~n"),
     %io:format("~p\n", [List]).
 
 sendTile(Socket, Tile) ->
     sendPosition(Socket, Tile#tile.position),
     sendPerhaps(Socket, "Unit", Tile#tile.unit),
-    sendPerhaps(Socket, "City", Tile#tile.city),
-    sendPerhaps(Socket, "String", Tile#tile.improvement).
+    sendPerhaps(Socket, "City", Tile#tile.city). %UPPDATERA PROTOKOLLET OCH TA BORT ONÖDIGA RECORDATTRIBUT
 
 sendPosition(Socket, {X, Y}) ->
     sendInteger(Socket, X-1),
@@ -166,13 +165,13 @@ sendPosition(Socket, {X, Y}) ->
 sendCity(Socket, City) ->
     sendString(Socket, City#city.owner),
     sendList(Socket, "Unit", City#city.units),
-    sendList(Socket, "String", City#city.buildings),
     sendString(Socket, City#city.name).
 
 sendUnit(Socket, Unit) ->
     sendString(Socket, Unit#unit.owner),
     sendString(Socket, Unit#unit.str),
-    sendInteger(Socket, Unit#unit.mp).
+    sendInteger(Socket, Unit#unit.mp),
+    sendList(Socket, "Unit", Unit#unit.units).
 
 sendPerhaps(Socket, _Type, null) ->
     sendBoolean(Socket, 0);

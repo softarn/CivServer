@@ -83,7 +83,7 @@ create_unit(Map, {X, Y}, UnitType, Owner) -> %Adds a unit if the tile is vacant 
     end.
 % Arguments: The map in which to remove a unit, Pos of the tile
 % Removes a unit from the tile at the given position
-% Returns the updated unit map
+%% Returns {ok, updated unit map}
 remove_unit(Map, X, Y) ->
     case get_tile(Map, X, Y) of
 	{ok, Tile} ->
@@ -111,6 +111,8 @@ add_unit(Map,Unit, X, Y) ->
     end.
 
 
+
+
 % Arguments: The map to extract the tile from, Position of the tile to be extracted
 % Fetches the tile at position X,Y if it is in the map, else returns {error, Reason}
 %Returns {ok, Tile}
@@ -133,6 +135,16 @@ get_unit(Map, X, Y) ->
 	true -> %else..
 	    Tile = element(Y, element(X, Map)),
 	    Tile#tile.unit
+    end.
+
+get_city(Map, X, Y) -> 
+    if 
+	(X > size(Map)) or (Y > size(element(1, Map))) or
+	(X < 1) or (Y < 1)		->
+	    {error, "Out of bounds"};
+	true -> %else..
+	    Tile = element(Y, element(X, Map)),
+	    Tile#tile.city
     end.
 
 tuplemap_to_listmap(Tuple) ->
@@ -197,6 +209,188 @@ make_move([{position, EX, EY}], Game, Unit, {startpos, SX, SY}) ->
 	    {error, Reason}
     end.
 
+%Arguments: Unitmap, FromX, FromY, ToX, ToY, Owner of unit to be inserted
+% Returns error if:
+    % -there is no unit at FX, FY
+    % -FX, FY or TX,TY isnt on the map
+    % -If the unit at TX,TY isnt a "containerunit" or a city
+%Else Checks:
+    %if TX,TY contains a City, and then calls enter city (Returns {ok, UpdatedUnitMap}
+    %if TX,TY contains a "containerunit" of type trireme, galley, caravel or siegetower, and then calls enter_Unittype (returns {ok, UpdatedUnitMap}
+insert_unit(UnitMap, {FX, FY}, {TX, TY}) ->
+    FromUnit = get_unit(UnitMap, FX, FY),
+    {ok, Endtile} = get_tile(UnitMap, TX, TY),
+
+    if 
+	(FromUnit =:= null) or (FromUnit =:= {error, "Out of bounds"}) or (Endtile =:= {error, "Out of bounds"}) ->
+	    {error, "Invalid tile"};
+	
+	(Endtile#tile.city =/= null) ->
+	    io:format("UNIT VID STADEN: ~p~n", [Endtile#tile.unit]),
+	    enter_container(UnitMap, {FX, FY}, {TX, TY}, city);
+	
+	(Endtile#tile.unit =/= null) ->
+	    EndUnit = Endtile#tile.unit,
+	    case EndUnit#unit.name of
+		trireme ->
+		    enter_container(UnitMap, {FX, FY}, {TX, TY}, unit);
+		galley ->
+		    enter_container(UnitMap, {FX, FY}, {TX, TY}, unit);
+		caravel ->
+		    enter_container(UnitMap, {FX, FY}, {TX, TY}, unit);
+		siege_tower ->
+		    enter_container(UnitMap, {FX, FY}, {TX, TY}, unit);
+		_ ->
+		    {error, "Invalid tile"}
+	    end;
+
+	true ->
+	    {error, "Invalid tile"}
+    end.
+   
+%Arguments: UnitMap, FromX, FromY, ToX, ToY
+% If the unitowner is not the cityowner - returns {error, "Permission denied"} 
+%Else
+% Gets the city at TX,To and adds the unit at FX, FY to the city's unitlist,
+% Removes the unit from FX, FY and updates the tile at TX, TY with the updated city
+%Returns {ok, UpdatedUnitMap}
+enter_container(UnitMap, {FX, FY}, {TX, TY}, Type) ->
+    EnteringUnit = get_unit(UnitMap, FX, FY),
+
+    case Type of
+	city ->
+	    OldContainer = get_city(UnitMap, TX, TY),
+	    if 
+		EnteringUnit#unit.owner =/= OldContainer#city.owner ->
+		    {error, "Permission denied"};
+		true ->
+		    {ok, UpdatedUnitMap1} = remove_unit(UnitMap, FX, FY),
+		    {ok, OldTile} = get_tile(UpdatedUnitMap1, TX, TY),
+		    OldUnits = OldContainer#city.units,
+		    UpdatedContainer = OldContainer#city{units = OldUnits ++ [EnteringUnit]},
+		    UpdatedTile = OldTile#tile{city = UpdatedContainer},
+		    UpdatedUnitMap2 = update_tile(UpdatedUnitMap1, UpdatedTile, TX, TY),
+		    io:format("~p entered the city ~p ~n", [EnteringUnit#unit.str, UpdatedContainer#city.name]),
+		    {ok, UpdatedUnitMap2}
+	    end;
+
+	unit ->
+	    OldContainer = get_unit(UnitMap, TX, TY),
+	    if
+		EnteringUnit#unit.owner =/= OldContainer#unit.owner ->
+		    {error, "Permission denied"};
+		true ->
+		    {ok, UpdatedUnitMap1} = remove_unit(UnitMap, FX, FY),
+		    {ok, OldTile} = get_tile(UpdatedUnitMap1, TX, TY),
+		    OldUnits = OldContainer#unit.units,
+		    UpdatedContainer = OldContainer#unit{units = OldUnits ++ [EnteringUnit]},
+		    UpdatedTile = OldTile#tile{unit = UpdatedContainer},
+		    UpdatedUnitMap2 = update_tile(UpdatedUnitMap1, UpdatedTile, TX, TY),
+		    io:format("~p entered the unit ~p ~n", [EnteringUnit#unit.str, UpdatedContainer#unit.name]),
+		    {ok, UpdatedUnitMap2}
+	    end
+    end.
+
+%Arguments: Unitmap, ContainerX, ContainerY, Unittype, Manpower, ToX, ToY,
+% Returns {eror, Reason} if:
+% -the ToX,ToY-tile is occupied or out of bounds
+% -the Containertile is out of bounds, not a "containerunit" nor a city
+% else calls on leave_ContainerType method and returns {ok, UpdatedUnitMap}
+extract_unit(UnitMap, {CX, CY}, UnitType, MP, {TX, TY}) ->
+    CTile = get_tile(UnitMap, CX, CY),
+    ToPlace = get_unit(UnitMap, TX, TY),
+    
+    if
+	(ToPlace =/= null) or (ToPlace =:= {error, "Out of bounds"}) ->
+	    {error, "Invalid tile"};
+
+	true -> % else
+
+	    case CTile of
+		{error, "Out of bounds"} ->
+		    {error, "Out of bounds"};
+
+		{ok, ContainerTile} ->
+		    if
+			(ContainerTile#tile.city =/= null) ->
+			    leave_container(UnitMap, {CX, CY}, UnitType, MP, {TX, TY}, city);
+
+			(ContainerTile#tile.unit =/= null) ->
+			    ContainerType = (ContainerTile#tile.unit)#unit.name,
+			    case ContainerType of
+				trireme ->
+				    leave_container(UnitMap, {CX, CY}, UnitType, MP, {TX, TY}, unit);
+				galley ->
+				    leave_container(UnitMap, {CX, CY}, UnitType, MP, {TX, TY}, unit);
+				caravel ->
+				    leave_container(UnitMap, {CX, CY}, UnitType, MP, {TX, TY}, unit);
+				siege_tower ->
+				    leave_container(UnitMap, {CX, CY}, UnitType, MP, {TX, TY}, unit);
+				_ ->
+				    {error, "Invalid tile"}
+			    end;
+
+			true ->
+			    {error, "Invalid tile"}
+
+		    end
+	    end
+    end.
+			
+%Arguments: UnitMap, CityX,CityY, UnitType, manpower, ToX, ToY
+%%filters the buildinglist and checks the length.
+% if the length is:
+    % 0 ->
+    % returns {error, "Unit not found"}
+
+    % Anything else ->
+    % Gets the head of the list (of identical units) which is the unit that wants to exit
+    % Deletes the unit from the citylist and updates the tile with the new city,
+    % Gets the tile where to place the exiting unit and places it there and updates the unitmap with the tile
+    % returns {ok, UpdatedUnitMap}
+leave_container(UnitMap, {CX, CY}, UnitType, MP, {TX, TY}, Type) ->
+    case Type of
+	city ->
+	    OldContainer = get_city(UnitMap, CX, CY),
+	    OldList = OldContainer#city.units;
+	unit ->
+	    OldContainer = get_unit(UnitMap, CX, CY),
+	    OldList = OldContainer#unit.units
+    end,
+    
+    Find_Unit = fun(UR) ->
+	(UR#unit.str =:= UnitType) and (UR#unit.mp =:= MP)
+    end,
+
+    MatchingUnits = lists:filter(Find_Unit, OldList),
+
+    case length(MatchingUnits) of
+	0 ->
+	    io:format("Unit not found in container~n"),
+	    {error, "Unit not found"};
+	_ ->
+	    TheUnit = hd(MatchingUnits), %hitta unit
+	    UpdatedList = lists:delete(TheUnit, OldList), %ta bort från containern 
+	    {ok, OldTile} = get_tile(UnitMap, CX, CY), 
+	    
+	    if 
+		(Type =:= city) ->
+		    UpdatedContainer = OldContainer#city{units = UpdatedList}, %uppdatera containern 
+		    UpdatedTile = OldTile#tile{city = UpdatedContainer}; %skapa ny tile med uppdaterade staden på
+		(Type =:= unit) ->
+		    UpdatedContainer = OldContainer#unit{units = UpdatedList}, %uppdatera containern 
+		    UpdatedTile = OldTile#tile{unit = UpdatedContainer} %skapa ny tile med uppdaterade staden på
+	    end,
+	    
+	    UpdatedUnitMap1 = update_tile(UnitMap, UpdatedTile, CX, CY), %uppdatera tilen där staden stod med den nya tilen
+
+	    {ok, OldToTile} = get_tile(UpdatedUnitMap1, TX, TY), %hämta tilen där enheten ska placeras
+	    UpdatedToTile = OldToTile#tile{unit = TheUnit}, % skapa ny tile med enheten på
+	    UpdatedUnitMap2 = update_tile(UpdatedUnitMap1, UpdatedToTile, TX, TY), %uppdatera tilen där enheten ska stå med den nya tilen
+	    io:format("~p left a city/ship/tower~n", [UnitType]),
+	    {ok, UpdatedUnitMap2}
+    end.
+
 
 % Arguments: Unitmap, AttackPos, DefPos
 % Attacks from Attackpos to Def pos,
@@ -207,8 +401,8 @@ attack_unit(UnitMap, TerrainMap, {AttX, AttY}, {DefX, DefY}) -> %GLÖM EJ RANGEK
     DefTerrain = lists:nth(DefY, lists:nth(DefX, TerrainMap)),
     AttackUnit = get_unit(UnitMap, AttX, AttY),
     DefUnit = get_unit(UnitMap, DefX, DefY),
-    AttackTile = get_tile(UnitMap, AttX, AttY),
-    DefTile = get_tile(UnitMap, DefX, DefY),
+    {ok, AttackTile} = get_tile(UnitMap, AttX, AttY),
+    {ok, DefTile} = get_tile(UnitMap, DefX, DefY),
 
     if 
 	(AttackUnit =:= null) or (DefUnit =:= null) ->
@@ -227,7 +421,7 @@ attack_unit(UnitMap, TerrainMap, {AttX, AttY}, {DefX, DefY}) -> %GLÖM EJ RANGEK
 
 	true -> %else
 	    {RemAttackMp, RemDefMp} = ?COMBAT:combat(AttackUnit#unit.str, AttackUnit#unit.mp, AttTerrain, DefUnit#unit.str, DefUnit#unit.mp, DefTerrain),
-	    io:format("~p with ~p manpower on ~p-terrain from {~p,~p} attacked ~p with ~p manpower on ~p-terrain on {~p,~p}. Result Attacker: ~p mp left, Defender: ~p mp left", [AttackUnit#unit.str, AttackUnit#unit.mp, AttTerrain, AttX, AttY, DefUnit#unit.str, DefUnit#unit.mp, DefTerrain, DefX, DefY, RemAttackMp, RemDefMp]),
+	    io:format("~p with ~p manpower on ~p-terrain from {~p,~p} attacked ~p with ~p manpower on ~p-terrain on {~p,~p}. Result Attacker: ~p mp left, Defender: ~p mp left~n", [AttackUnit#unit.str, AttackUnit#unit.mp, AttTerrain, AttX, AttY, DefUnit#unit.str, DefUnit#unit.mp, DefTerrain, DefX, DefY, RemAttackMp, RemDefMp]),
 	    if
 		(RemAttackMp =< 0) and (RemDefMp =< 0) ->
 		    {ok, FirstUpdatedUnitMap} = remove_unit(UnitMap, AttX, AttY), 
@@ -251,3 +445,46 @@ attack_unit(UnitMap, TerrainMap, {AttX, AttY}, {DefX, DefY}) -> %GLÖM EJ RANGEK
 		    {ok, SecondUpdatedUnitMap, {RemAttackMp, RemDefMp}}
 	    end
     end.	    
+
+
+
+build_city(UnitMap, {X, Y}, CityName, CityOwner) ->
+    Settler = get_unit(UnitMap, X, Y),
+    {ok, Tile} = get_tile(UnitMap, X, Y), 
+    ExistingCity = get_city(UnitMap, X, Y),
+    
+    if
+	(Settler =:= {error, "Out of bounds"}) or (Settler#unit.name =/= settler) ->
+	    {error, "Invalid tile"};
+	(ExistingCity =:= {error, "Out of bounds"}) or (ExistingCity =/= null) ->
+	    {error, "Invalid tile"};
+	(Tile =:= {error, "Out of bounds"}) ->
+	    {error, "Out of bounds"};
+	
+	true -> %else
+	   City = #city{name = CityName, owner = CityOwner},
+	   UpdatedTile = Tile#tile{city = City, unit = null},
+	   UpdatedUnitMap1 = update_tile(UnitMap, UpdatedTile, X, Y), 
+	   io:format("~p built a city named ~p at {~p, ~p}~n", [CityOwner, CityName, X, Y]),
+	   {ok, UpdatedUnitMap1}
+   end.
+
+disband_unit(UnitMap, {X, Y}, Owner) ->
+   Unit = get_unit(UnitMap, X, Y),
+
+   case Unit of
+	   {error, "Out of bounds"} ->
+	       {error, "Out of bounds"};
+	   null ->
+	       {error, "Invalid tile"};
+	   _ ->
+	       if
+		   (Unit#unit.owner =/= Owner) ->
+		       {error, "Permission denied"};
+		   true ->
+		       io:format("~p disbanded a ~p unit~n", [Owner, Unit#unit.str]),
+		       {ok, UpdatedUnitMap} = remove_unit(UnitMap, X, Y),
+		       {ok, UpdatedUnitMap}
+	       end
+       end.
+

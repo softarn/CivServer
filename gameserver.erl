@@ -105,14 +105,50 @@ handle_call({create_unit, {X, Y}, UnitType, Owner}, _From, Game) ->
 	    {reply, {error, Reason}, Game}
     end;
 
+handle_call({build_city, {X, Y}, CityName, CityOwner}, _From, Game) ->
+    case ?GAMEPLAN:build_city(Game#game.tilemap, {X, Y}, CityName, CityOwner) of
+	{ok, UpdatedUnitMap} ->
+	    UpdatedGame = Game#game{tilemap = UpdatedUnitMap},
+	    {reply, {ok, UpdatedGame}, UpdatedGame};
+	{error, Reason} ->
+	    {reply, {error, Reason}, Game}
+    end;
+
+handle_call({insert_unit, {FX, FY}, {TX, TY}}, _From, Game) ->
+    case ?GAMEPLAN:insert_unit(Game#game.tilemap, {FX, FY}, {TX, TY}) of
+	{ok, UpdatedUnitMap} ->
+	    UpdatedGame = Game#game{tilemap = UpdatedUnitMap},
+	    {reply, {ok, UpdatedGame}, UpdatedGame};
+	{error, Reason} ->
+	    {reply, {error, Reason}, Game}
+    end;
+
+handle_call({extract_unit, {CX, CY}, UnitType, MP, {TX, TY}}, _From, Game) ->
+    case ?GAMEPLAN:extract_unit(Game#game.tilemap, {CX, CY}, UnitType, MP, {TX, TY}) of
+	{ok, UpdatedUnitMap} ->
+	    UpdatedGame = Game#game{tilemap = UpdatedUnitMap},
+	    {reply, {ok, UpdatedGame}, UpdatedGame};
+	{error, Reason} ->
+	    {reply, {error, Reason}, Game}
+    end;
+
+handle_call({disband_unit, {X, Y}, Owner}, _From, Game) ->
+    case ?GAMEPLAN:disband_unit(Game#game.tilemap, {X, Y}, Owner) of
+	{ok, UpdatedUnitMap} ->
+	    UpdatedGame = Game#game{tilemap = UpdatedUnitMap},
+	    {reply, {ok, UpdatedGame}, UpdatedGame};
+	{error, Reason} ->
+	    {reply, {error, Reason}, Game}
+    end;
+
 handle_call({attack_unit, {AttX, AttY}, {DefX, DefY}}, _From, Game) ->
-	case ?GAMEPLAN:attack_unit(Game#game.tilemap, Game#game.map, {AttX, AttY}, {DefX, DefY}) of
-	    {ok, UpdatedUnitMap, {RemAttMp, RemDefMp}} ->
-		UpdatedGame = Game#game{tilemap = UpdatedUnitMap},
-		{reply, {ok, UpdatedGame, {RemAttMp, RemDefMp}}, UpdatedGame};
-	    {error, Reason} ->
-		{reply, {error, Reason}, Game}
-	end.
+    case ?GAMEPLAN:attack_unit(Game#game.tilemap, Game#game.map, {AttX, AttY}, {DefX, DefY}) of
+	{ok, UpdatedUnitMap, {RemAttMp, RemDefMp}} ->
+	    UpdatedGame = Game#game{tilemap = UpdatedUnitMap},
+	    {reply, {ok, UpdatedGame, {RemAttMp, RemDefMp}}, UpdatedGame};
+	{error, Reason} ->
+	    {reply, {error, Reason}, Game}
+    end.
 
 terminate(_Reason, _State) ->
     ok.
@@ -182,9 +218,14 @@ stop(Game_pid) -> gen_server:call(Game_pid, stop).
 finished_turn(Game_pid) -> gen_server:call(Game_pid, finished_turn).
 move_unit(Game_pid, PosList) -> gen_server:call(Game_pid, {move_unit, PosList}).
 create_unit(Game_pid, {X,Y}, UnitType, Owner) -> gen_server:call(Game_pid, {create_unit, {X, Y}, UnitType, Owner}).
+build_city(Game_pid, {X,Y}, CityName, CityOwner) -> gen_server:call(Game_pid, {build_city, {X,Y}, CityName, CityOwner}).
+insert_unit(Game_pid, {FX, FY}, {TX, TY}) -> gen_server:call(Game_pid, {insert_unit, {FX, FY}, {TX, TY}}).
+extract_unit(Game_pid, {CX, CY}, UnitType, MP, {TX, TY}) -> gen_server:call(Game_pid, {extract_unit, {CX, CY}, UnitType, MP, {TX, TY}}).
+disband_unit(Game_pid, {X, Y}, Owner) -> gen_server:call(Game_pid, {disband_unit, {X, Y}, Owner}).
 attack_unit(Game_pid, {AttX, AttY}, {DefX, DefY}) -> gen_server:call(Game_pid, {attack_unit, {AttX, AttY}, {DefX, DefY}}).
 player_leave(Game_pid, Player) -> gen_server:cast(Game_pid, {player_leave, Player}).
 start_game(Game_pid, MapSize) -> gen_server:cast(Game_pid, {start_game, MapSize}).
+
 
 %Internal functions
 

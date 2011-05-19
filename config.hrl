@@ -1,6 +1,6 @@
 -define(TCP, tcp).
 -define(P_HANDLER, player_handler).
--define(P_VERSION, 2).
+-define(P_VERSION, 3).
 -define(SERVER, server).
 -define(GAMESRV, gameserver).
 -define(TERGEN, ter_gen).
@@ -31,13 +31,11 @@
 -record(tile, {
 	position = null, %{X,Y}
 	unit = null, %unitrecord
-	city = null, %cityrecord
-	improvement = null}). %String
+	city = null}). %cityrecord
 
 -record(city, {
 	owner = null, %String
-	units = null, % [Units]
-	buildings = null, %[String]
+	units = [],	% [Units]
 	name = null}). %String
 
 -record(unit_info, {
@@ -54,4 +52,5 @@
 	owner = null,
 	name = null,
 	str = null,
+	units = [],
 	mp = null}).

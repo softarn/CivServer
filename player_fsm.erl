@@ -189,8 +189,20 @@ game_turn({Header, List}, {Player, Game}) -> %GLÖM EJ ATT UPPDATERA GAME i bör
 	    end;
 	20 -> %Message for you sir
 	    {next_state, game_turn, {Player, Game}};
+
+	21 -> %Built city
+	    [{position, X, Y}, CityName] = List,
+	    case ?GAMESRV:build_city(Game#game.game_pid, {X, Y}, CityName, Player#player.name) of
+		{ok, UpdatedGame} ->
+		    ?P_HANDLER:sendMsg(Player#player.socket, {1, [Header]}), %confirmd
+		    {next_state, game_turn, {Player, UpdatedGame}};
+		{error, _Reason} ->
+		    ?P_HANDLER:sendFailMsg(Player#player.socket, 7, Header), % FailPacket "Invalid tile"
+		    {next_state, game_turn, {Player, Game}}
+	    end;
+	    
 	23 -> %Spawnd
-	    [{position, X, Y}, {unit, Owner, UnitType, _Manpower}] = List,
+	    [{position, X, Y}, {unit, Owner, UnitType, _Manpower, _Units}] = List,
 	    case ?GAMESRV:create_unit(Game#game.game_pid, {X, Y}, UnitType, Owner) of
 		{ok, UpdatedGame} ->
 		    ?P_HANDLER:sendMsg(Player#player.socket, {1, [Header]}), %Confirm'd
@@ -204,6 +216,39 @@ game_turn({Header, List}, {Player, Game}) -> %GLÖM EJ ATT UPPDATERA GAME i bör
 	    ?GAMESRV:player_leave(Game#game.game_pid, Player),
 	    ?P_HANDLER:sendMsg(Player#player.socket, {1, [Header]}), %Confirm'd
 	    {next_state, server_lobby, {Player, null}};
+
+	26 -> %Enter city/ship/tower "Enter the dragon..."
+	    [{position, FX, FY}, {position, TX, TY}] = List,
+	    case ?GAMESRV:insert_unit(Game#game.game_pid, {FX, FY}, {TX, TY}) of
+		{ok, UpdatedGame} ->
+		    ?P_HANDLER:sendMsg(Player#player.socket, {1, [Header]}), %Confirmd
+		    {next_state, game_turn, {Player, UpdatedGame}};
+		{error, _Reason} ->
+		    ?P_HANDLER:sendFailMsg(Player#player.socket, 7, Header), %Failpacket invalid tile
+		    {next_state, game_turn, {Player, Game}} 
+		end;
+
+	28 -> %Exit city/ship/tower, "Exit dragon"
+	    [{position, CX, CY}, UnitType, MP, {position, TX, TY}] = List,
+	    case ?GAMESRV:extract_unit(Game#game.game_pid, {CX, CY}, UnitType, MP, {TX, TY}) of
+		{ok, UpdatedGame} ->
+		    ?P_HANDLER:sendMsg(Player#player.socket, {1, [Header]}),
+		    {next_state, game_turn, {Player, UpdatedGame}};
+		{error, _Reason} ->
+		    ?P_HANDLER:sendFailMsg(Player#player.socket, 7, Header), %Failpacket invalid tile
+		    {next_state, game_turn, {Player, Game}}
+	    end;
+
+	29 -> %Disband unit
+	    [{position, X, Y}] = List,
+	    case ?GAMESRV:disband_unit(Game#game.game_pid, {X, Y}, Player#player.name) of
+		{ok, UpdatedGame} ->
+		    ?P_HANDLER:sendMsg(Player#player.socket, {1, [Header]}),
+		    {next_state, game_turn, {Player, UpdatedGame}};
+		{error, _Reason} ->
+		    ?P_HANDLER:sendFailMsg(Player#player.socket, 7, Header), %Failpacket invalid tile
+		    {next_state, game_turn, {Player, Game}}
+	    end;
 
 	_ ->
 	    ?P_HANDLER:sendFailMsg(Player#player.socket, -1, Header), % FailPacket "invalid state"
