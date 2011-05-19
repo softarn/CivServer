@@ -291,21 +291,38 @@ public class Proxy
     {
         try
         {
-			Packet toSend = new Packet((byte)28);
-			toSend.add(fromX);
-			toSend.add(fromY);
-            toSend.add(type);
-            toSend.add(mp);
-			toSend.add(toX);
-			toSend.add(toY);
-			send(toSend);
-			return receiver.getResult();
+		Packet toSend = new Packet((byte)28);
+		toSend.add(fromX);
+		toSend.add(fromY);
+        	toSend.add(type);
+        	toSend.add(mp);
+		toSend.add(toX);
+		toSend.add(toY);
+		send(toSend);
+		return receiver.getResult();
         }
-		catch(FailedException fe)
-		{
-			throw fe;
-		}
+	catch(FailedException fe)
+	{
+		throw fe;
+	}
     }
+
+    public result disbandUnit(int px, int py) throws FailedException
+    {
+	    try
+	    {
+		    Packet toSend = new Packet((byte)29);
+		    toSend.add(px);
+		    toSend.add(py);
+		    send(toSend);
+		    return receiver.getResult();
+	    }
+	    catch(FailedException fe)
+	    {
+		    throw fe;
+	    }
+    }
+
 
 	// Method to test sending and receiving lists.
 	private Result listTest(int x, int y) throws FailedException
