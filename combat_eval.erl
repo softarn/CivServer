@@ -15,29 +15,40 @@
 %% the next version..
 
 -module(combat_eval).
--export([combat/6]).
+-export([combat/7]).
 
-combat(Attacker, AtkMP, AtkTerr, Defender, DefMp, DefTerr) ->
+combat(Attacker, AtkMP, AtkTerr, Defender, DefMp, DefTerr, Modifiers) ->
 	AttStr = string:to_lower(Attacker),
 	AtkTerrStr = string:to_lower(AtkTerr),
 	DefTerrStr = string:to_lower(DefTerr),
 	DefStr = string:to_lower(Defender),
     case element(6, unit_attr:get_attr(list_to_atom(AttStr))) of
 		assault ->
-		    assault_combat(list_to_atom(AttStr), AtkMP, AtkTerrStr, list_to_atom(DefStr), DefMp, DefTerrStr);
+		    assault_combat(list_to_atom(AttStr), AtkMP, AtkTerrStr, list_to_atom(DefStr), DefMp, DefTerrStr, Modifiers);
 		range ->
-			ranged_combat(list_to_atom(AttStr), AtkMP, AtkTerrStr, DefMp);
+			ranged_combat(list_to_atom(AttStr), AtkMP, AtkTerrStr, DefMp, Modifiers);
 		bombardment ->
-			bombard_combat(list_to_atom(AttStr), AtkMP, AtkTerrStr, DefMp)
+			bombard_combat(list_to_atom(AttStr), AtkMP, AtkTerrStr, DefMp, Modifiers)
 	end.
 
-assault_combat(Atk, AtkMP, AtkTerr, Def, DefMP, DefTerr) ->
+assault_combat(Atk, AtkMP, AtkTerr, Def, DefMP, DefTerr, Modifiers) ->
 	random:seed(now()),
+	{Siege, Fort} = Modifiers,
 	Charges = random:uniform(12) + random:uniform(12),
 	AtkAttrs = unit_attr:get_attr(Atk),
 	DefAttrs = unit_attr:get_attr(Def),
-	AtkBonus = 1 + element(1, terr_attr:get_attr(AtkTerr)),
-	DefBonus = 1 + element(2, terr_attr:get_attr(DefTerr)),
+	case Siege of
+		true ->
+			AtkBonus = 2 + element(1, terr_attr:get_attr(AtkTerr));
+		false ->
+			AtkBonus = 1 + element(1, terr_attr:get_attr(AtkTerr))
+	end,
+	case Fort of
+		true ->
+			DefBonus = 1 + element(2, terr_attr:get_attr(DefTerr)) + 0.25;
+		false ->
+			DefBonus = 1 + element(2, terr_attr:get_attr(DefTerr))
+	end,
 	AP = element(2, AtkAttrs),
 	% Add attack bonus from terrain
 	NewAP = round(AP * AtkBonus),
@@ -70,13 +81,20 @@ assault_charge(AP, AtkMP, DP, DefMP, Charges) ->
 	NewDefMP = DefMP - DAU,
 	assault_charge(AP, NewAtkMP, DP, NewDefMP, Charges-1).
 
-ranged_combat(Attacker, AtkMP, AtkTerr, DefMP) ->
+ranged_combat(Attacker, AtkMP, AtkTerr, DefMP, Modifiers) ->
+	{Siege, _} = Modifiers,
 	random:seed(now()),
 	Charges = random:uniform(3) + random:uniform(3),
 	AtkAttrs = unit_attr:get_attr(Attacker),
 	AP = element(2, AtkAttrs),
 	% Add attack bonus from terrain.
-	NewAP = round(AP * (1 + element(1, terr_attr:get_attr(AtkTerr)))),
+	case Siege of
+		true ->
+			AtkBonus = 2 + element(1, terr_attr:get_attr(AtkTerr));
+		false ->
+			AtkBonus = 1 + element(1, terr_attr:get_attr(AtkTerr))
+	end,
+	NewAP = round(AP * AtkBonus),
 	ranged_charge(NewAP, AtkMP, DefMP, Charges).
 	
 ranged_charge(_, AtkMP, DefMP, 0) ->
@@ -89,12 +107,19 @@ ranged_charge(AP, AtkMP, DefMP, Charges) ->
 	NewDefMP = DefMP - DAU,
 	ranged_charge(AP, AtkMP, NewDefMP, Charges-1).
 
-bombard_combat(Attacker, AtkMP, AtkTerr, DefMP) ->
+bombard_combat(Attacker, AtkMP, AtkTerr, DefMP, Modifiers) ->
+	{Siege, _} = Modifiers,
 	random:seed(now()),
 	AtkAttrs = unit_attr:get_attr(Attacker),
 	AP = element(2, AtkAttrs),
 	% Add attack bonus from terrain
-	NewAP = round(AP * (1 + element(1, terr_attr:get_attr(AtkTerr)))),
+	case Siege of
+		true ->
+			AtkBonus = 2 + element(1, terr_attr:get_attr(AtkTerr));
+		false ->
+			AtkBonus = 1 + element(1, terr_attr:get_attr(AtkTerr))
+	end,
+	NewAP = round(AP * AtkBonus),
 	AUDP = round((NewAP * AtkMP) / 100),
 	DAU = (random:uniform(AUDP + 1) - 1) + (random:uniform(AUDP + 1) - 1),
 	NewDefMP = DefMP - DAU,
