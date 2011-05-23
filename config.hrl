@@ -53,4 +53,5 @@
 	name = null,
 	str = null,
 	units = [],
+	fortified = false,
 	mp = null}).

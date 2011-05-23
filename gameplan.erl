@@ -426,17 +426,29 @@ attack_unit(UnitMap, TerrainMap, {AttX, AttY}, {DefX, DefY}) -> %GLÖM EJ RANGEK
 	    {error, "Out of bounds"};
 	(AttackTile =:= {error, "Out of bounds"}) or (DefTile =:= {error, "Out of bounds"}) ->
 	    {error, "Out of bounds"};
-%get_range({X1,Y1},{X2,Y2})->
-%	Z1 = X1 - Y1,		
-%	Z2 = X2 - Y2,		
-%	erlang:max(erlang:max(dif(X1,X2),dif(Y1,Y2)),dif(Z1,Z2)).
-%dif(X1,X2)->
-%	erlang:max(X1,X2) - erlang:min (X1,X2).
 
+	true ->
 
-	true -> %else
-	    {RemAttackMp, RemDefMp} = ?COMBAT:combat(AttackUnit#unit.str, AttackUnit#unit.mp, AttTerrain, DefUnit#unit.str, DefUnit#unit.mp, DefTerrain),
-	    io:format("~p with ~p manpower on ~p-terrain from {~p,~p} attacked ~p with ~p manpower on ~p-terrain on {~p,~p}. Result Attacker: ~p mp left, Defender: ~p mp left~n", [AttackUnit#unit.str, AttackUnit#unit.mp, AttTerrain, AttX, AttY, DefUnit#unit.str, DefUnit#unit.mp, DefTerrain, DefX, DefY, RemAttackMp, RemDefMp]),
+	    if 
+		(AttackUnit#unit.name =:= siege_tower) and (DefUnit#unit.fortified =:= true) ->
+		    AttUnit1 = hd(AttackUnit#unit.units),
+		    {RemAttackMp, RemDefMp} = ?COMBAT:combat(AttUnit1#unit.str, AttUnit1#unit.mp, AttTerrain, DefUnit#unit.str, DefUnit#unit.mp, DefTerrain, {true, true}),
+		    io:format("~p in a siegetower with ~p manpower on ~p-terrain from {~p,~p} attacked a fortified ~p with ~p manpower on ~p-terrain on {~p,~p}. Result Attacker: ~p mp left, Defender: ~p mp left~n", [AttackUnit#unit.str, AttackUnit#unit.mp, AttTerrain, AttX, AttY, DefUnit#unit.str, DefUnit#unit.mp, DefTerrain, DefX, DefY, RemAttackMp, RemDefMp]);
+
+		(AttackUnit#unit.name =:= siege_tower) ->
+		    AttUnit1 = hd(AttackUnit#unit.units),
+		    {RemAttackMp, RemDefMp} = ?COMBAT:combat(AttUnit1#unit.str, AttUnit1#unit.mp, AttTerrain, DefUnit#unit.str, DefUnit#unit.mp, DefTerrain, {true, false}),
+		    io:format("~p in a siegetower with ~p manpower on ~p-terrain from {~p,~p} attacked ~p with ~p manpower on ~p-terrain on {~p,~p}. Result Attacker: ~p mp left, Defender: ~p mp left~n", [AttackUnit#unit.str, AttackUnit#unit.mp, AttTerrain, AttX, AttY, DefUnit#unit.str, DefUnit#unit.mp, DefTerrain, DefX, DefY, RemAttackMp, RemDefMp]);
+
+		(DefUnit#unit.fortified =:= true) ->
+		    {RemAttackMp, RemDefMp} = ?COMBAT:combat(AttackUnit#unit.str, AttackUnit#unit.mp, AttTerrain, DefUnit#unit.str, DefUnit#unit.mp, DefTerrain, {false, true}),
+		    io:format("~p in a siegetower with ~p manpower on ~p-terrain from {~p,~p} attacked ~p with ~p manpower on ~p-terrain on {~p,~p}. Result Attacker: ~p mp left, Defender: ~p mp left~n", [AttackUnit#unit.str, AttackUnit#unit.mp, AttTerrain, AttX, AttY, DefUnit#unit.str, DefUnit#unit.mp, DefTerrain, DefX, DefY, RemAttackMp, RemDefMp]);
+
+		true -> %else
+		    {RemAttackMp, RemDefMp} = ?COMBAT:combat(AttackUnit#unit.str, AttackUnit#unit.mp, AttTerrain, DefUnit#unit.str, DefUnit#unit.mp, DefTerrain, {false, false}),
+		    io:format("~p with ~p manpower on ~p-terrain from {~p,~p} attacked ~p with ~p manpower on ~p-terrain on {~p,~p}. Result Attacker: ~p mp left, Defender: ~p mp left~n", [AttackUnit#unit.str, AttackUnit#unit.mp, AttTerrain, AttX, AttY, DefUnit#unit.str, DefUnit#unit.mp, DefTerrain, DefX, DefY, RemAttackMp, RemDefMp])
+	    end,
+
 	    if
 		(RemAttackMp =< 0) and (RemDefMp =< 0) ->
 		    {ok, FirstUpdatedUnitMap} = remove_unit(UnitMap, AttX, AttY), 
@@ -459,8 +471,7 @@ attack_unit(UnitMap, TerrainMap, {AttX, AttY}, {DefX, DefY}) -> %GLÖM EJ RANGEK
 		    {ok, SecondUpdatedUnitMap} = update_unit(FirstUpdatedUnitMap, UpdDefUnit, DefX, DefY),
 		    {ok, SecondUpdatedUnitMap, {RemAttackMp, RemDefMp}}
 	    end
-    end.	    
-
+    end.  
 
 
 build_city(UnitMap, {X, Y}, CityName, CityOwner) ->
