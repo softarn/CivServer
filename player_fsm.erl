@@ -180,9 +180,14 @@ game_turn({Header, List}, {Player, Game}) -> %GLÖM EJ ATT UPPDATERA GAME i bör
 	    [{position, AttX, AttY}, {position, DefX, DefY}] = List,
 
 	    case ?GAMESRV:attack_unit(Game#game.game_pid, {AttX, AttY}, {DefX, DefY}) of
-		{ok, UpdatedGame, {RemAttMp, RemDefMp}} ->
+		{ok, UpdatedGame, {RemAttMp, RemDefMp}} ->	    
 		    ?P_HANDLER:sendMsg(Player#player.socket, {19, [RemAttMp, RemDefMp]}),
 		    {next_state, game_turn, {Player, UpdatedGame}};
+		
+		{bombardment, UpdatedGame, {X, Y}, DPU} ->
+		    ?P_HANDLER:sendMsg(Player#player.socket, {30, [{X, Y}, DPU]}),
+		    {next_state, game_turn, {Player, UpdatedGame}};
+		
 		{error, _Reason} ->
 		    ?P_HANDLER:sendFailMsg(Player#player.socket, 11, Header), %FailPacket "Out of range" PERHAPS INVALID TILE/POS/NO UNIT AT TILE DEPENDING ON FAILREASON?
 		    {next_state, game_turn, {Player, Game}}

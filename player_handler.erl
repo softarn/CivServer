@@ -155,8 +155,14 @@ sendMsg(Socket, {Header, List}) ->
 	    ?TCP:sendInteger(Socket, RemDefMp);
 	
 	25 -> % Game Closed
-	    ?TCP:sendHeader(Socket, 25)
-    end.
+	    ?TCP:sendHeader(Socket, 25);
+
+	30 -> % Bombardment result
+	    [{X, Y}, DPU] = List,
+	    ?TCP:sendHeader(Socket, 30),
+	    ?TCP:sendPosition(Socket, {X, Y}),
+	    ?TCP:sendInteger(Socket, DPU)
+    end.    
 
 send_to_fsm(To, Packet) ->
     ?P_FSM:send_packet(To, Packet). 

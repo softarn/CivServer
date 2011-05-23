@@ -146,6 +146,16 @@ handle_call({attack_unit, {AttX, AttY}, {DefX, DefY}}, _From, Game) ->
 	{ok, UpdatedUnitMap, {RemAttMp, RemDefMp}} ->
 	    UpdatedGame = Game#game{tilemap = UpdatedUnitMap},
 	    {reply, {ok, UpdatedGame, {RemAttMp, RemDefMp}}, UpdatedGame};
+
+	{bombardment, UpdatedUnitMap, {X, Y}, DPU, VictimStr} ->
+	    UpdatedGame = Game#game{tilemap = UpdatedUnitMap},
+	    FindPlayerFun = fun(PR) ->
+		    PR#player.name =:= VictimStr
+	    end,
+	    Victim = hd(lists:filter(FindPlayerFun, Game#game.players)),
+	    ?P_HANDLER:sendMsg(Victim#player.socket, {30, [{X, Y}, DPU]}),
+	    {reply, {bombardment, UpdatedGame, {X, Y}, DPU}, UpdatedGame};
+
 	{error, Reason} ->
 	    {reply, {error, Reason}, Game}
     end.

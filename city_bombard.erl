@@ -10,5 +10,4 @@ bombard(AttackerStr, AtkMP, AtkTerrStr, DefList) ->
 	NewAP = round(AP * (1 + element(1, terr_attr:get_attr(AtkTerr)))),
 	AUDP = round((NewAP * AtkMP) / 100),
 	DAU = (random:uniform(AUDP + 1) - 1) + (random:uniform(AUDP + 1) - 1),
-	DPU = round(DAU / length(DefList)),	% Damage per unit.
-	[X-DPU || X <- DefList].
+	round(DAU / length(DefList)).	% Damage per unit.
