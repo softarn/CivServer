@@ -26,7 +26,7 @@ make_gameplan(Size, Game) ->
 assign_pos([], [], UMap) ->
     UMap;
 assign_pos([Player|PlayerRest], [Pos|PosRest], UMap) ->
-    {ok, UpdatedUMap} = create_unit(UMap, Pos, "Knight", Player#player.name),
+    {ok, UpdatedUMap} = create_unit(UMap, Pos, "Settler", Player#player.name),
     assign_pos(PlayerRest, PosRest, UpdatedUMap).
 
 % Arguments: Map to be updated, Tile to be inserted, Position of the tile to be replaced
@@ -196,15 +196,30 @@ make_move([{position, EX, EY}| Tail], Game, Unit, Start) when length(Tail) =/= 0
 
 make_move([{position, EX, EY}], Game, Unit, {startpos, SX, SY}) ->
     Unitmap = Game#game.tilemap,
-    case remove_unit(Unitmap, SX, SY) of
-	{ok, NewUnitmap} ->
-	    case add_unit(NewUnitmap, Unit, EX, EY) of
-		{ok, Map} -> 
-		    io:format("Moved unit ~p from {~p,~p} to {~p,~p}~n", [Unit#unit.str, SX,SY, EX, EY]),
-		    {ok, Game#game{tilemap = Map}};
-		{error, Reason} -> 
-		    {error, Reason}
+    
+   case get_tile(Unitmap, EX, EY) of
+	{ok, Tile} ->
+	    if
+		(Tile#tile.city =/= null) or ((Tile#tile.unit)#unit.name =:= trireme) or 
+		((Tile#tile.unit)#unit.name =:= galley) or ((Tile#tile.unit)#unit.name =:= siege_tower) or
+	       	((Tile#tile.unit)#unit.name =:= caravel) ->
+		    insert_unit(Unitmap, {SX, SY}, {EX, EY});
+
+		true ->
+		    case remove_unit(Unitmap, SX, SY) of
+			{ok, NewUnitmap} ->
+			    case add_unit(NewUnitmap, Unit, EX, EY) of
+				{ok, Map} -> 
+				    io:format("Moved unit ~p from {~p,~p} to {~p,~p}~n", [Unit#unit.str, SX,SY, EX, EY]),
+				    {ok, Game#game{tilemap = Map}};
+				{error, Reason} -> 
+				    {error, Reason}
+			    end;
+			{error, Reason} ->
+			    {error, Reason}
+		    end
 	    end;
+
 	{error, Reason} ->
 	    {error, Reason}
     end.
