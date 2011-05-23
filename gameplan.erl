@@ -453,8 +453,9 @@ attack_unit(UnitMap, TerrainMap, {AttX, AttY}, {DefX, DefY}) -> %GLÖM EJ RANGEK
 		(BombBool =:= true) and (DefTile#tile.city =/= null) -> %City bombardment
 		    DefCity = DefTile#tile.city,
 		    DefUnits = DefCity#city.units,
+		    UnitMp = [X#unit.mp || X <- DefUnits],
 
-		    DPU = ?BOMB:bombard(AttackUnit#unit.str, AttackUnit#unit.mp, AttTerrain, DefUnits),
+		    DPU = ?BOMB:bombard(AttackUnit#unit.str, AttackUnit#unit.mp, AttTerrain, UnitMp),
 
 		    UpdateUnitFun = fun(UR) ->
 			    UpdUR = UR#unit{mp = UR#unit.mp - DPU},
