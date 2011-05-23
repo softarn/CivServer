@@ -51,7 +51,7 @@ namespace proxy
 		void disbandUnit(int x, int y);
 		void buildCity(int x, int y, const std::string &name);
 		void enterDragon(int x, int y, int dragonX, int dragonY);
-		void removeFromDragon(int dragonX, int dragonY, const std::string &unitType, int manpower);
+		void removeFromDragon(int dragonX, int dragonY, const std::string &unitType, int manpower, int targetX, int targetY);
 	};
 
 }

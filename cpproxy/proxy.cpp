@@ -290,7 +290,7 @@ namespace proxy
 	void Proxy::buildCity(int x, int y, const std::string &name)
 	{
 		// Tell the server to build
-		m_networkManager.send<uint8_t>(protocol::Header::BUILD_UNIT);
+		m_networkManager.send<uint8_t>(protocol::Header::BUILD_CITY);
 
 		// Send position
 		m_networkManager.send(x);
@@ -304,7 +304,7 @@ namespace proxy
 		std::auto_ptr<protocol::Packet> packet = m_networkManager.receivePacket();
 
 		// which must be a confirmation
-		confirmPacket(*packet, protocol::Header::BUILD_UNIT);
+		confirmPacket(*packet, protocol::Header::BUILD_CITY);
 	}
 
 	void Proxy::enterDragon(int x, int y, int dragonX, int dragonY)
@@ -328,7 +328,7 @@ namespace proxy
 		confirmPacket(*packet, protocol::Header::ENTER_THE_DRAGON);
 	}
 
-	void Proxy::removeFromDragon(int dragonX, int dragonY, const std::string &unitType, int manpower)
+	void Proxy::removeFromDragon(int dragonX, int dragonY, const std::string &unitType, int manpower, int targetX, int targetY)
 	{
 		// Tell the server to exit the Dragon
 		m_networkManager.send<uint8_t>(protocol::Header::EXIT_THE_DRAGON);
@@ -341,6 +341,9 @@ namespace proxy
 		m_networkManager.send(unitType);
 		m_networkManager.send(manpower);
 
+		// Tell the server where to put my unit
+		m_networkManager.send(targetX);
+		m_networkManager.send(targetY);
 
 		// Receive the answer
 		std::auto_ptr<protocol::Packet> packet = m_networkManager.receivePacket();

@@ -40,7 +40,7 @@ namespace proxy
 				COMBAT_REQUEST = 18,
 				COMBAT_RESULT = 19,
 				MESSAGE_FOR_YOU_SIR = 20,
-				BUILD_UNIT = 21,
+				BUILD_CITY = 21,
 				SPAWN_UNIT = 23,
 				EXIT_GAME = 24,
 				GAME_CLOSED = 25,
