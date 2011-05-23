@@ -9,4 +9,6 @@ public interface PacketListener{
 	public void chatMessageReceived(Result received);
 
 	public void gameClosed();
+
+	public void wasBombarded(Result received);
 }

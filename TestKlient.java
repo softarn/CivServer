@@ -319,5 +319,9 @@ class TestKlient{
         public void gameClosed(){
             System.out.println("Game closed");
         }
+
+	public void wasBombarded(Result res){
+		System.out.println("Du blev bombad!" + "\nPå ruta " + res.getBombX() + ";" + res.getBombY() + "\nLiv borttaget: " + res.getHealthLost());
+	}
 	}
 }

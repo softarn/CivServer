@@ -199,6 +199,14 @@ public class Receiver implements Runnable
                 pl.gameClosed();
             }
 
+	    else if(header == 30)
+	    {
+		toReturn.addBombX(receiveInt());
+		toReturn.addBombY(receiveInt());
+		toReturn.addHealthLost(receiveInt());
+		    pl.wasBombarded(toReturn);
+	    }
+
 			// Test
 			else if(header == 99)
 			{
