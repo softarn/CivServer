@@ -25,6 +25,8 @@ create_unit(UnitType, Owner) ->
 	"Trireme" ->	#unit{str="Trireme",	owner=Owner,	name=trireme,	mp=50};
 	"Galley" ->	#unit{str="Galley",	owner=Owner,	name=galley,	mp=250};
 	"Caravel" ->	#unit{str="Caravel",	owner=Owner,	name=caravel,	mp=100};
+
+	"Siege Tower" -> #unit{str="Siege Tower",owner=Owner,	name=siege_tower,mp=0};
 	_-> {error, invalid_unit}
     end.
 

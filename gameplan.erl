@@ -25,9 +25,10 @@ make_gameplan(Size, Game) ->
 % Returns the updated unit-map
 assign_pos([], [], UMap) ->
     UMap;
-assign_pos([Player|PlayerRest], [Pos|PosRest], UMap) ->
-    {ok, UpdatedUMap} = create_unit(UMap, Pos, "Settler", Player#player.name),
-    assign_pos(PlayerRest, PosRest, UpdatedUMap).
+assign_pos([Player|PlayerRest], [Pos1, Pos2|PosRest], UMap) ->
+    {ok, UpdatedUMap} = create_unit(UMap, Pos1, "Settler", Player#player.name),
+    {ok, UpdatedUMap2} = create_unit(UpdatedUMap, Pos2, "Settler", Player#player.name),
+    assign_pos(PlayerRest, PosRest, UpdatedUMap2).
 
 % Arguments: Map to be updated, Tile to be inserted, Position of the tile to be replaced
 % Replaces the tile at position X,Y with the new tile
