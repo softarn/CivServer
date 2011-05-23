@@ -199,11 +199,27 @@ make_move([{position, EX, EY}], Game, Unit, {startpos, SX, SY}) ->
     
    case get_tile(Unitmap, EX, EY) of
 	{ok, Tile} ->
+	    io:format("~p~n", [Tile]),
 	    if
-		(Tile#tile.city =/= null) or ((Tile#tile.unit)#unit.name =:= trireme) or 
-		((Tile#tile.unit)#unit.name =:= galley) or ((Tile#tile.unit)#unit.name =:= siege_tower) or
-	       	((Tile#tile.unit)#unit.name =:= caravel) ->
-		    insert_unit(Unitmap, {SX, SY}, {EX, EY});
+		(Tile#tile.city =/= null) ->
+		    {ok, UpdatedUnitMap} = insert_unit(Unitmap, {SX, SY}, {EX, EY}),
+		    {ok, Game#game{tilemap = UpdatedUnitMap}};
+
+		((Tile#tile.unit)#unit.name =:= trireme) ->
+		    {ok, UpdatedUnitMap} = insert_unit(Unitmap, {SX, SY}, {EX, EY}),
+		    {ok, Game#game{tilemap = UpdatedUnitMap}};
+		
+		((Tile#tile.unit)#unit.name =:= galley) ->
+		    {ok, UpdatedUnitMap} = insert_unit(Unitmap, {SX, SY}, {EX, EY}),
+		    {ok, Game#game{tilemap = UpdatedUnitMap}};
+
+		((Tile#tile.unit)#unit.name =:= siege_tower) ->
+		    {ok, UpdatedUnitMap} = insert_unit(Unitmap, {SX, SY}, {EX, EY}),
+		    {ok, Game#game{tilemap = UpdatedUnitMap}};
+
+		((Tile#tile.unit)#unit.name =:= caravel) ->
+		    {ok, UpdatedUnitMap} = insert_unit(Unitmap, {SX, SY}, {EX, EY}),
+		    {ok, Game#game{tilemap = UpdatedUnitMap}};
 
 		true ->
 		    case remove_unit(Unitmap, SX, SY) of
