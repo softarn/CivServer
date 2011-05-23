@@ -68,7 +68,7 @@ public:
 };
 
 
-void gameLobby(Proxy &proxy, std::string gameName)
+void gameLobby(GameLogix &proxy, std::string gameName)
 {
 	std::cout << "Welcome to " << gameName << "'s game!\n";
 	g_gameRunning = true;
@@ -139,7 +139,7 @@ void gameLobby(Proxy &proxy, std::string gameName)
 }
 
 
-void listGames(Proxy &proxy)
+void listGames(GameLogix &proxy)
 {
 	std::vector<std::string> gameList = proxy.listGames();
 
@@ -148,7 +148,7 @@ void listGames(Proxy &proxy)
 		std::cout << "  " << gameList[i] << std::endl;
 }
 
-void mainMenu(Proxy &proxy, std::string playerName)
+void mainMenu(GameLogix &proxy, std::string playerName)
 {
 	int option;
 	do
@@ -197,7 +197,8 @@ int main()
 	try
 	{
 		MyPacketListener pl;
-		Proxy proxy(pl);
+		Proxy p(pl);
+		GameLogix &proxy = p;
 		//proxy.connect("dvk.fishface.se", 1339);
 		//proxy.connect("130.229.157.246", 1234);
 		proxy.connect("chylis.dyndns-at-work.com", 1337);

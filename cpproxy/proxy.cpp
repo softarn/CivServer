@@ -37,7 +37,7 @@ namespace proxy
 		// Send a hello world packet
 		m_networkManager.send<uint8_t>(protocol::Header::HELLO_WORLD);
 		// Send protocol version
-		m_networkManager.send<int>(0x02);
+		m_networkManager.send<int>(protocol::VERSION);
 		// Send player name
 		m_networkManager.send(m_playerName);
 
@@ -244,9 +244,9 @@ namespace proxy
 		confirmPacket(*packet, protocol::Header::MESSAGE_FOR_YOU_SIR);
 	}
 
-	void Proxy::spawnUnit(int x, int y, const std::string &owner, const std::string &unitType, int manpower)
+	void Proxy::spawnUnit(int x, int y, const std::string &owner, const std::string &unitType, int manpower, const std::vector<protocol::Unit> &containedUnits)
 	{
-		// Send a message
+		// Tell the server to spawn a unit
 		m_networkManager.send<uint8_t>(protocol::Header::SPAWN_UNIT);
 
 		// Send position
@@ -258,12 +258,95 @@ namespace proxy
 		m_networkManager.send(unitType);
 		m_networkManager.send(manpower);
 
+		// Send a list of all contained units
+		m_networkManager.send(containedUnits);
+
+
 
 		// Receive the answer
 		std::auto_ptr<protocol::Packet> packet = m_networkManager.receivePacket();
 
 		// which must be a confirmation
 		confirmPacket(*packet, protocol::Header::SPAWN_UNIT);
+	}
+
+	void Proxy::disbandUnit(int x, int y)
+	{
+		// Tell the server to fck a unit
+		m_networkManager.send<uint8_t>(protocol::Header::DISBAND_UNIT);
+
+		// Send position
+		m_networkManager.send(x);
+		m_networkManager.send(y);
+
+
+		// Receive the answer
+		std::auto_ptr<protocol::Packet> packet = m_networkManager.receivePacket();
+
+		// which must be a confirmation
+		confirmPacket(*packet, protocol::Header::DISBAND_UNIT);
+	}
+
+	void Proxy::buildCity(int x, int y, const std::string &name)
+	{
+		// Tell the server to build
+		m_networkManager.send<uint8_t>(protocol::Header::BUILD_UNIT);
+
+		// Send position
+		m_networkManager.send(x);
+		m_networkManager.send(y);
+
+		// and name
+		m_networkManager.send(name);
+
+
+		// Receive the answer
+		std::auto_ptr<protocol::Packet> packet = m_networkManager.receivePacket();
+
+		// which must be a confirmation
+		confirmPacket(*packet, protocol::Header::BUILD_UNIT);
+	}
+
+	void Proxy::enterDragon(int x, int y, int dragonX, int dragonY)
+	{
+		// Tell the server to enter the Dragon
+		m_networkManager.send<uint8_t>(protocol::Header::ENTER_THE_DRAGON);
+
+		// Send position of the unit
+		m_networkManager.send(x);
+		m_networkManager.send(y);
+
+		// Send position of the dragon
+		m_networkManager.send(dragonX);
+		m_networkManager.send(dragonY);
+
+
+		// Receive the answer
+		std::auto_ptr<protocol::Packet> packet = m_networkManager.receivePacket();
+
+		// which must be a confirmation
+		confirmPacket(*packet, protocol::Header::ENTER_THE_DRAGON);
+	}
+
+	void Proxy::removeFromDragon(int dragonX, int dragonY, const std::string &unitType, int manpower)
+	{
+		// Tell the server to exit the Dragon
+		m_networkManager.send<uint8_t>(protocol::Header::EXIT_THE_DRAGON);
+
+		// Send position of the dragon
+		m_networkManager.send(dragonX);
+		m_networkManager.send(dragonY);
+
+		// Tell what unit to remove
+		m_networkManager.send(unitType);
+		m_networkManager.send(manpower);
+
+
+		// Receive the answer
+		std::auto_ptr<protocol::Packet> packet = m_networkManager.receivePacket();
+
+		// which must be a confirmation
+		confirmPacket(*packet, protocol::Header::EXIT_THE_DRAGON);
 	}
 
 

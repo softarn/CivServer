@@ -9,6 +9,8 @@ namespace proxy
 
 	namespace protocol
 	{
+		extern const int VERSION = 0x03;
+
 		Position::Position(int x, int y)
 			: x(x), y(y)
 		{
@@ -103,18 +105,26 @@ namespace proxy
 		get(p.y);
 	}
 
+	template <> void Serializer::put(const protocol::Unit &u)
+	{
+		put(u.owner);
+		put(u.unitType);
+		put(u.currentManpower);
+		put(u.containedUnits);
+	}
+
 	template <> void Serializer::get(protocol::Unit &u)
 	{
 		get(u.owner);
 		get(u.unitType);
 		get(u.currentManpower);
+		get(u.containedUnits);
 	}
 
 	template <> void Serializer::get(protocol::City &c)
 	{
 		get(c.owner);
 		get(c.units);
-		get(c.buildings);
 		get(c.name);
 	}
 
@@ -123,7 +133,6 @@ namespace proxy
 		get(t.position);
 		get(t.unit);
 		get(t.city);
-		get(t.improvement);
 	}
 
 	template <> void Serializer::get(protocol::Faild &f)

@@ -7,8 +7,8 @@
 		<Option compiler="gcc" />
 		<Build>
 			<Target title="Debug_Linux">
-				<Option output="bin\Debug\cpproxy" prefix_auto="1" extension_auto="1" />
-				<Option object_output="obj\Debug\" />
+				<Option output="bin/Debug/cpproxy" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Compiler>
@@ -19,8 +19,8 @@
 				</Linker>
 			</Target>
 			<Target title="Debug_Windows">
-				<Option output="bin\Debug\cpproxy" prefix_auto="1" extension_auto="1" />
-				<Option object_output="obj\Debug\" />
+				<Option output="bin/Debug/cpproxy" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Compiler>
@@ -38,6 +38,7 @@
 		<Unit filename="buffer.cpp" />
 		<Unit filename="buffer.h" />
 		<Unit filename="bytestream.h" />
+		<Unit filename="gamelogix.h" />
 		<Unit filename="main.cpp" />
 		<Unit filename="mutex.cpp" />
 		<Unit filename="mutex.h" />

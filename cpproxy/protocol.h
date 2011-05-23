@@ -12,6 +12,8 @@ namespace proxy
 
 	namespace protocol
 	{
+		extern const int VERSION;
+
 
 		struct Header
 		{
@@ -38,9 +40,13 @@ namespace proxy
 				COMBAT_REQUEST = 18,
 				COMBAT_RESULT = 19,
 				MESSAGE_FOR_YOU_SIR = 20,
+				BUILD_UNIT = 21,
 				SPAWN_UNIT = 23,
 				EXIT_GAME = 24,
-				GAME_CLOSED = 25
+				GAME_CLOSED = 25,
+				ENTER_THE_DRAGON = 26,
+				EXIT_THE_DRAGON = 28,
+				DISBAND_UNIT = 29
 			};
 		};
 
@@ -66,13 +72,13 @@ namespace proxy
 			std::string owner;
 			std::string unitType;
 			int currentManpower;
+			std::vector<Unit> containedUnits;
 		};
 
 		struct City
 		{
 			std::string owner;
 			std::vector<Unit> units;
-			std::vector<std::string> buildings;
 			std::string name;
 		};
 
@@ -81,7 +87,6 @@ namespace proxy
 			Position position;
 			Perhaps<Unit> unit;
 			Perhaps<City> city;
-			Perhaps<std::string> improvement;
 		};
 
 
