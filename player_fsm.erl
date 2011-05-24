@@ -121,13 +121,14 @@ game_lobby({Header, List}, {Player, Game}) ->
 	    end;
 
 	13 -> %Start game request
+	    [Width, Height] = List,
 	    case Player#player.name =:= Game#game.name of % Is player host?
 		false ->
 		    ?P_HANDLER:sendFailMsg(Player#player.socket, 4, Header), % FailPacket "Permission denied"
 		    {next_state, game_lobby, {Player, Game}};
 		true ->
 		    ?P_HANDLER:sendMsg(Player#player.socket, {1, [Header]}), %Comfirm'd
-		    ?GAMESRV:start_game(Game#game.game_pid, 20), % param: Gamename, mapsize
+		    ?GAMESRV:start_game(Game#game.game_pid, Width, Height), % param: Gamename, mapsize
 		    {next_state, game_wait, {Player, Game}}
 
 	    end;	% player = host

@@ -50,7 +50,9 @@ recv(Socket, FSM) ->
 	    [LockFlag];
 
 	13 -> % Start game request
-	    [];
+	    Width = ?TCP:readInteger(Socket)
+	    Height = ?TCP:readInteger(Socket),
+	    [Width, Height];
 
 	15 -> %Move request
 	    MovePath = ?TCP:readList(Socket, "Position"),

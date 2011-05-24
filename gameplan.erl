@@ -8,12 +8,12 @@
 % Generates a empty Unit-map (tuples) with tilerecords containing their position
 % Adds starting units to the Unit-map
 % Updates the game-record with the new maps and returns the updated game record
-make_gameplan(Size, Game) ->
+make_gameplan(Width, Height, Game) ->
     Players = Game#game.players,
-    TerrainMatrix = ?TERGEN:generate(Size, Size),
-    UnitMatrix = erlang:make_tuple(Size, erlang:make_tuple(Size, #tile{})),
+    TerrainMatrix = ?TERGEN:generate(Width, Height),
+    UnitMatrix = erlang:make_tuple(Width, erlang:make_tuple(Height, #tile{})),
 
-    UpdUnitMatrix = add_pos(UnitMatrix, Size, Size, Size),
+    UpdUnitMatrix = add_pos(UnitMatrix, Width, Height, Height),
     NumberOfPlayers = length(Game#game.players),
 
     StartPos = ?START_POS:get_placement(NumberOfPlayers, TerrainMatrix),
@@ -217,6 +217,7 @@ make_move([{position, EX, EY}], Game, Unit, {startpos, SX, SY}) ->
 			false ->
 			    case is_empty(City) of
 				true ->
+				    io:format("~p took over ~p's city ~p~n", [Unit#unit.owner City#city.owner, City#city.name]),
 				    NewCity = City#city{owner = Unit#unit.owner},
 				    UpdatedTile = Tile#tile{city = NewCity},
 				    UpdatedUnitMap1 = update_tile(Unitmap, UpdatedTile, EX, EY),
@@ -244,6 +245,7 @@ make_move([{position, EX, EY}], Game, Unit, {startpos, SX, SY}) ->
 			false ->
 			    case is_empty(Tower) of
 				true ->
+				    io:format("~p took over ~p's siegetower~n", [Unit#unit.owner City#city.owner]),
 				    NewTower = Tower#unit{owner = Unit#unit.owner},
 				    UpdatedTile = Tile#tile{unit = NewTower},
 				    UpdatedUnitMap1 = update_tile(Unitmap, UpdatedTile, EX, EY),
