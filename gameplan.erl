@@ -476,6 +476,7 @@ attack_unit(UnitMap, TerrainMap, {AttX, AttY}, {DefX, DefY}) -> %GLÖM EJ RANGEK
 	    {error, "Out of bounds"};
 
 	true ->
+	    VictimStr = DefUnit#unit.owner,
 
 	    BombBool = lists:member(AttackUnit#unit.name, [catapult, trebuchet, cannon, galley, caravel]),
 
@@ -501,7 +502,6 @@ attack_unit(UnitMap, TerrainMap, {AttX, AttY}, {DefX, DefY}) -> %GLÖM EJ RANGEK
 		    UpdatedCity = DefCity#city{units = UpdatedUnits2},
 		    UpdatedDefTile = DefTile#tile{city = UpdatedCity},
 		    UpdatedUnitMap = update_tile(UnitMap, UpdatedDefTile, DefX, DefY), 
-		    VictimStr = UpdatedCity#city.owner,
 		    {bombardment, UpdatedUnitMap, {DefX, DefY}, DPU, VictimStr};
 
 		true -> %else
@@ -533,31 +533,32 @@ attack_unit(UnitMap, TerrainMap, {AttX, AttY}, {DefX, DefY}) -> %GLÖM EJ RANGEK
 			    io:format("~p with ~p manpower on ~p-terrain from {~p,~p} attacked ~p with ~p manpower on ~p-terrain on {~p,~p}. Result Attacker: ~p mp left, Defender: ~p mp left~n", [AttackUnit#unit.str, AttackUnit#unit.mp, AttTerrain, AttX, AttY, DefUnit#unit.str, DefUnit#unit.mp, DefTerrain, DefX, DefY, RemAttackMp, RemDefMp])
 		    end,
 
+		    DefMpLost = DefUnit#unit.mp - RemDefMp,
+
 		    if
 			(RemAttackMp =< 0) and (RemDefMp =< 0) ->
 			    {ok, FirstUpdatedUnitMap} = remove_unit(UnitMap, AttX, AttY), 
 			    {ok, SecondUpdatedUnitMap} = remove_unit(FirstUpdatedUnitMap, DefX, DefY),
-			    {ok, SecondUpdatedUnitMap, {RemAttackMp, RemDefMp}};
+			    {ok, SecondUpdatedUnitMap, {RemAttackMp, RemDefMp}, VictimStr, {DefMpLost, DefX, DefY}};
 			(RemAttackMp =< 0) ->
 			    UpdDefUnit = DefUnit#unit{mp = RemDefMp},
 			    {ok, FirstUpdatedUnitMap} = remove_unit(UnitMap, AttX, AttY),
 			    {ok, SecondUpdatedUnitMap} = update_unit(FirstUpdatedUnitMap, UpdDefUnit, DefX, DefY), 
-			    {ok, SecondUpdatedUnitMap, {RemAttackMp, RemDefMp}};
+			    {ok, SecondUpdatedUnitMap, {RemAttackMp, RemDefMp}, VictimStr, {DefMpLost, DefX, DefY}};
 			(RemDefMp =< 0) ->
 			    UpdAttackUnit = AttackUnit#unit{mp = RemAttackMp},
 			    {ok, FirstUpdatedUnitMap} = remove_unit(UnitMap, DefX, DefY),
 			    {ok, SecondUpdatedUnitMap} = update_unit(FirstUpdatedUnitMap, UpdAttackUnit, AttX, AttY), 
-			    {ok, SecondUpdatedUnitMap, {RemAttackMp, RemDefMp}};
+			    {ok, SecondUpdatedUnitMap, {RemAttackMp, RemDefMp}, VictimStr, {DefMpLost, DefX, DefY}};
 			true -> %else
 			    UpdAttackUnit = AttackUnit#unit{mp = RemAttackMp},
 			    UpdDefUnit = DefUnit#unit{mp = RemDefMp},
 			    {ok, FirstUpdatedUnitMap} = update_unit(UnitMap, UpdAttackUnit, AttX, AttY), 
 			    {ok, SecondUpdatedUnitMap} = update_unit(FirstUpdatedUnitMap, UpdDefUnit, DefX, DefY),
-			    {ok, SecondUpdatedUnitMap, {RemAttackMp, RemDefMp}}
+			    {ok, SecondUpdatedUnitMap, {RemAttackMp, RemDefMp}, VictimStr, {DefMpLost, DefX, DefY}}
 		    end
 	    end
-    end.  
-
+end.
 
 build_city(UnitMap, {X, Y}, CityName, CityOwner) ->
     Settler = get_unit(UnitMap, X, Y),

@@ -160,19 +160,36 @@ handle_call({unfortify_unit, {X, Y}, Owner}, _From, Game) ->
     end;
 
 handle_call({attack_unit, {AttX, AttY}, {DefX, DefY}}, _From, Game) ->
-    case ?GAMEPLAN:attack_unit(Game#game.tilemap, Game#game.map, {AttX, AttY}, {DefX, DefY}) of
-	{ok, UpdatedUnitMap, {RemAttMp, RemDefMp}} ->
-	    UpdatedGame = Game#game{tilemap = UpdatedUnitMap},
-	    {reply, {ok, UpdatedGame, {RemAttMp, RemDefMp}}, UpdatedGame};
 
-	{bombardment, UpdatedUnitMap, {X, Y}, DPU, VictimStr} ->
-	    UpdatedGame = Game#game{tilemap = UpdatedUnitMap},
+    
+    case ?GAMEPLAN:attack_unit(Game#game.tilemap, Game#game.map, {AttX, AttY}, {DefX, DefY}) of
+	{ok, UpdatedUnitMap, {RemAttMp, RemDefMp}, VictimStr, {DefMpLost, DefX, DefY}} ->
 	    FindPlayerFun = fun(PR) ->
 		    PR#player.name =:= VictimStr
 	    end,
-	    Victim = hd(lists:filter(FindPlayerFun, Game#game.players)),
-	    ?P_HANDLER:sendMsg(Victim#player.socket, {30, [{X, Y}, DPU]}),
-	    {reply, {bombardment, UpdatedGame, {X, Y}, DPU}, UpdatedGame};
+	    UpdatedGame = Game#game{tilemap = UpdatedUnitMap},
+	    VictimList = lists:filter(FindPlayerFun, Game#game.players),
+	    if (VictimList =/= []) ->
+		    Victim = hd(VictimList),
+		    ?P_HANDLER:sendMsg(Victim#player.socket, {30, [{DefX, DefY}, DefMpLost]});
+		true ->
+		    ok
+	    end,
+	    {reply, {ok, UpdatedGame, {RemAttMp, RemDefMp}}, UpdatedGame};
+
+	{bombardment, UpdatedUnitMap, {X, Y}, DPU, VictimStr} ->
+	    FindPlayerFun = fun(PR) ->
+		    PR#player.name =:= VictimStr
+	    end,
+	    UpdatedGame = Game#game{tilemap = UpdatedUnitMap},
+	    VictimList = lists:filter(FindPlayerFun, Game#game.players),
+	    if (VictimList =/= []) ->
+		    Victim = hd(VictimList),
+		    ?P_HANDLER:sendMsg(Victim#player.socket, {30, [{X, Y}, DPU]});
+		true ->
+		    ok
+	    end,
+	    {reply, {bombardment, UpdatedGame}, UpdatedGame};
 
 	{error, Reason} ->
 	    {reply, {error, Reason}, Game}
