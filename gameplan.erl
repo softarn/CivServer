@@ -432,8 +432,13 @@ attack_unit(UnitMap, TerrainMap, {AttX, AttY}, {DefX, DefY}) -> %GLÖM EJ RANGEK
     AttTerrain = lists:nth(AttY, lists:nth(AttX, TerrainMap)),
     DefTerrain = lists:nth(DefY, lists:nth(DefX, TerrainMap)),
     AttackUnit = get_unit(UnitMap, AttX, AttY),
-    DefUnit = get_unit(UnitMap, DefX, DefY),
     DefCity = get_city(UnitMap, DefX, DefY),
+	if 
+		((DefCity=:=null) or (DefCity=:={error, "Out of bounds"}))->
+			DefUnit = get_unit(UnitMap, DefX, DefY);
+		true ->
+			DefUnit = get_city_def(DefCity#city.units)
+	end,	
     {ok, AttackTile} = get_tile(UnitMap, AttX, AttY),
     {ok, DefTile} = get_tile(UnitMap, DefX, DefY),
 
@@ -477,12 +482,12 @@ attack_unit(UnitMap, TerrainMap, {AttX, AttY}, {DefX, DefY}) -> %GLÖM EJ RANGEK
 
 		    if
 
-			(AttackUnit#unit.name =:= siege_tower) and (DefUnit#unit.fortified =:= true) ->
+			((AttackUnit#unit.name =:= siege_tower) and (DefCity=/=null)) and (DefUnit#unit.fortified =:= true) ->
 			    AttUnit1 = hd(AttackUnit#unit.units),
 			    {RemAttackMp, RemDefMp} = ?COMBAT:combat(AttUnit1#unit.str, AttUnit1#unit.mp, AttTerrain, DefUnit#unit.str, DefUnit#unit.mp, DefTerrain, {true, true}),
 			    io:format("~p in a siegetower with ~p manpower on ~p-terrain from {~p,~p} attacked a fortified ~p with ~p manpower on ~p-terrain on {~p,~p}. Result Attacker: ~p mp left, Defender: ~p mp left~n", [AttackUnit#unit.str, AttackUnit#unit.mp, AttTerrain, AttX, AttY, DefUnit#unit.str, DefUnit#unit.mp, DefTerrain, DefX, DefY, RemAttackMp, RemDefMp]);
 
-			(AttackUnit#unit.name =:= siege_tower) ->
+			(AttackUnit#unit.name =:= siege_tower) and (DefCity=/=null) ->
 			    AttUnit1 = hd(AttackUnit#unit.units),
 			    {RemAttackMp, RemDefMp} = ?COMBAT:combat(AttUnit1#unit.str, AttUnit1#unit.mp, AttTerrain, DefUnit#unit.str, DefUnit#unit.mp, DefTerrain, {true, false}),
 			    io:format("~p in a siegetower with ~p manpower on ~p-terrain from {~p,~p} attacked ~p with ~p manpower on ~p-terrain on {~p,~p}. Result Attacker: ~p mp left, Defender: ~p mp left~n", [AttackUnit#unit.str, AttackUnit#unit.mp, AttTerrain, AttX, AttY, DefUnit#unit.str, DefUnit#unit.mp, DefTerrain, DefX, DefY, RemAttackMp, RemDefMp]);
@@ -561,4 +566,32 @@ disband_unit(UnitMap, {X, Y}, Owner) ->
 		    {ok, UpdatedUnitMap}
 	    end
     end.
+
+% Fetches the best defender from a list of Unit records.
+
+get_city_def([])->
+	null;
+get_city_def(Defenders) when is_list(Defenders)-> 
+	get_city_def(Defenders,hd(Defenders)).
+
+get_city_def([],Best_Defender)->
+	Best_Defender;
+get_city_def(Defenders,Best_defender)->
+	%Contender to be best Defender!
+	Contender = hd(Defenders),
+	Contender_stats = unit_attr:get_attr(Contender#unit.name),
+	Contender_def_power = round(element(3,Contender_stats)*(Contender#unit.mp)/100),
+	%Reigning champion!
+	Best_def_stats = unit_attr:get_attr(Best_defender#unit.name),
+	Best_def_power = round(element(3,Best_def_stats)*(Best_defender#unit.mp)/100),
+
+% The winner takes it all!
+case Contender_def_power > Best_def_power of
+	true ->
+		get_city_def(tl(Defenders),hd(Defenders));
+	false ->
+		get_city_def(tl(Defenders),Best_defender)
+
+end.
+
 
