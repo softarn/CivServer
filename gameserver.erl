@@ -247,8 +247,8 @@ handle_cast({player_leave, Player}, Game) ->
 % Sets game status to locked and in_game,
 % updates main server, puts players fsm into correct state (see starting_game comments below)
 % Returns the updated game record
-handle_cast({start_game, MapSize}, Game) ->
-    UpdatedGame = ?GAMEPLAN:make_gameplan(MapSize, Game), % Fixa storleken senare
+handle_cast({start_game, Width, Height}, Game) ->
+    UpdatedGame = ?GAMEPLAN:make_gameplan(Width, Height, Game), % Fixa storleken senare
     UpdatedGame2 = UpdatedGame#game{locked = 1, current_state = in_game},
     UpdatedGame3 = starting_game(UpdatedGame2),
     {noreply, UpdatedGame3}.
@@ -271,7 +271,7 @@ fortify_unit(Game_pid, {X, Y}, Owner) -> gen_server:call(Game_pid, {fortify_unit
 unfortify_unit(Game_pid, {X, Y}, Owner) -> gen_server:call(Game_pid, {unfortify_unit, {X, Y}, Owner}).
 attack_unit(Game_pid, {AttX, AttY}, {DefX, DefY}) -> gen_server:call(Game_pid, {attack_unit, {AttX, AttY}, {DefX, DefY}}).
 player_leave(Game_pid, Player) -> gen_server:cast(Game_pid, {player_leave, Player}).
-start_game(Game_pid, MapSize) -> gen_server:cast(Game_pid, {start_game, MapSize}).
+start_game(Game_pid, Width, Height) -> gen_server:cast(Game_pid, {start_game, Width, Height}).
 
 
 %Internal functions
