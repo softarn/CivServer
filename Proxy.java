@@ -144,7 +144,26 @@ public class Proxy
 	{
 		try
 		{
-			send(new Packet((byte)13));
+			Packet toSend new Packet((byte)13);
+			toSend.add(20);
+			toSend.add(20);
+			send(toSend);
+			return receiver.getResult();
+		}
+		catch(FailedException fe)
+		{
+			throw fe;
+		}
+	}
+
+	public Result startGame(int width, int height) throws FailedException
+	{
+		try
+		{
+			Packet toSend new Packet((byte)13);
+			toSend.add(width);
+			toSend.add(height);
+			send(toSend);
 			return receiver.getResult();
 		}
 		catch(FailedException fe)
