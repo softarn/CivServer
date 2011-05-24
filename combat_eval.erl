@@ -15,9 +15,10 @@
 %% the next version..
 
 -module(combat_eval).
--export([combat/7]).
+-export([combat/5]).
+-include("config.hrl").
 
-combat(Attacker, AtkMP, AtkTerr, Defender, DefMp, DefTerr, Modifiers) ->
+combat(#unit{str=Attacker, mp=AtkMP},AtkTerr, #unit{str=Defender, mp=DefMp}, DefTerr, Modifiers) ->
 	AttStr = string:to_lower(Attacker),
 	AtkTerrStr = string:to_lower(AtkTerr),
 	DefTerrStr = string:to_lower(DefTerr),

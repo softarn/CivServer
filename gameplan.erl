@@ -500,21 +500,21 @@ attack_unit(UnitMap, TerrainMap, {AttX, AttY}, {DefX, DefY}) -> %GLÖM EJ RANGEK
 		    if
 
 			((AttackUnit#unit.name =:= siege_tower) and (DefCity=/=null)) and (DefUnit#unit.fortified =:= true) ->
-			    AttUnit1 = hd(AttackUnit#unit.units),
-			    {RemAttackMp, RemDefMp} = ?COMBAT:combat(AttUnit1#unit.str, AttUnit1#unit.mp, AttTerrain, DefUnit#unit.str, DefUnit#unit.mp, DefTerrain, {true, true}),
+			    AttUnit = hd(AttackUnit#unit.units),
+			    {RemAttackMp, RemDefMp} = ?COMBAT:combat(AttUnit, AttTerrain, DefUnit, DefTerrain, {true, true}),
 			    io:format("~p in a siegetower with ~p manpower on ~p-terrain from {~p,~p} attacked a fortified ~p with ~p manpower on ~p-terrain on {~p,~p}. Result Attacker: ~p mp left, Defender: ~p mp left~n", [AttackUnit#unit.str, AttackUnit#unit.mp, AttTerrain, AttX, AttY, DefUnit#unit.str, DefUnit#unit.mp, DefTerrain, DefX, DefY, RemAttackMp, RemDefMp]);
 
 			(AttackUnit#unit.name =:= siege_tower) and (DefCity=/=null) ->
-			    AttUnit1 = hd(AttackUnit#unit.units),
-			    {RemAttackMp, RemDefMp} = ?COMBAT:combat(AttUnit1#unit.str, AttUnit1#unit.mp, AttTerrain, DefUnit#unit.str, DefUnit#unit.mp, DefTerrain, {true, false}),
+			    AttUnit = hd(AttackUnit#unit.units),
+			    {RemAttackMp, RemDefMp} = ?COMBAT:combat(AttUnit, AttTerrain, DefUnit, DefTerrain, {true, false}),
 			    io:format("~p in a siegetower with ~p manpower on ~p-terrain from {~p,~p} attacked ~p with ~p manpower on ~p-terrain on {~p,~p}. Result Attacker: ~p mp left, Defender: ~p mp left~n", [AttackUnit#unit.str, AttackUnit#unit.mp, AttTerrain, AttX, AttY, DefUnit#unit.str, DefUnit#unit.mp, DefTerrain, DefX, DefY, RemAttackMp, RemDefMp]);
 
 			(DefUnit#unit.fortified =:= true) ->
-			    {RemAttackMp, RemDefMp} = ?COMBAT:combat(AttackUnit#unit.str, AttackUnit#unit.mp, AttTerrain, DefUnit#unit.str, DefUnit#unit.mp, DefTerrain, {false, true}),
+			    {RemAttackMp, RemDefMp} = ?COMBAT:combat(AttackUnit, AttTerrain, DefUnit, DefTerrain, {false, true}),
 			    io:format("~p in a siegetower with ~p manpower on ~p-terrain from {~p,~p} attacked ~p with ~p manpower on ~p-terrain on {~p,~p}. Result Attacker: ~p mp left, Defender: ~p mp left~n", [AttackUnit#unit.str, AttackUnit#unit.mp, AttTerrain, AttX, AttY, DefUnit#unit.str, DefUnit#unit.mp, DefTerrain, DefX, DefY, RemAttackMp, RemDefMp]);
 
 			true -> %else
-			    {RemAttackMp, RemDefMp} = ?COMBAT:combat(AttackUnit#unit.str, AttackUnit#unit.mp, AttTerrain, DefUnit#unit.str, DefUnit#unit.mp, DefTerrain, {false, false}),
+			    {RemAttackMp, RemDefMp} = ?COMBAT:combat(AttackUnit, AttTerrain, DefUnit, DefTerrain, {false, false}),
 			    io:format("~p with ~p manpower on ~p-terrain from {~p,~p} attacked ~p with ~p manpower on ~p-terrain on {~p,~p}. Result Attacker: ~p mp left, Defender: ~p mp left~n", [AttackUnit#unit.str, AttackUnit#unit.mp, AttTerrain, AttX, AttY, DefUnit#unit.str, DefUnit#unit.mp, DefTerrain, DefX, DefY, RemAttackMp, RemDefMp])
 		    end,
 

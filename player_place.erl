@@ -34,7 +34,7 @@ ok_tile({_X, Y}, {_Width, Height}, _Map, _Dict) when (Y > Height) or (Y < 1) ->
 ok_tile(Pos, _MapWH, Map, Dict) ->
     case is_water(Pos, Map) of
 	true -> false;
-	false ->	
+	false ->
 	    case dict:is_key(Pos, Dict) of 
 		false -> 
 		    true;
