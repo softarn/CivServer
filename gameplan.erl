@@ -305,7 +305,7 @@ insert_unit(UnitMap, {FX, FY}, {TX, TY}) ->
 
 	(Endtile#tile.unit =/= null) ->
 	    EndUnit = Endtile#tile.unit,
-	    case {is_container_unit(EndUnit#unit.name),
+	    case {is_container_unit(EndUnit),
 		    same_owner(EndUnit, FromUnit)} of
 		{true, true} ->
 		    {ok, NewUnitMap} = remove_unit(UnitMap, FX, FY),
