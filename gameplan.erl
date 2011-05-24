@@ -203,8 +203,24 @@ make_move([{position, EX, EY}], Game, Unit, {startpos, SX, SY}) ->
 	    io:format("~p~n", [Tile]),
 	    if
 		(Tile#tile.city =/= null) ->
-		    {ok, UpdatedUnitMap} = insert_unit(Unitmap, {SX, SY}, {EX, EY}),
-		    {ok, Game#game{tilemap = UpdatedUnitMap}};
+			City = Tile#tile.city,
+			case compare_owners(Unit, City) of
+				same ->
+		    			{ok, UpdatedUnitMap} = insert_unit(Unitmap, {SX, SY}, {EX, EY}),
+		    			{ok, Game#game{tilemap = UpdatedUnitMap}};
+				different ->
+					case is_empty(City) of
+						true ->
+							NewCity = City#city{owner = Unit#unit.owner},
+							UpdatedTile = Tile#tile{city = NewCity},
+							UpdatedUnitMap1 = update_tile(Unitmap, UpdatedTile, EX, EY),
+							io:format("Hej ~p~n", [NewCity]),
+			    				{ok, UpdatedUnitMap2} = insert_unit(UpdatedUnitMap1, {SX, SY}, {EX, EY}),
+		    					{ok, Game#game{tilemap = UpdatedUnitMap2}};
+						false ->
+							{error, "Invalid, full of enemies"}
+					end
+			end;
 
 		((Tile#tile.unit)#unit.name =:= trireme) ->
 		    {ok, UpdatedUnitMap} = insert_unit(Unitmap, {SX, SY}, {EX, EY}),
@@ -563,3 +579,23 @@ disband_unit(UnitMap, {X, Y}, Owner) ->
 	    end
     end.
 
+compare_owners(Unit, City) ->
+	UnitOwner = Unit#unit.owner,
+	CityOwner = City#city.owner,
+
+	case UnitOwner == CityOwner of
+		true ->
+			same;
+		false ->
+			different
+	end.
+
+is_empty(City) ->
+	CityUnits = City#city.units,
+
+	case CityUnits of
+		[] ->
+			true;
+		_ ->
+			false
+	end.
