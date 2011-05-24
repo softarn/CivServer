@@ -141,6 +141,24 @@ handle_call({disband_unit, {X, Y}, Owner}, _From, Game) ->
 	    {reply, {error, Reason}, Game}
     end;
 
+handle_call({fortify_unit, {X, Y}, Owner}, _From, Game) ->
+    case ?GAMEPLAN:fortify_unit(Game#game.tilemap, {X, Y}, Owner) of
+	{ok, UpdatedUnitMap} ->
+	    UpdatedGame = Game#game{tilemap = UpdatedUnitMap},
+	    {reply, {ok, UpdatedGame}, UpdatedGame};
+	{error, Reason} ->
+	    {reply, {error, Reason}, Game}
+    end;
+
+handle_call({unfortify_unit, {X, Y}, Owner}, _From, Game) ->
+    case ?GAMEPLAN:unfortify_unit(Game#game.tilemap, {X, Y}, Owner) of
+	{ok, UpdatedUnitMap} ->
+	    UpdatedGame = Game#game{tilemap = UpdatedUnitMap},
+	    {reply, {ok, UpdatedGame}, UpdatedGame};
+	{error, Reason} ->
+	    {reply, {error, Reason}, Game}
+    end;
+
 handle_call({attack_unit, {AttX, AttY}, {DefX, DefY}}, _From, Game) ->
     case ?GAMEPLAN:attack_unit(Game#game.tilemap, Game#game.map, {AttX, AttY}, {DefX, DefY}) of
 	{ok, UpdatedUnitMap, {RemAttMp, RemDefMp}} ->
@@ -232,6 +250,8 @@ build_city(Game_pid, {X,Y}, CityName, CityOwner) -> gen_server:call(Game_pid, {b
 insert_unit(Game_pid, {FX, FY}, {TX, TY}) -> gen_server:call(Game_pid, {insert_unit, {FX, FY}, {TX, TY}}).
 extract_unit(Game_pid, {CX, CY}, UnitType, MP, {TX, TY}) -> gen_server:call(Game_pid, {extract_unit, {CX, CY}, UnitType, MP, {TX, TY}}).
 disband_unit(Game_pid, {X, Y}, Owner) -> gen_server:call(Game_pid, {disband_unit, {X, Y}, Owner}).
+fortify_unit(Game_pid, {X, Y}, Owner) -> gen_server:call(Game_pid, {fortify_unit, {X, Y}, Owner}).
+unfortify_unit(Game_pid, {X, Y}, Owner) -> gen_server:call(Game_pid, {unfortify_unit, {X, Y}, Owner}).
 attack_unit(Game_pid, {AttX, AttY}, {DefX, DefY}) -> gen_server:call(Game_pid, {attack_unit, {AttX, AttY}, {DefX, DefY}}).
 player_leave(Game_pid, Player) -> gen_server:cast(Game_pid, {player_leave, Player}).
 start_game(Game_pid, MapSize) -> gen_server:cast(Game_pid, {start_game, MapSize}).

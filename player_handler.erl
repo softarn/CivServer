@@ -93,6 +93,14 @@ recv(Socket, FSM) ->
 	    Pos = ?TCP:readElement(Socket, "Position"),
 	    [Pos];
 
+	31 -> %Fortify
+	    Pos = ?TCP:readElement(Socket, "Position"),
+	    [Pos];
+
+	32 -> %UnFortify
+	    Pos = ?TCP:readElement(Socket, "Position"),
+	    [Pos];
+
 	_ ->
 	    []
 

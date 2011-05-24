@@ -496,17 +496,23 @@ attack_unit(UnitMap, TerrainMap, {AttX, AttY}, {DefX, DefY}) -> %GLÖM EJ RANGEK
 		    {bombardment, UpdatedUnitMap, {DefX, DefY}, DPU, VictimStr};
 
 		true -> %else
+		    case DefCity of
+			null ->
+			    City_combat = false;
+			_ ->
+			    City_combat = true
+		    end,
 
 		    if
 
-			((AttackUnit#unit.name =:= siege_tower) and (DefCity=/=null)) and (DefUnit#unit.fortified =:= true) ->
+			((AttackUnit#unit.name =:= siege_tower) and (DefUnit#unit.fortified =:= true)) ->
 			    AttUnit = hd(AttackUnit#unit.units),
-			    {RemAttackMp, RemDefMp} = ?COMBAT:combat(AttUnit, AttTerrain, DefUnit, DefTerrain, {true, true}),
+			    {RemAttackMp, RemDefMp} = ?COMBAT:combat(AttUnit, AttTerrain, DefUnit, DefTerrain, {City_combat, true}),
 			    io:format("~p in a siegetower with ~p manpower on ~p-terrain from {~p,~p} attacked a fortified ~p with ~p manpower on ~p-terrain on {~p,~p}. Result Attacker: ~p mp left, Defender: ~p mp left~n", [AttackUnit#unit.str, AttackUnit#unit.mp, AttTerrain, AttX, AttY, DefUnit#unit.str, DefUnit#unit.mp, DefTerrain, DefX, DefY, RemAttackMp, RemDefMp]);
 
-			(AttackUnit#unit.name =:= siege_tower) and (DefCity=/=null) ->
+			(AttackUnit#unit.name =:= siege_tower) ->
 			    AttUnit = hd(AttackUnit#unit.units),
-			    {RemAttackMp, RemDefMp} = ?COMBAT:combat(AttUnit, AttTerrain, DefUnit, DefTerrain, {true, false}),
+			    {RemAttackMp, RemDefMp} = ?COMBAT:combat(AttUnit, AttTerrain, DefUnit, DefTerrain, {City_combat, false}),
 			    io:format("~p in a siegetower with ~p manpower on ~p-terrain from {~p,~p} attacked ~p with ~p manpower on ~p-terrain on {~p,~p}. Result Attacker: ~p mp left, Defender: ~p mp left~n", [AttackUnit#unit.str, AttackUnit#unit.mp, AttTerrain, AttX, AttY, DefUnit#unit.str, DefUnit#unit.mp, DefTerrain, DefX, DefY, RemAttackMp, RemDefMp]);
 
 			(DefUnit#unit.fortified =:= true) ->
@@ -581,6 +587,44 @@ disband_unit(UnitMap, {X, Y}, Owner) ->
 		    io:format("~p disbanded a ~p unit~n", [Owner, Unit#unit.str]),
 		    {ok, UpdatedUnitMap} = remove_unit(UnitMap, X, Y),
 		    {ok, UpdatedUnitMap}
+	    end
+    end.
+
+fortify_unit(UnitMap, {X, Y}, Owner) ->
+    Unit = get_unit(UnitMap, X, Y),
+
+    case Unit of
+	{error, "Out of bounds"} ->
+	    {error, "Out of bounds"};
+	null ->
+	    {error, "Invalid tile"};
+	_ ->
+	    if
+		(Unit#unit.owner =/= Owner) ->
+		    {error, "Permission denied"};
+		true ->
+		    FortUnit = Unit#unit{fortified = true},
+		    io:format("~p fortified a ~p unit~n", [Owner, Unit#unit.str]),
+		    update_unit(UnitMap, FortUnit, X, Y) %Returns {ok, UpdatedUnitMap}
+	    end
+    end.
+
+unfortify_unit(UnitMap, {X, Y}, Owner) ->
+    Unit = get_unit(UnitMap, X, Y),
+
+    case Unit of
+	{error, "Out of bounds"} ->
+	    {error, "Out of bounds"};
+	null ->
+	    {error, "Invalid tile"};
+	_ ->
+	    if
+		(Unit#unit.owner =/= Owner) ->
+		    {error, "Permission denied"};
+		true ->
+		    UnFortUnit = Unit#unit{fortified = false},
+		    io:format("~p un-fortified a ~p unit~n", [Owner, Unit#unit.str]),
+		    update_unit(UnitMap, UnFortUnit, X, Y) %Returns {ok, UpdatedUnitMap}
 	    end
     end.
 
