@@ -144,7 +144,7 @@ public class Proxy
 	{
 		try
 		{
-			Packet toSend new Packet((byte)13);
+			Packet toSend = new Packet((byte)13);
 			toSend.add(20);
 			toSend.add(20);
 			send(toSend);
@@ -160,7 +160,7 @@ public class Proxy
 	{
 		try
 		{
-			Packet toSend new Packet((byte)13);
+			Packet toSend = new Packet((byte)13);
 			toSend.add(width);
 			toSend.add(height);
 			send(toSend);
