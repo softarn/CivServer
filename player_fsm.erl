@@ -184,8 +184,8 @@ game_turn({Header, List}, {Player, Game}) -> %GLÖM EJ ATT UPPDATERA GAME i bör
 		    ?P_HANDLER:sendMsg(Player#player.socket, {19, [RemAttMp, RemDefMp]}),
 		    {next_state, game_turn, {Player, UpdatedGame}};
 		
-		{bombardment, UpdatedGame, {X, Y}, DPU} ->
-		    ?P_HANDLER:sendMsg(Player#player.socket, {30, [{X, Y}, DPU]}),
+		{bombardment, UpdatedGame} ->
+		    ?P_HANDLER:sendMsg(Player#player.socket, {1, [Header]}),
 		    {next_state, game_turn, {Player, UpdatedGame}};
 		
 		{error, _Reason} ->
@@ -247,6 +247,28 @@ game_turn({Header, List}, {Player, Game}) -> %GLÖM EJ ATT UPPDATERA GAME i bör
 	29 -> %Disband unit
 	    [{position, X, Y}] = List,
 	    case ?GAMESRV:disband_unit(Game#game.game_pid, {X, Y}, Player#player.name) of
+		{ok, UpdatedGame} ->
+		    ?P_HANDLER:sendMsg(Player#player.socket, {1, [Header]}),
+		    {next_state, game_turn, {Player, UpdatedGame}};
+		{error, _Reason} ->
+		    ?P_HANDLER:sendFailMsg(Player#player.socket, 7, Header), %Failpacket invalid tile
+		    {next_state, game_turn, {Player, Game}}
+	    end;
+
+	31 -> %Fortify
+	    [{position, X, Y}] = List,
+	    case ?GAMESRV:fortify_unit(Game#game.game_pid, {X, Y}, Player#player.name) of
+		{ok, UpdatedGame} ->
+		    ?P_HANDLER:sendMsg(Player#player.socket, {1, [Header]}),
+		    {next_state, game_turn, {Player, UpdatedGame}};
+		{error, _Reason} ->
+		    ?P_HANDLER:sendFailMsg(Player#player.socket, 7, Header), %Failpacket invalid tile
+		    {next_state, game_turn, {Player, Game}}
+	    end;
+
+	32 -> %UnFortify
+	    [{position, X, Y}] = List,
+	    case ?GAMESRV:unfortify_unit(Game#game.game_pid, {X, Y}, Player#player.name) of
 		{ok, UpdatedGame} ->
 		    ?P_HANDLER:sendMsg(Player#player.socket, {1, [Header]}),
 		    {next_state, game_turn, {Player, UpdatedGame}};
