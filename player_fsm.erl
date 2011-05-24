@@ -255,6 +255,28 @@ game_turn({Header, List}, {Player, Game}) -> %GLÖM EJ ATT UPPDATERA GAME i bör
 		    {next_state, game_turn, {Player, Game}}
 	    end;
 
+	31 -> %Fortify
+	    [{position, X, Y}] = List,
+	    case ?GAMESRV:fortify_unit(Game#game.game_pid, {X, Y}, Player#player.name) of
+		{ok, UpdatedGame} ->
+		    ?P_HANDLER:sendMsg(Player#player.socket, {1, [Header]}),
+		    {next_state, game_turn, {Player, UpdatedGame}};
+		{error, _Reason} ->
+		    ?P_HANDLER:sendFailMsg(Player#player.socket, 7, Header), %Failpacket invalid tile
+		    {next_state, game_turn, {Player, Game}}
+	    end;
+
+	32 -> %UnFortify
+	    [{position, X, Y}] = List,
+	    case ?GAMESRV:unfortify_unit(Game#game.game_pid, {X, Y}, Player#player.name) of
+		{ok, UpdatedGame} ->
+		    ?P_HANDLER:sendMsg(Player#player.socket, {1, [Header]}),
+		    {next_state, game_turn, {Player, UpdatedGame}};
+		{error, _Reason} ->
+		    ?P_HANDLER:sendFailMsg(Player#player.socket, 7, Header), %Failpacket invalid tile
+		    {next_state, game_turn, {Player, Game}}
+	    end;
+
 	_ ->
 	    ?P_HANDLER:sendFailMsg(Player#player.socket, -1, Header), % FailPacket "invalid state"
 	    {next_state, game_turn, {Player, Game}}
