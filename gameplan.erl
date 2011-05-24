@@ -231,8 +231,24 @@ make_move([{position, EX, EY}], Game, Unit, {startpos, SX, SY}) ->
 		    {ok, Game#game{tilemap = UpdatedUnitMap}};
 
 		((Tile#tile.unit)#unit.name =:= siege_tower) ->
-		    {ok, UpdatedUnitMap} = insert_unit(Unitmap, {SX, SY}, {EX, EY}),
-		    {ok, Game#game{tilemap = UpdatedUnitMap}};
+		    Tower = Tile#tile.unit,
+		    case compare_owners(Unit, Tower) of
+			same ->
+			    {ok, UpdatedUnitMap} = insert_unit(Unitmap, {SX, SY}, {EX, EY}),
+			    {ok, Game#game{tilemap = UpdatedUnitMap}};
+			different ->
+			    case is_empty(Tower) of
+				true ->
+				    NewTower = Tower#unit{owner = Unit#unit.owner},
+				    UpdatedTile = Tile#tile{unit = NewTower},
+				    UpdatedUnitMap1 = update_tile(Unitmap, UpdatedTile, EX, EY),
+				    io:format("Hej ~p~n", [NewTower]),
+				    {ok, UpdatedUnitMap2} = insert_unit(UpdatedUnitMap1, {SX, SY}, {EX, EY}),
+				    {ok, Game#game{tilemap = UpdatedUnitMap2}};
+				false ->
+				    {error, "Invalid, full of enemies"}
+			    end
+		    end;
 
 		((Tile#tile.unit)#unit.name =:= caravel) ->
 		    {ok, UpdatedUnitMap} = insert_unit(Unitmap, {SX, SY}, {EX, EY}),
@@ -658,21 +674,42 @@ get_city_def(Defenders,Best_defender)->
     end.
 
 
-compare_owners(Unit, City) ->
-    UnitOwner = Unit#unit.owner,
-    CityOwner = City#city.owner,
+compare_owners(Record1, Record2) when (is_record(Record1, unit) and is_record(Record2, city)) ->
+    UnitOwner = Record1#unit.owner,
+    CityOwner = Record2#city.owner,
 
     case UnitOwner == CityOwner of
 	true ->
 	    same;
 	false ->
 	    different
+    end;
+
+compare_owners(Record1, Tower) when (is_record(Record1, unit) and is_record(Tower, unit)) ->
+    UnitOwner = Record1#unit.owner,
+    TowerOwner = Tower#unit.owner,
+
+    case UnitOwner == TowerOwner of
+	true ->
+	    same;
+	false ->
+	    different
     end.
 
-is_empty(City) ->
-    CityUnits = City#city.units,
+is_empty(Record) when is_record(Record, city) ->
+    CityUnits = Record#city.units,
 
     case CityUnits of
+	[] ->
+	    true;
+	_ ->
+	    false
+    end;
+
+is_empty(Record) when is_record(Record, unit) ->
+    TowerUnits = Record#unit.units,
+
+    case TowerUnits of
 	[] ->
 	    true;
 	_ ->
