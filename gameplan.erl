@@ -462,7 +462,7 @@ attack_unit(UnitMap, TerrainMap, {AttX, AttY}, {DefX, DefY}) -> %GLÖM EJ RANGEK
     {ok, DefTile} = get_tile(UnitMap, DefX, DefY),
 
     if 
-	(AttackUnit =:= null) or ((DefUnit =:= null) and (DefCity =:= null)) ->
+	(AttackUnit =:= null) or (DefUnit =:= null) ->
 	    {error, "Invalid tile"};
 	(AttackUnit =:= {error, "Out of bounds"}) or (DefUnit =:= {error, "Out of bounds"}) ->
 	    {error, "Out of bounds"};
@@ -471,17 +471,19 @@ attack_unit(UnitMap, TerrainMap, {AttX, AttY}, {DefX, DefY}) -> %GLÖM EJ RANGEK
 
 	true ->
 	    VictimStr = DefUnit#unit.owner,
+	    io:format("Efter VictimStr"),
 
 	    BombBool = lists:member(AttackUnit#unit.name, [catapult, trebuchet, cannon, galley, caravel]),
+	    io:format("Efter bombbool"),
 
 	    if 
 		(BombBool =:= true) and (DefTile#tile.city =/= null) -> %City bombardment
 		    DefCity = DefTile#tile.city,
 		    DefUnits = DefCity#city.units,
 		    UnitMp = [X#unit.mp || X <- DefUnits],
-
+		    io:format("efter list comp!!!!"),
 		    DPU = ?BOMB:bombard(AttackUnit#unit.str, AttackUnit#unit.mp, AttTerrain, UnitMp),
-
+		
 		    UpdateUnitFun = fun(UR) ->
 			    UpdUR = UR#unit{mp = UR#unit.mp - DPU},
 			    UpdUR
@@ -491,8 +493,10 @@ attack_unit(UnitMap, TerrainMap, {AttX, AttY}, {DefX, DefY}) -> %GLÖM EJ RANGEK
 			    UR#unit.mp >= 0
 		    end,
 
-		    UpdatedUnits1 = lists:foreach(UpdateUnitFun, DefUnits),
+		    UpdatedUnits1 = [UpdateUnitFun(X) || X <- DefUnits],
+		    io:format("efter updateunitFun!"),
 		    UpdatedUnits2 = lists:filter(AboveZero, UpdatedUnits1),
+		    io:format("efter abovezeroFun!"),
 		    UpdatedCity = DefCity#city{units = UpdatedUnits2},
 		    UpdatedDefTile = DefTile#tile{city = UpdatedCity},
 		    UpdatedUnitMap = update_tile(UnitMap, UpdatedDefTile, DefX, DefY), 
