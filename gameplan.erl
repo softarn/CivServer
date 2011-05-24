@@ -483,7 +483,7 @@ attack_unit(UnitMap, TerrainMap, {AttX, AttY}, {DefX, DefY}) -> %GLÖM EJ RANGEK
 		    UnitMp = [X#unit.mp || X <- DefUnits],
 		    io:format("efter list comp!!!!"),
 		    DPU = ?BOMB:bombard(AttackUnit#unit.str, AttackUnit#unit.mp, AttTerrain, UnitMp),
-		
+
 		    UpdateUnitFun = fun(UR) ->
 			    UpdUR = UR#unit{mp = UR#unit.mp - DPU},
 			    UpdUR
@@ -533,29 +533,79 @@ attack_unit(UnitMap, TerrainMap, {AttX, AttY}, {DefX, DefY}) -> %GLÖM EJ RANGEK
 
 		    DefMpLost = DefUnit#unit.mp - RemDefMp,
 
+		    FindUnit = fun(UR) ->
+			    UR =/= DefUnit
+		    end,	
+
+
 		    if
 			(RemAttackMp =< 0) and (RemDefMp =< 0) ->
 			    {ok, FirstUpdatedUnitMap} = remove_unit(UnitMap, AttX, AttY), 
-			    {ok, SecondUpdatedUnitMap} = remove_unit(FirstUpdatedUnitMap, DefX, DefY),
-			    {ok, SecondUpdatedUnitMap, {RemAttackMp, RemDefMp}, VictimStr, {DefMpLost, DefX, DefY}};
+			    if 
+				(City_combat =:= true) ->
+				    UpdatedCityUnits = lists:delete(DefUnit, DefCity#city.units),
+				    UpdatedCity = DefCity#city{units = UpdatedCityUnits},
+				    {ok, OldTile} = get_tile(FirstUpdatedUnitMap, DefX, DefY),
+				    UpdatedTile = OldTile#tile{city = UpdatedCity},
+				    SecondUpdatedUnitMap = update_tile(FirstUpdatedUnitMap, UpdatedTile, DefX, DefY),
+				    {ok, SecondUpdatedUnitMap, {RemAttackMp, RemDefMp}, VictimStr, {DefMpLost, DefX, DefY}};
+				true ->
+				    {ok, SecondUpdatedUnitMap} = remove_unit(FirstUpdatedUnitMap, DefX, DefY),
+				    {ok, SecondUpdatedUnitMap, {RemAttackMp, RemDefMp}, VictimStr, {DefMpLost, DefX, DefY}}
+			    end;
 			(RemAttackMp =< 0) ->
-			    UpdDefUnit = DefUnit#unit{mp = RemDefMp},
 			    {ok, FirstUpdatedUnitMap} = remove_unit(UnitMap, AttX, AttY),
-			    {ok, SecondUpdatedUnitMap} = update_unit(FirstUpdatedUnitMap, UpdDefUnit, DefX, DefY), 
-			    {ok, SecondUpdatedUnitMap, {RemAttackMp, RemDefMp}, VictimStr, {DefMpLost, DefX, DefY}};
+			    if
+				(City_combat =:= true) ->
+				    OldCityUnits = lists:filter(FindUnit, DefCity#city.units),
+				    UpdDefUnit = DefUnit#unit{mp = RemDefMp},
+				    UpdatedCityUnits = [UpdDefUnit | OldCityUnits],
+				    UpdatedCity = DefCity#city{units = UpdatedCityUnits},
+				    {ok, OldTile} = get_tile(FirstUpdatedUnitMap, DefX, DefY),
+				    UpdatedTile = OldTile#tile{city = UpdatedCity},
+				    SecondUpdatedUnitMap = update_tile(FirstUpdatedUnitMap, UpdatedTile, DefX, DefY),
+				    {ok, SecondUpdatedUnitMap, {RemAttackMp, RemDefMp}, VictimStr, {DefMpLost, DefX, DefY}};
+				true ->
+				    UpdDefUnit = DefUnit#unit{mp = RemDefMp},
+				    {ok, SecondUpdatedUnitMap} = update_unit(FirstUpdatedUnitMap, UpdDefUnit, DefX, DefY), 
+				    {ok, SecondUpdatedUnitMap, {RemAttackMp, RemDefMp}, VictimStr, {DefMpLost, DefX, DefY}}
+			    end;
+
 			(RemDefMp =< 0) ->
 			    UpdAttackUnit = AttackUnit#unit{mp = RemAttackMp},
-			    {ok, FirstUpdatedUnitMap} = remove_unit(UnitMap, DefX, DefY),
-			    {ok, SecondUpdatedUnitMap} = update_unit(FirstUpdatedUnitMap, UpdAttackUnit, AttX, AttY), 
-			    {ok, SecondUpdatedUnitMap, {RemAttackMp, RemDefMp}, VictimStr, {DefMpLost, DefX, DefY}};
+			    {ok, FirstUpdatedUnitMap} = update_unit(UnitMap, UpdAttackUnit, AttX, AttY), 
+			    if
+				(City_combat =:= true) ->
+				    UpdatedCityUnits = lists:delete(DefUnit, DefCity#city.units),
+				    UpdatedCity = DefCity#city{units = UpdatedCityUnits},
+				    {ok, OldTile} = get_tile(FirstUpdatedUnitMap, DefX, DefY),
+				    UpdatedTile = OldTile#tile{city = UpdatedCity},
+				    SecondUpdatedUnitMap = update_tile(FirstUpdatedUnitMap, UpdatedTile, DefX, DefY),
+				    {ok, SecondUpdatedUnitMap, {RemAttackMp, RemDefMp}, VictimStr, {DefMpLost, DefX, DefY}};
+				true ->
+				    {ok, SecondUpdatedUnitMap} = remove_unit(FirstUpdatedUnitMap, DefX, DefY),
+				    {ok, SecondUpdatedUnitMap, {RemAttackMp, RemDefMp}, VictimStr, {DefMpLost, DefX, DefY}}
+			    end;
 			true -> %else
 			    UpdAttackUnit = AttackUnit#unit{mp = RemAttackMp},
-			    UpdDefUnit = DefUnit#unit{mp = RemDefMp},
 			    {ok, FirstUpdatedUnitMap} = update_unit(UnitMap, UpdAttackUnit, AttX, AttY), 
-			    {ok, SecondUpdatedUnitMap} = update_unit(FirstUpdatedUnitMap, UpdDefUnit, DefX, DefY),
-			    {ok, SecondUpdatedUnitMap, {RemAttackMp, RemDefMp}, VictimStr, {DefMpLost, DefX, DefY}}
-		    end
-	    end
+			    if
+				(City_combat =:= true) ->
+				    OldCityUnits = lists:filter(FindUnit, DefCity#city.units),
+				    UpdDefUnit = DefUnit#unit{mp = RemDefMp},
+				    UpdatedCityUnits = [UpdDefUnit | OldCityUnits],
+				    UpdatedCity = DefCity#city{units = UpdatedCityUnits},
+				    {ok, OldTile} = get_tile(FirstUpdatedUnitMap, DefX, DefY),
+				    UpdatedTile = OldTile#tile{city = UpdatedCity},
+				    SecondUpdatedUnitMap = update_tile(FirstUpdatedUnitMap, UpdatedTile, DefX, DefY),
+				    {ok, SecondUpdatedUnitMap, {RemAttackMp, RemDefMp}, VictimStr, {DefMpLost, DefX, DefY}};
+				true ->
+				    UpdDefUnit = DefUnit#unit{mp = RemDefMp},
+				    {ok, SecondUpdatedUnitMap} = update_unit(FirstUpdatedUnitMap, UpdDefUnit, DefX, DefY), 
+				    {ok, SecondUpdatedUnitMap, {RemAttackMp, RemDefMp}, VictimStr, {DefMpLost, DefX, DefY}}
+			    end
+		end
+	end
 end.
 
 build_city(UnitMap, {X, Y}, CityName, CityOwner) ->
