@@ -325,6 +325,38 @@ public class Proxy
 	    }
     }
 
+    public Result fortify(int px, int py) throws FailedException
+    {
+	    try
+	    {
+		    Packet toSend = new Packet((byte)31);
+		    toSend.add(px);
+		    toSend.add(py);
+		    send(toSend);
+		    return receiver.getResult();
+	    }
+	    catch(FailedException fe)
+	    {
+		    throw fe;
+	    }
+    }
+
+    public Result unFortify(int px, int py) throws FailedException
+    {
+	    try
+	    {
+		    Packet toSend = new Packet((byte)32);
+		    toSend.add(px);
+		    toSend.add(py);
+		    send(toSend);
+		    return receiver.getResult();
+	    }
+	    catch(FailedException fe)
+	    {
+		    throw fe;
+	    }
+    }
+
 
 	// Method to test sending and receiving lists.
 	private Result listTest(int x, int y) throws FailedException
