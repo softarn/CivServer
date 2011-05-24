@@ -454,10 +454,18 @@ attack_unit(UnitMap, TerrainMap, {AttX, AttY}, {DefX, DefY}) -> %GLÖM EJ RANGEK
     DefCity = get_city(UnitMap, DefX, DefY),
     if 
 	((DefCity=:=null) or (DefCity=:={error, "Out of bounds"}))->
-	    DefUnit = get_unit(UnitMap, DefX, DefY);
+	    Unchecked_def_unit = get_unit(UnitMap, DefX, DefY),
+		case Unchecked_def_unit#unit.name of
+			siege_tower ->
+				DefUnit = get_defender(Unchecked_def_unit#unit.units);
+			_->
+				DefUnit = Unchecked_def_unit
+		end;
 	true ->
-	    DefUnit = get_city_def(DefCity#city.units)
+	    DefUnit = get_defender(DefCity#city.units)
     end,	
+
+
     {ok, AttackTile} = get_tile(UnitMap, AttX, AttY),
     {ok, DefTile} = get_tile(UnitMap, DefX, DefY),
 
@@ -647,14 +655,14 @@ is_container_unit(#unit{name = Name}) ->
 
 % Fetches the best defender from a list of Unit records.
 
-get_city_def([])->
+get_defender([])->
     null;
-get_city_def([Defender | Tail]) -> 
-    get_city_def(Tail, Defender).
+get_defender([Defender | Tail]) -> 
+    get_defender(Tail, Defender).
 
-get_city_def([],Best_Defender)->
+get_defender([],Best_Defender)->
     Best_Defender;
-get_city_def(Defenders,Best_defender)->
+get_defender(Defenders,Best_defender)->
     %Contender to be best Defender!
     Contender = hd(Defenders),
     Contender_stats = unit_attr:get_attr(Contender#unit.name),
@@ -666,9 +674,9 @@ get_city_def(Defenders,Best_defender)->
     % The winner takes it all!
     case Contender_def_power > Best_def_power of
 	true ->
-	    get_city_def(tl(Defenders), Contender);
+	    get_defender(tl(Defenders), Contender);
 	false ->
-	    get_city_def(tl(Defenders),Best_defender)
+	    get_defender(tl(Defenders),Best_defender)
 
     end.
 
