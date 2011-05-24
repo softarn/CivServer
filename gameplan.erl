@@ -279,16 +279,10 @@ insert_unit(UnitMap, {FX, FY}, {TX, TY}) ->
 
 	(Endtile#tile.unit =/= null) ->
 	    EndUnit = Endtile#tile.unit,
-	    case EndUnit#unit.name of
-		trireme ->
+	    case is_container_unit(EndUnit#unit.name) of
+		true ->
 		    enter_container(UnitMap, {FX, FY}, {TX, TY}, unit);
-		galley ->
-		    enter_container(UnitMap, {FX, FY}, {TX, TY}, unit);
-		caravel ->
-		    enter_container(UnitMap, {FX, FY}, {TX, TY}, unit);
-		siege_tower ->
-		    enter_container(UnitMap, {FX, FY}, {TX, TY}, unit);
-		_ ->
+		false ->
 		    {error, "Invalid tile"}
 	    end;
 
@@ -364,17 +358,10 @@ extract_unit(UnitMap, {CX, CY}, UnitType, MP, {TX, TY}) ->
 			    leave_container(UnitMap, {CX, CY}, UnitType, MP, {TX, TY}, city);
 
 			(ContainerTile#tile.unit =/= null) ->
-			    ContainerType = (ContainerTile#tile.unit)#unit.name,
-			    case ContainerType of
-				trireme ->
+			    case is_container_unit(ContainerTile#tile.unit) of
+				true ->
 				    leave_container(UnitMap, {CX, CY}, UnitType, MP, {TX, TY}, unit);
-				galley ->
-				    leave_container(UnitMap, {CX, CY}, UnitType, MP, {TX, TY}, unit);
-				caravel ->
-				    leave_container(UnitMap, {CX, CY}, UnitType, MP, {TX, TY}, unit);
-				siege_tower ->
-				    leave_container(UnitMap, {CX, CY}, UnitType, MP, {TX, TY}, unit);
-				_ ->
+				false ->
 				    {error, "Invalid tile"}
 			    end;
 
@@ -583,6 +570,21 @@ disband_unit(UnitMap, {X, Y}, Owner) ->
 		    {ok, UpdatedUnitMap}
 	    end
     end.
+
+is_container_unit(#unit{name = Name}) ->
+    case Name of
+	trireme ->
+	    true;
+	galley ->
+	    true;
+	caravel ->
+	    true;
+	siege_tower ->
+	    true;
+	_ ->
+	    false
+    end.
+
 
 % Fetches the best defender from a list of Unit records.
 
