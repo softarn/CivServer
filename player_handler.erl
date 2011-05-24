@@ -50,7 +50,7 @@ recv(Socket, FSM) ->
 	    [LockFlag];
 
 	13 -> % Start game request
-	    Width = ?TCP:readInteger(Socket)
+	    Width = ?TCP:readInteger(Socket),
 	    Height = ?TCP:readInteger(Socket),
 	    [Width, Height];
 

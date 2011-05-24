@@ -217,7 +217,7 @@ make_move([{position, EX, EY}], Game, Unit, {startpos, SX, SY}) ->
 			false ->
 			    case is_empty(City) of
 				true ->
-				    io:format("~p took over ~p's city ~p~n", [Unit#unit.owner City#city.owner, City#city.name]),
+				    io:format("~p took over ~p's city ~p~n", [Unit#unit.owner, City#city.owner, City#city.name]),
 				    NewCity = City#city{owner = Unit#unit.owner},
 				    UpdatedTile = Tile#tile{city = NewCity},
 				    UpdatedUnitMap1 = update_tile(Unitmap, UpdatedTile, EX, EY),
@@ -245,7 +245,7 @@ make_move([{position, EX, EY}], Game, Unit, {startpos, SX, SY}) ->
 			false ->
 			    case is_empty(Tower) of
 				true ->
-				    io:format("~p took over ~p's siegetower~n", [Unit#unit.owner City#city.owner]),
+				    io:format("~p took over ~p's siegetower~n", [Unit#unit.owner, Tower#unit.owner]),
 				    NewTower = Tower#unit{owner = Unit#unit.owner},
 				    UpdatedTile = Tile#tile{unit = NewTower},
 				    UpdatedUnitMap1 = update_tile(Unitmap, UpdatedTile, EX, EY),
