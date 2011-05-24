@@ -203,24 +203,24 @@ make_move([{position, EX, EY}], Game, Unit, {startpos, SX, SY}) ->
 	    io:format("~p~n", [Tile]),
 	    if
 		(Tile#tile.city =/= null) ->
-			City = Tile#tile.city,
-			case compare_owners(Unit, City) of
-				same ->
-		    			{ok, UpdatedUnitMap} = insert_unit(Unitmap, {SX, SY}, {EX, EY}),
-		    			{ok, Game#game{tilemap = UpdatedUnitMap}};
-				different ->
-					case is_empty(City) of
-						true ->
-							NewCity = City#city{owner = Unit#unit.owner},
-							UpdatedTile = Tile#tile{city = NewCity},
-							UpdatedUnitMap1 = update_tile(Unitmap, UpdatedTile, EX, EY),
-							io:format("Hej ~p~n", [NewCity]),
-			    				{ok, UpdatedUnitMap2} = insert_unit(UpdatedUnitMap1, {SX, SY}, {EX, EY}),
-		    					{ok, Game#game{tilemap = UpdatedUnitMap2}};
-						false ->
-							{error, "Invalid, full of enemies"}
-					end
-			end;
+		    City = Tile#tile.city,
+		    case compare_owners(Unit, City) of
+			same ->
+			    {ok, UpdatedUnitMap} = insert_unit(Unitmap, {SX, SY}, {EX, EY}),
+			    {ok, Game#game{tilemap = UpdatedUnitMap}};
+			different ->
+			    case is_empty(City) of
+				true ->
+				    NewCity = City#city{owner = Unit#unit.owner},
+				    UpdatedTile = Tile#tile{city = NewCity},
+				    UpdatedUnitMap1 = update_tile(Unitmap, UpdatedTile, EX, EY),
+				    io:format("Hej ~p~n", [NewCity]),
+				    {ok, UpdatedUnitMap2} = insert_unit(UpdatedUnitMap1, {SX, SY}, {EX, EY}),
+				    {ok, Game#game{tilemap = UpdatedUnitMap2}};
+				false ->
+				    {error, "Invalid, full of enemies"}
+			    end
+		    end;
 
 		((Tile#tile.unit)#unit.name =:= trireme) ->
 		    {ok, UpdatedUnitMap} = insert_unit(Unitmap, {SX, SY}, {EX, EY}),
@@ -449,12 +449,12 @@ attack_unit(UnitMap, TerrainMap, {AttX, AttY}, {DefX, DefY}) -> %GLÖM EJ RANGEK
     DefTerrain = lists:nth(DefY, lists:nth(DefX, TerrainMap)),
     AttackUnit = get_unit(UnitMap, AttX, AttY),
     DefCity = get_city(UnitMap, DefX, DefY),
-	if 
-		((DefCity=:=null) or (DefCity=:={error, "Out of bounds"}))->
-			DefUnit = get_unit(UnitMap, DefX, DefY);
-		true ->
-			DefUnit = get_city_def(DefCity#city.units)
-	end,	
+    if 
+	((DefCity=:=null) or (DefCity=:={error, "Out of bounds"}))->
+	    DefUnit = get_unit(UnitMap, DefX, DefY);
+	true ->
+	    DefUnit = get_city_def(DefCity#city.units)
+    end,	
     {ok, AttackTile} = get_tile(UnitMap, AttX, AttY),
     {ok, DefTile} = get_tile(UnitMap, DefX, DefY),
 
@@ -587,48 +587,48 @@ disband_unit(UnitMap, {X, Y}, Owner) ->
 % Fetches the best defender from a list of Unit records.
 
 get_city_def([])->
-	null;
-get_city_def(Defenders) when is_list(Defenders)-> 
-	get_city_def(Defenders,hd(Defenders)).
+    null;
+get_city_def([Defender | Tail]) -> 
+    get_city_def(Tail, Defender).
 
 get_city_def([],Best_Defender)->
-	Best_Defender;
+    Best_Defender;
 get_city_def(Defenders,Best_defender)->
-	%Contender to be best Defender!
-	Contender = hd(Defenders),
-	Contender_stats = unit_attr:get_attr(Contender#unit.name),
-	Contender_def_power = round(element(3,Contender_stats)*(Contender#unit.mp)/100),
-	%Reigning champion!
-	Best_def_stats = unit_attr:get_attr(Best_defender#unit.name),
-	Best_def_power = round(element(3,Best_def_stats)*(Best_defender#unit.mp)/100),
+    %Contender to be best Defender!
+    Contender = hd(Defenders),
+    Contender_stats = unit_attr:get_attr(Contender#unit.name),
+    Contender_def_power = round(element(3,Contender_stats)*(Contender#unit.mp)/100),
+    %Reigning champion!
+    Best_def_stats = unit_attr:get_attr(Best_defender#unit.name),
+    Best_def_power = round(element(3,Best_def_stats)*(Best_defender#unit.mp)/100),
 
-% The winner takes it all!
-case Contender_def_power > Best_def_power of
+    % The winner takes it all!
+    case Contender_def_power > Best_def_power of
 	true ->
-		get_city_def(tl(Defenders),hd(Defenders));
+	    get_city_def(tl(Defenders), Contender);
 	false ->
-		get_city_def(tl(Defenders),Best_defender)
+	    get_city_def(tl(Defenders),Best_defender)
 
-end.
+    end.
 
 
 compare_owners(Unit, City) ->
-	UnitOwner = Unit#unit.owner,
-	CityOwner = City#city.owner,
+    UnitOwner = Unit#unit.owner,
+    CityOwner = City#city.owner,
 
-	case UnitOwner == CityOwner of
-		true ->
-			same;
-		false ->
-			different
-	end.
+    case UnitOwner == CityOwner of
+	true ->
+	    same;
+	false ->
+	    different
+    end.
 
 is_empty(City) ->
-	CityUnits = City#city.units,
+    CityUnits = City#city.units,
 
-	case CityUnits of
-		[] ->
-			true;
-		_ ->
-			false
-	end.
+    case CityUnits of
+	[] ->
+	    true;
+	_ ->
+	    false
+    end.
