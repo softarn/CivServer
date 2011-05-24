@@ -161,8 +161,22 @@ public class Proxy
 		try
 		{
 			Packet toSend = new Packet((byte)13);
-			toSend.add(width);
-			toSend.add(height);
+			if(width < 20)
+			{
+				toSend.add(20);
+			}
+			else
+			{
+				toSend.add(width);
+			}
+			if(height < 20)
+			{
+				toSend.add(20);
+			}
+			else
+			{
+				toSend.add(height);
+			}
 			send(toSend);
 			return receiver.getResult();
 		}
