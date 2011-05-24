@@ -121,13 +121,14 @@ game_lobby({Header, List}, {Player, Game}) ->
 	    end;
 
 	13 -> %Start game request
+	    [Width, Height] = List,
 	    case Player#player.name =:= Game#game.name of % Is player host?
 		false ->
 		    ?P_HANDLER:sendFailMsg(Player#player.socket, 4, Header), % FailPacket "Permission denied"
 		    {next_state, game_lobby, {Player, Game}};
 		true ->
 		    ?P_HANDLER:sendMsg(Player#player.socket, {1, [Header]}), %Comfirm'd
-		    ?GAMESRV:start_game(Game#game.game_pid, 20), % param: Gamename, mapsize
+		    ?GAMESRV:start_game(Game#game.game_pid, Width, Height), % param: Gamename, mapsize
 		    {next_state, game_wait, {Player, Game}}
 
 	    end;	% player = host
@@ -180,9 +181,14 @@ game_turn({Header, List}, {Player, Game}) -> %GLÖM EJ ATT UPPDATERA GAME i bör
 	    [{position, AttX, AttY}, {position, DefX, DefY}] = List,
 
 	    case ?GAMESRV:attack_unit(Game#game.game_pid, {AttX, AttY}, {DefX, DefY}) of
-		{ok, UpdatedGame, {RemAttMp, RemDefMp}} ->
+		{ok, UpdatedGame, {RemAttMp, RemDefMp}} ->	    
 		    ?P_HANDLER:sendMsg(Player#player.socket, {19, [RemAttMp, RemDefMp]}),
 		    {next_state, game_turn, {Player, UpdatedGame}};
+		
+		{bombardment, UpdatedGame} ->
+		    ?P_HANDLER:sendMsg(Player#player.socket, {1, [Header]}),
+		    {next_state, game_turn, {Player, UpdatedGame}};
+		
 		{error, _Reason} ->
 		    ?P_HANDLER:sendFailMsg(Player#player.socket, 11, Header), %FailPacket "Out of range" PERHAPS INVALID TILE/POS/NO UNIT AT TILE DEPENDING ON FAILREASON?
 		    {next_state, game_turn, {Player, Game}}
@@ -242,6 +248,28 @@ game_turn({Header, List}, {Player, Game}) -> %GLÖM EJ ATT UPPDATERA GAME i bör
 	29 -> %Disband unit
 	    [{position, X, Y}] = List,
 	    case ?GAMESRV:disband_unit(Game#game.game_pid, {X, Y}, Player#player.name) of
+		{ok, UpdatedGame} ->
+		    ?P_HANDLER:sendMsg(Player#player.socket, {1, [Header]}),
+		    {next_state, game_turn, {Player, UpdatedGame}};
+		{error, _Reason} ->
+		    ?P_HANDLER:sendFailMsg(Player#player.socket, 7, Header), %Failpacket invalid tile
+		    {next_state, game_turn, {Player, Game}}
+	    end;
+
+	31 -> %Fortify
+	    [{position, X, Y}] = List,
+	    case ?GAMESRV:fortify_unit(Game#game.game_pid, {X, Y}, Player#player.name) of
+		{ok, UpdatedGame} ->
+		    ?P_HANDLER:sendMsg(Player#player.socket, {1, [Header]}),
+		    {next_state, game_turn, {Player, UpdatedGame}};
+		{error, _Reason} ->
+		    ?P_HANDLER:sendFailMsg(Player#player.socket, 7, Header), %Failpacket invalid tile
+		    {next_state, game_turn, {Player, Game}}
+	    end;
+
+	32 -> %UnFortify
+	    [{position, X, Y}] = List,
+	    case ?GAMESRV:unfortify_unit(Game#game.game_pid, {X, Y}, Player#player.name) of
 		{ok, UpdatedGame} ->
 		    ?P_HANDLER:sendMsg(Player#player.socket, {1, [Header]}),
 		    {next_state, game_turn, {Player, UpdatedGame}};

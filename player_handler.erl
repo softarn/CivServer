@@ -50,7 +50,9 @@ recv(Socket, FSM) ->
 	    [LockFlag];
 
 	13 -> % Start game request
-	    [];
+	    Width = ?TCP:readInteger(Socket),
+	    Height = ?TCP:readInteger(Socket),
+	    [Width, Height];
 
 	15 -> %Move request
 	    MovePath = ?TCP:readList(Socket, "Position"),
@@ -90,6 +92,14 @@ recv(Socket, FSM) ->
 	    [ContainerPos, UnitType, ManPower, ToPlacePos];
 
 	29 -> %Disband unit
+	    Pos = ?TCP:readElement(Socket, "Position"),
+	    [Pos];
+
+	31 -> %Fortify
+	    Pos = ?TCP:readElement(Socket, "Position"),
+	    [Pos];
+
+	32 -> %UnFortify
 	    Pos = ?TCP:readElement(Socket, "Position"),
 	    [Pos];
 
@@ -155,8 +165,14 @@ sendMsg(Socket, {Header, List}) ->
 	    ?TCP:sendInteger(Socket, RemDefMp);
 	
 	25 -> % Game Closed
-	    ?TCP:sendHeader(Socket, 25)
-    end.
+	    ?TCP:sendHeader(Socket, 25);
+
+	30 -> % Casualty report 
+	    [{X, Y}, DPU] = List,
+	    ?TCP:sendHeader(Socket, 30),
+	    ?TCP:sendPosition(Socket, {X, Y}),
+	    ?TCP:sendInteger(Socket, DPU)
+    end.    
 
 send_to_fsm(To, Packet) ->
     ?P_FSM:send_packet(To, Packet). 
