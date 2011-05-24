@@ -165,7 +165,7 @@ sendMsg(Socket, {Header, List}) ->
 	25 -> % Game Closed
 	    ?TCP:sendHeader(Socket, 25);
 
-	30 -> % Bombardment result
+	30 -> % Casualty report 
 	    [{X, Y}, DPU] = List,
 	    ?TCP:sendHeader(Socket, 30),
 	    ?TCP:sendPosition(Socket, {X, Y}),

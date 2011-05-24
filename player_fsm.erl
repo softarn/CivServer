@@ -184,8 +184,8 @@ game_turn({Header, List}, {Player, Game}) -> %GLÖM EJ ATT UPPDATERA GAME i bör
 		    ?P_HANDLER:sendMsg(Player#player.socket, {19, [RemAttMp, RemDefMp]}),
 		    {next_state, game_turn, {Player, UpdatedGame}};
 		
-		{bombardment, UpdatedGame, {X, Y}, DPU} ->
-		    ?P_HANDLER:sendMsg(Player#player.socket, {30, [{X, Y}, DPU]}),
+		{bombardment, UpdatedGame} ->
+		    ?P_HANDLER:sendMsg(Player#player.socket, {1, [Header]}),
 		    {next_state, game_turn, {Player, UpdatedGame}};
 		
 		{error, _Reason} ->
