@@ -204,7 +204,7 @@ public class Receiver implements Runnable
 		toReturn.addBombX(receiveInt());
 		toReturn.addBombY(receiveInt());
 		toReturn.addHealthLost(receiveInt());
-		    pl.wasBombarded(toReturn);
+		    pl.casualtyReport(toReturn);
 	    }
 
 			// Test

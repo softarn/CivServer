@@ -10,5 +10,5 @@ public interface PacketListener{
 
 	public void gameClosed();
 
-	public void wasBombarded(Result received);
+	public void casualtyReport(Result received);
 }
