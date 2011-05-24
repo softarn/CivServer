@@ -203,8 +203,24 @@ make_move([{position, EX, EY}], Game, Unit, {startpos, SX, SY}) ->
 	    io:format("~p~n", [Tile]),
 	    if
 		(Tile#tile.city =/= null) ->
-		    {ok, UpdatedUnitMap} = insert_unit(Unitmap, {SX, SY}, {EX, EY}),
-		    {ok, Game#game{tilemap = UpdatedUnitMap}};
+			City = Tile#tile.city,
+			case compare_owners(Unit, City) of
+				same ->
+		    			{ok, UpdatedUnitMap} = insert_unit(Unitmap, {SX, SY}, {EX, EY}),
+		    			{ok, Game#game{tilemap = UpdatedUnitMap}};
+				different ->
+					case is_empty(City) of
+						true ->
+							NewCity = City#city{owner = Unit#unit.owner},
+							UpdatedTile = Tile#tile{city = NewCity},
+							UpdatedUnitMap1 = update_tile(Unitmap, UpdatedTile, EX, EY),
+							io:format("Hej ~p~n", [NewCity]),
+			    				{ok, UpdatedUnitMap2} = insert_unit(UpdatedUnitMap1, {SX, SY}, {EX, EY}),
+		    					{ok, Game#game{tilemap = UpdatedUnitMap2}};
+						false ->
+							{error, "Invalid, full of enemies"}
+					end
+			end;
 
 		((Tile#tile.unit)#unit.name =:= trireme) ->
 		    {ok, UpdatedUnitMap} = insert_unit(Unitmap, {SX, SY}, {EX, EY}),
@@ -432,8 +448,13 @@ attack_unit(UnitMap, TerrainMap, {AttX, AttY}, {DefX, DefY}) -> %GLÖM EJ RANGEK
     AttTerrain = lists:nth(AttY, lists:nth(AttX, TerrainMap)),
     DefTerrain = lists:nth(DefY, lists:nth(DefX, TerrainMap)),
     AttackUnit = get_unit(UnitMap, AttX, AttY),
-    DefUnit = get_unit(UnitMap, DefX, DefY),
     DefCity = get_city(UnitMap, DefX, DefY),
+	if 
+		((DefCity=:=null) or (DefCity=:={error, "Out of bounds"}))->
+			DefUnit = get_unit(UnitMap, DefX, DefY);
+		true ->
+			DefUnit = get_city_def(DefCity#city.units)
+	end,	
     {ok, AttackTile} = get_tile(UnitMap, AttX, AttY),
     {ok, DefTile} = get_tile(UnitMap, DefX, DefY),
 
@@ -478,12 +499,12 @@ attack_unit(UnitMap, TerrainMap, {AttX, AttY}, {DefX, DefY}) -> %GLÖM EJ RANGEK
 
 		    if
 
-			(AttackUnit#unit.name =:= siege_tower) and (DefUnit#unit.fortified =:= true) ->
+			((AttackUnit#unit.name =:= siege_tower) and (DefCity=/=null)) and (DefUnit#unit.fortified =:= true) ->
 			    AttUnit = hd(AttackUnit#unit.units),
 			    {RemAttackMp, RemDefMp} = ?COMBAT:combat(AttUnit, AttTerrain, DefUnit, DefTerrain, {true, true}),
 			    io:format("~p in a siegetower with ~p manpower on ~p-terrain from {~p,~p} attacked a fortified ~p with ~p manpower on ~p-terrain on {~p,~p}. Result Attacker: ~p mp left, Defender: ~p mp left~n", [AttackUnit#unit.str, AttackUnit#unit.mp, AttTerrain, AttX, AttY, DefUnit#unit.str, DefUnit#unit.mp, DefTerrain, DefX, DefY, RemAttackMp, RemDefMp]);
 
-			(AttackUnit#unit.name =:= siege_tower) ->
+			(AttackUnit#unit.name =:= siege_tower) and (DefCity=/=null) ->
 			    AttUnit = hd(AttackUnit#unit.units),
 			    {RemAttackMp, RemDefMp} = ?COMBAT:combat(AttUnit, AttTerrain, DefUnit, DefTerrain, {true, false}),
 			    io:format("~p in a siegetower with ~p manpower on ~p-terrain from {~p,~p} attacked ~p with ~p manpower on ~p-terrain on {~p,~p}. Result Attacker: ~p mp left, Defender: ~p mp left~n", [AttackUnit#unit.str, AttackUnit#unit.mp, AttTerrain, AttX, AttY, DefUnit#unit.str, DefUnit#unit.mp, DefTerrain, DefX, DefY, RemAttackMp, RemDefMp]);
@@ -563,3 +584,51 @@ disband_unit(UnitMap, {X, Y}, Owner) ->
 	    end
     end.
 
+% Fetches the best defender from a list of Unit records.
+
+get_city_def([])->
+	null;
+get_city_def(Defenders) when is_list(Defenders)-> 
+	get_city_def(Defenders,hd(Defenders)).
+
+get_city_def([],Best_Defender)->
+	Best_Defender;
+get_city_def(Defenders,Best_defender)->
+	%Contender to be best Defender!
+	Contender = hd(Defenders),
+	Contender_stats = unit_attr:get_attr(Contender#unit.name),
+	Contender_def_power = round(element(3,Contender_stats)*(Contender#unit.mp)/100),
+	%Reigning champion!
+	Best_def_stats = unit_attr:get_attr(Best_defender#unit.name),
+	Best_def_power = round(element(3,Best_def_stats)*(Best_defender#unit.mp)/100),
+
+% The winner takes it all!
+case Contender_def_power > Best_def_power of
+	true ->
+		get_city_def(tl(Defenders),hd(Defenders));
+	false ->
+		get_city_def(tl(Defenders),Best_defender)
+
+end.
+
+
+compare_owners(Unit, City) ->
+	UnitOwner = Unit#unit.owner,
+	CityOwner = City#city.owner,
+
+	case UnitOwner == CityOwner of
+		true ->
+			same;
+		false ->
+			different
+	end.
+
+is_empty(City) ->
+	CityUnits = City#city.units,
+
+	case CityUnits of
+		[] ->
+			true;
+		_ ->
+			false
+	end.
