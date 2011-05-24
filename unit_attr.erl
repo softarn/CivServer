@@ -58,10 +58,10 @@ get_unit_info(UnitType) ->
 get_attr(Unit)->
     case Unit of	% MP,AP,DP,Rng,Mov,Atk,MovT
 	catapult ->		{100,12,1,2,1,bombardment,ground};		
-	trebuchet ->	{100,20,2,3,1,bombardment,ground};		
+	trebuchet ->		{100,20,2,3,1,bombardment,ground};		
 	cannon ->		{100,30,3,4,1,bombardment,ground};		
 	archer ->		{100,4,2,2,1,range,ground};		
-	musketeer ->	{100,8,6,2,1,range,ground};		
+	musketeer ->		{100,8,6,2,1,range,ground};		
 
 	phalanx ->		{100,2,5,1,1,assault,ground};		
 	legion ->		{100,6,4,1,1,assault,ground};		
