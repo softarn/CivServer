@@ -65,6 +65,10 @@ public:
 		std::cout << "Game closed\n";
 		g_gameRunning = false;
 	}
+
+	void casualtyReport(proxy::protocol::CasualtyReport &)
+	{
+	}
 };
 
 
@@ -104,7 +108,12 @@ void gameLobby(GameLogix &proxy, std::string gameName)
 			break;
 
 		case 3:
-			proxy.startGame();
+			{
+				std::cout << "Enter map size: ";
+				int mapSize;
+				std::cin >> mapSize;
+				proxy.startGame(mapSize);
+			}
 			break;
 
 		case 4:
@@ -199,9 +208,8 @@ int main()
 		MyPacketListener pl;
 		Proxy p(pl);
 		GameLogix &proxy = p;
-		//proxy.connect("dvk.fishface.se", 1339);
-		//proxy.connect("130.229.157.246", 1234);
-		proxy.connect("chylis.dyndns-at-work.com", 1337);
+
+		proxy.connect("dvk.fishface.se", 1339);
 
 		std::cout << "Connected, what is your name? ";
 		std::string name;

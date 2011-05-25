@@ -138,10 +138,14 @@ namespace proxy
 		confirmPacket(*packet, protocol::Header::LOCK_GAME_REQUEST);
 	}
 
-	void Proxy::startGame()
+	void Proxy::startGame(int mapSize)
 	{
 		// Request to start a game
 		m_networkManager.send<uint8_t>(protocol::Header::START_GAME_REQUEST);
+
+		// Send map width & height
+		m_networkManager.send(mapSize);
+		m_networkManager.send(mapSize);
 
 
 		// Receive the answer

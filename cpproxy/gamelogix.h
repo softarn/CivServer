@@ -30,7 +30,7 @@ namespace proxy
 
 		virtual void changeCivilization(const std::string &newCivilization) = 0;
 		virtual void lockGame(bool lock = true) = 0;
-		virtual void startGame() = 0;
+		virtual void startGame(int mapSize) = 0;
 		virtual void leaveGame() = 0;
 
 		// In-game functions

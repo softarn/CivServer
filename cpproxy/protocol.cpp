@@ -79,6 +79,11 @@ namespace proxy
 
 			case Header::MESSAGE_FOR_YOU_SIR:
 				packet->destructablePacket = packet->chatMessage = receiveNewPacket<ChatMessage>(socket);
+				break;
+
+			case Header::CASUALTY_REPORT:
+				packet->destructablePacket = packet->casualtyReport = receiveNewPacket<CasualtyReport>(socket);
+				break;
 			}
 
 			return packet;
@@ -192,6 +197,13 @@ namespace proxy
 	{
 		get(cm.sender);
 		get(cm.message);
+	}
+
+	template <> void Serializer::get(protocol::CasualtyReport &cr)
+	{
+		get(cr.x);
+		get(cr.y);
+		get(cr.healthLost);
 	}
 
 

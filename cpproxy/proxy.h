@@ -38,7 +38,7 @@ namespace proxy
 
 		void changeCivilization(const std::string &newCivilization);
 		void lockGame(bool lock = true);
-		void startGame();
+		void startGame(int mapSize);
 		void leaveGame();
 
 		// In-game functions

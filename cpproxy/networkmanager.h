@@ -26,6 +26,8 @@ namespace proxy
 		virtual void chatMessageReceived(protocol::ChatMessage &) = 0;
 
 		virtual void gameClosed() = 0;
+
+		virtual void casualtyReport(protocol::CasualtyReport &) = 0;
 	};
 
 

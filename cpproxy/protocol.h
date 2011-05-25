@@ -46,7 +46,8 @@ namespace proxy
 				GAME_CLOSED = 25,
 				ENTER_THE_DRAGON = 26,
 				EXIT_THE_DRAGON = 28,
-				DISBAND_UNIT = 29
+				DISBAND_UNIT = 29,
+				CASUALTY_REPORT = 30,
 			};
 		};
 
@@ -152,6 +153,12 @@ namespace proxy
 			std::string message;
 		};
 
+		struct CasualtyReport : DestructablePacket
+		{
+			int x, y;
+			int healthLost;
+		};
+
 
 		struct Packet
 		{
@@ -171,6 +178,7 @@ namespace proxy
 				ItsYourTurn *itsYourTurn;
 				CombatResult *combatResult;
 				ChatMessage *chatMessage;
+				CasualtyReport *casualtyReport;
 			};
 
 			Packet(uint8_t header);
