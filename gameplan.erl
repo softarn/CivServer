@@ -833,6 +833,7 @@ is_empty(#unit{units = TowerUnits}) ->
 	_ -> false
     end.
 
+get_siege_unit(null) -> null;
 get_siege_unit(UR) ->
     case UR#unit.units of
 	[] ->
