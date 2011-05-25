@@ -31,6 +31,7 @@
 %% Returns a matrix (a list containing lists) representing a randomly
 %% generated terrain map, with the given width and height.
 %% This is the only method you need to call.
+
 generate(Width,Height) when is_number(Width), is_number(Height)->
 	random:seed(now()),
 	TheMap = generate_ocean(create_map(Width, Height)),
