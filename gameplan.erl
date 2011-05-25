@@ -760,8 +760,6 @@ is_empty(#unit{units = TowerUnits}) ->
 	[] -> true;
 	_ -> false
     end.
-<<<<<<< HEAD
-=======
 
 get_siege_unit(null) -> null;
 get_siege_unit(UR) ->
@@ -771,4 +769,3 @@ get_siege_unit(UR) ->
 	[H|_] ->
 	    H
     end.
->>>>>>> 5f21205052bc51738ac0439ba7c5f14dffc9f2ac
