@@ -248,8 +248,13 @@ handle_cast({player_leave, Player}, Game) ->
 % Sets game status to locked and in_game,
 % updates main server, puts players fsm into correct state (see starting_game comments below)
 % Returns the updated game record
-handle_cast({start_game, Width, Height}, Game) ->
-    UpdatedGame = ?GAMEPLAN:make_gameplan(Width, Height, Game), % Fixa storleken senare
+handle_cast({start_game, Width, _Height}, Game) ->
+    if
+	Width < 20 -> NewWidth = 20;
+	Width > 100 -> NewWidth = 100;
+	true -> NewWidth = Width
+    end,
+    UpdatedGame = ?GAMEPLAN:make_gameplan(NewWidth, NewWidth, Game), % Fixa storleken senare
     UpdatedGame2 = UpdatedGame#game{locked = 1, current_state = in_game},
     UpdatedGame3 = starting_game(UpdatedGame2),
     {noreply, UpdatedGame3}.
