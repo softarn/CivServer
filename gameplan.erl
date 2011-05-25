@@ -229,12 +229,24 @@ make_move([{position, EX, EY}], Game, Unit, {startpos, SX, SY}) ->
 		    end;
 
 		((Tile#tile.unit)#unit.name =:= trireme) ->
-		    {ok, UpdatedUnitMap} = insert_unit(Unitmap, {SX, SY}, {EX, EY}),
-		    {ok, Game#game{tilemap = UpdatedUnitMap}};
+		    Cont = Tile#tile.unit,
+		    case same_owner(Unit, Cont) of
+			true ->
+			    {ok, UpdatedUnitMap} = insert_unit(Unitmap, {SX, SY}, {EX, EY}),
+			    {ok, Game#game{tilemap = UpdatedUnitMap}};
+			false ->
+			    {error, "Permission denied"}
+		    end;
 
 		((Tile#tile.unit)#unit.name =:= galley) ->
-		    {ok, UpdatedUnitMap} = insert_unit(Unitmap, {SX, SY}, {EX, EY}),
-		    {ok, Game#game{tilemap = UpdatedUnitMap}};
+		    Cont = Tile#tile.unit,
+		    case same_owner(Unit, Cont) of
+			true ->
+			    {ok, UpdatedUnitMap} = insert_unit(Unitmap, {SX, SY}, {EX, EY}),
+			    {ok, Game#game{tilemap = UpdatedUnitMap}};
+			false ->
+			    {error, "Permission denied"}
+		    end;
 
 		((Tile#tile.unit)#unit.name =:= siege_tower) ->
 		    Tower = Tile#tile.unit,
@@ -258,8 +270,14 @@ make_move([{position, EX, EY}], Game, Unit, {startpos, SX, SY}) ->
 		    end;
 
 		((Tile#tile.unit)#unit.name =:= caravel) ->
-		    {ok, UpdatedUnitMap} = insert_unit(Unitmap, {SX, SY}, {EX, EY}),
-		    {ok, Game#game{tilemap = UpdatedUnitMap}};
+		    Cont = Tile#tile.unit,
+		    case same_owner(Unit, Cont) of
+			true ->
+			    {ok, UpdatedUnitMap} = insert_unit(Unitmap, {SX, SY}, {EX, EY}),
+			    {ok, Game#game{tilemap = UpdatedUnitMap}};
+			false ->
+			    {error, "Permission denied"}
+		    end;
 
 		true ->
 		    case remove_unit(Unitmap, SX, SY) of
