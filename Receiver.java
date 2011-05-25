@@ -382,6 +382,7 @@ public class Receiver implements Runnable
 		{
 			String owner = receiveString();
 			int size = receiveInt();
+			toAddTo.prepareForCityUnits();
 			for(int i=0; i<size; i++)
 			{
 				toAddTo.addCityUnit(receiveUnit());
