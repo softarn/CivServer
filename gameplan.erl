@@ -355,13 +355,10 @@ enter_container(UnitMap, EnteringUnit, {TX, TY}, Type) ->
 extract_unit(UnitMap, {CX, CY}, UnitType, MP, {TX, TY}) ->
     CTile = get_tile(UnitMap, CX, CY),
     ToPlace = get_unit(UnitMap, TX, TY),
-
     if
-	(ToPlace =/= null) or (ToPlace =:= {error, "Out of bounds"}) ->
+	ToPlace =:= {error, "Out of bounds"} ->
 	    {error, "Invalid tile"};
-
 	true -> % else
-
 	    case CTile of
 		{error, "Out of bounds"} ->
 		    {error, "Out of bounds"};
