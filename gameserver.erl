@@ -171,6 +171,7 @@ handle_call({attack_unit, {AttX, AttY}, {DefX, DefY}}, _From, Game) ->
 	    VictimList = lists:filter(FindPlayerFun, Game#game.players),
 	    if (VictimList =/= []) ->
 		    Victim = hd(VictimList),
+		    io:format("Sent a casualty report to ~p~n", [Victim#player.name]),
 		    ?P_HANDLER:sendMsg(Victim#player.socket, {30, [{DefX, DefY}, DefMpLost]});
 		true ->
 		    ok
