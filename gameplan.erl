@@ -373,13 +373,10 @@ enter_container(UnitMap, EnteringUnit, {TX, TY}, Type) ->
 extract_unit(UnitMap, {CX, CY}, UnitType, MP, {TX, TY}) ->
     CTile = get_tile(UnitMap, CX, CY),
     ToPlace = get_unit(UnitMap, TX, TY),
-
     if
-	(ToPlace =/= null) or (ToPlace =:= {error, "Out of bounds"}) ->
+	ToPlace =:= {error, "Out of bounds"} ->
 	    {error, "Invalid tile"};
-
 	true -> % else
-
 	    case CTile of
 		{error, "Out of bounds"} ->
 		    {error, "Out of bounds"};
@@ -851,6 +848,7 @@ is_empty(#unit{units = TowerUnits}) ->
 	_ -> false
     end.
 
+get_siege_unit(null) -> null;
 get_siege_unit(UR) ->
     case UR#unit.units of
 	[] ->
