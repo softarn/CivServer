@@ -764,7 +764,9 @@ get_defender([Defender | Tail]) ->
 
 get_defender([],Best_Defender)->
     Best_Defender;
-get_defender(Defenders,Best_defender)->
+get_defender([DefUnit|Tail],Best_defender) when DefUnit#unit.name =:= pikeman ->
+    get_defender(Tail, Best_defender);
+get_defender(Defenders,Best_defender) ->
     %Contender to be best Defender!
     Contender = hd(Defenders),
     Contender_stats = unit_attr:get_attr(Contender#unit.name),
