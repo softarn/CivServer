@@ -644,10 +644,10 @@ attack_unit(UnitMap, TerrainMap, {AttX, AttY}, {DefX, DefY}) -> %GLÖM EJ RANGEK
 	end
 end.
 
-delete_unit([Unit|Tail], Unit) when Unit =:= Unit ->
+delete_unit([Unit1|Tail], Unit2) when Unit1 =:= Unit2 ->
     Tail;
-delete_unit([Unit|Tail], Unit) when Unit =/= Unit ->
-    delete_unit(Tail++Unit, Unit).
+delete_unit([Unit1|Tail], Unit2) when Unit1 =/= Unit2 ->
+    delete_unit(Tail++Unit1, Unit2).
 
 
 build_city(UnitMap, {X, Y}, CityName, CityOwner) ->
