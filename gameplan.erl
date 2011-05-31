@@ -693,7 +693,7 @@ attack_unit(UnitMap, TerrainMap, {AttX, AttY}, {DefX, DefY}) -> %GLÖM EJ RANGEK
 					    {ok, SecondUpdatedUnitMap} = update_unit(FirstUpdatedUnitMap, UpdDefUnit, DefX, DefY);
 					true ->
 					    DUnit = get_siege_unit(DefUnit),
-					    UpdDefUnit = DUnit#unit{mp = RemAttackMp},
+					    UpdDefUnit = DUnit#unit{mp = RemDefMp},
 					    UpdSiegeTower2 = DefUnit#unit{units = [UpdDefUnit]},
 					    {ok, SecondUpdatedUnitMap} = update_unit(FirstUpdatedUnitMap, UpdSiegeTower2, DefX, DefY)
 				    end,
