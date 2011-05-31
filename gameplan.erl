@@ -572,11 +572,6 @@ attack_unit(UnitMap, TerrainMap, {AttX, AttY}, {DefX, DefY}) -> %GLÖM EJ RANGEK
 			    io:format("~p with ~p manpower on ~p-terrain from {~p,~p} attacked ~p with ~p manpower on ~p-terrain on {~p,~p}. Result Attacker: ~p mp left, Defender: ~p mp left~n", [AttackUnit#unit.str, AttackUnit#unit.mp, AttTerrain, AttX, AttY, DefUnit#unit.str, DefUnit#unit.mp, DefTerrain, DefX, DefY, RemAttackMp, RemDefMp])
 		    end,
 
-		    FindUnit = fun(UR) ->
-			    UR =/= DefUnit
-		    end,	
-
-
 		    if
 			(RemAttackMp =< 0) and (RemDefMp =< 0) ->
 			    case AttackUnit#unit.name =:= siege_tower of
@@ -708,10 +703,10 @@ attack_unit(UnitMap, TerrainMap, {AttX, AttY}, {DefX, DefY}) -> %GLÖM EJ RANGEK
 	    end
     end.
 
-delete_unit([Unit|Tail], Unit) when Unit =:= Unit ->
+delete_unit([Unit1|Tail], Unit) when Unit1 =:= Unit ->
     Tail;
-delete_unit([Unit|Tail], Unit) when Unit =/= Unit ->
-    delete_unit(Tail++[Unit], Unit).
+delete_unit([Unit1|Tail], Unit) when Unit1 =/= Unit ->
+    delete_unit(Tail++[Unit1], Unit).
 
 build_city(UnitMap, {X, Y}, CityName, CityOwner) ->
     Settler = get_unit(UnitMap, X, Y),
