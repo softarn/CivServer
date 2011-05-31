@@ -826,6 +826,10 @@ get_city_def([Defender | Tail]) ->
 
 get_city_def([],Best_Defender)->
     Best_Defender;
+
+get_city_def([DefUnit|Tail],Best_defender) when DefUnit#unit.name =:= pikeman ->
+    get_city_def(Tail, Best_defender);
+
 get_city_def(Defenders,Best_defender)->
     %Contender to be best Defender!
     Contender = hd(Defenders),
