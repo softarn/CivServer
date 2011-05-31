@@ -6,8 +6,8 @@ get_placement(Players,Map) when is_list(Map) ->
     get_base_pos(Players*2,list_to_tuple([list_to_tuple(X) || X<- Map])).
 
 get_base_pos(Players,Map)->
-    Width = size(element(1,Map)),
-    Height = size(Map),	
+    Height = size(element(1,Map)),
+    Width = size(Map),	
     base_placement(Players,Map,{Width, Height}, dict:new()).
 
 base_placement(0,_,_,Dict)->

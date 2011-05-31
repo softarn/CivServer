@@ -372,7 +372,7 @@ enter_container(UnitMap, EnteringUnit, {TX, TY}, Type) ->
     NewUnitMap = update_tile(UnitMap, UpdatedTile, TX, TY),
     {ok, NewUnitMap}.
 
-%Arguments: Unitmap, ContainerX, ContainerY, Unittype, Manpower, ToX, ToY,
+    %Arguments: Unitmap, ContainerX, ContainerY, Unittype, Manpower, ToX, ToY,
 % Returns {eror, Reason} if:
 % -the ToX,ToY-tile is occupied or out of bounds
 % -the Containertile is out of bounds, not a "containerunit" nor a city
@@ -454,7 +454,7 @@ leave_container(UnitMap, {CX, CY}, UnitType, MP, {TX, TY}, Type) ->
 		    UpdatedTile = OldTile#tile{unit = UpdatedContainer} %skapa ny tile med uppdaterade staden på
 	    end,
 	    UpdatedUnitMap1 = update_tile(UnitMap, UpdatedTile, CX, CY), %uppdatera tilen där staden stod med den nya tilen
-
+	    
 	    {ok, ToTile} = get_tile(UpdatedUnitMap1, TX, TY),
 	    case get_container(ToTile) of
 		unit -> {ok, UpdatedUnitMap2} = enter_container(UpdatedUnitMap1, Unit, {TX, TY}, unit);
@@ -479,38 +479,43 @@ attack_unit(UnitMap, TerrainMap, {AttX, AttY}, {DefX, DefY}) -> %GLÖM EJ RANGEK
     AttackUnit = get_unit(UnitMap, AttX, AttY),
     DefCity = get_city(UnitMap, DefX, DefY),
     if 
-	((DefCity=:=null) or (DefCity=:={error, "Out of bounds"})) ->
-	    DefUnit = get_unit(UnitMap, DefX, DefY);
+	((DefCity=:=null) or (DefCity=:={error, "Out of bounds"}))->
+	    Unchecked_def_unit = get_unit(UnitMap, DefX, DefY),
+		case Unchecked_def_unit#unit.name of
+			siege_tower ->
+				DefUnit = get_defender(Unchecked_def_unit#unit.units);
+			_->
+				DefUnit = Unchecked_def_unit
+		end;
 	true ->
-	    DefUnit = get_city_def(DefCity#city.units)
+	    DefUnit = get_defender(DefCity#city.units)
     end,	
+
+
     {ok, AttackTile} = get_tile(UnitMap, AttX, AttY),
     {ok, DefTile} = get_tile(UnitMap, DefX, DefY),
-    AttInsideUnit = get_siege_unit(AttackUnit),
-    DefInsideUnit = get_siege_unit(DefUnit),
 
     if 
 	(AttackUnit =:= null) or (DefUnit =:= null) ->
 	    {error, "Invalid tile"};
 	(AttackUnit =:= {error, "Out of bounds"}) or (DefUnit =:= {error, "Out of bounds"}) ->
 	    {error, "Out of bounds"};
-	(AttackUnit#unit.name =:= siege_tower) and (AttInsideUnit =:= null) ->
-	    {error, "Empty siegetower"};
-	(DefUnit#unit.name =:= siege_tower) and (DefInsideUnit =:= null) ->
-	    {error, "Empty siegetower"};
 	(AttackTile =:= {error, "Out of bounds"}) or (DefTile =:= {error, "Out of bounds"}) ->
 	    {error, "Out of bounds"};
 
 	true ->
 	    VictimStr = DefUnit#unit.owner,
+	    io:format("Efter VictimStr"),
 
 	    BombBool = lists:member(AttackUnit#unit.name, [catapult, trebuchet, cannon, galley, caravel]),
+	    io:format("Efter bombbool"),
 
 	    if 
 		(BombBool =:= true) and (DefTile#tile.city =/= null) -> %City bombardment
 		    DefCity = DefTile#tile.city,
 		    DefUnits = DefCity#city.units,
 		    UnitMp = [X#unit.mp || X <- DefUnits],
+		    io:format("efter list comp!!!!"),
 		    DPU = ?BOMB:bombard(AttackUnit#unit.str, AttackUnit#unit.mp, AttTerrain, UnitMp),
 
 		    UpdateUnitFun = fun(UR) ->
@@ -523,11 +528,12 @@ attack_unit(UnitMap, TerrainMap, {AttX, AttY}, {DefX, DefY}) -> %GLÖM EJ RANGEK
 		    end,
 
 		    UpdatedUnits1 = [UpdateUnitFun(X) || X <- DefUnits],
+		    io:format("efter updateunitFun!"),
 		    UpdatedUnits2 = lists:filter(AboveZero, UpdatedUnits1),
+		    io:format("efter abovezeroFun!"),
 		    UpdatedCity = DefCity#city{units = UpdatedUnits2},
 		    UpdatedDefTile = DefTile#tile{city = UpdatedCity},
 		    UpdatedUnitMap = update_tile(UnitMap, UpdatedDefTile, DefX, DefY), 
-		    io:format("~p bombarded ~p's city ~p. Result: Defender lost ~p mp~n", [AttackUnit#unit.owner, DefCity#city.owner, DefCity#city.name, DPU]),
 		    {bombardment, UpdatedUnitMap, {DefX, DefY}, DPU, VictimStr};
 
 		true -> %else
@@ -541,36 +547,25 @@ attack_unit(UnitMap, TerrainMap, {AttX, AttY}, {DefX, DefY}) -> %GLÖM EJ RANGEK
 		    if
 
 			((AttackUnit#unit.name =:= siege_tower) and (DefUnit#unit.fortified =:= true)) ->
-			    AttUnit = get_siege_unit(AttackUnit),
+			    AttUnit = hd(AttackUnit#unit.units),
 			    {RemAttackMp, RemDefMp} = ?COMBAT:combat(AttUnit, AttTerrain, DefUnit, DefTerrain, {City_combat, true}),
-			    DefMpLost = DefUnit#unit.mp - RemDefMp,
-			    io:format("~p in a siegetower with ~p manpower on ~p-terrain from {~p,~p} attacked a fortified ~p with ~p manpower on ~p-terrain on {~p,~p}. Result Attacker: ~p mp left, Defender: ~p mp left~n", [AttUnit#unit.str, AttUnit#unit.mp, AttTerrain, AttX, AttY, DefUnit#unit.str, DefUnit#unit.mp, DefTerrain, DefX, DefY, RemAttackMp, RemDefMp]);
+			    io:format("~p in a siegetower with ~p manpower on ~p-terrain from {~p,~p} attacked a fortified ~p with ~p manpower on ~p-terrain on {~p,~p}. Result Attacker: ~p mp left, Defender: ~p mp left~n", [AttackUnit#unit.str, AttackUnit#unit.mp, AttTerrain, AttX, AttY, DefUnit#unit.str, DefUnit#unit.mp, DefTerrain, DefX, DefY, RemAttackMp, RemDefMp]);
 
-			((AttackUnit#unit.name =:= siege_tower) and (DefUnit#unit.name =:= siege_tower)) ->
-			    {RemAttackMp, RemDefMp} = ?COMBAT:combat(AttInsideUnit, AttTerrain, DefInsideUnit, DefTerrain, {City_combat, false}),
-			    DefMpLost = DefInsideUnit#unit.mp - RemDefMp,
-			    io:format("~p in a siegetower with ~p manpower on ~p-terrain from {~p,~p} attacked a ~p in a siegetower with ~p manpower on ~p-terrain on {~p,~p}. Result Attacker: ~p mp left, Defender: ~p mp left~n", [AttInsideUnit#unit.str, AttInsideUnit#unit.mp, AttTerrain, AttX, AttY, DefInsideUnit#unit.str, DefInsideUnit#unit.mp, DefTerrain, DefX, DefY, RemAttackMp, RemDefMp]);
-			
 			(AttackUnit#unit.name =:= siege_tower) ->
-			    AttUnit = get_siege_unit(AttackUnit),
+			    AttUnit = hd(AttackUnit#unit.units),
 			    {RemAttackMp, RemDefMp} = ?COMBAT:combat(AttUnit, AttTerrain, DefUnit, DefTerrain, {City_combat, false}),
-			    DefMpLost = DefUnit#unit.mp - RemDefMp,
-			    io:format("~p in a siegetower with ~p manpower on ~p-terrain from {~p,~p} attacked ~p with ~p manpower on ~p-terrain on {~p,~p}. Result Attacker: ~p mp left, Defender: ~p mp left~n", [AttUnit#unit.str, AttUnit#unit.mp, AttTerrain, AttX, AttY, DefUnit#unit.str, DefUnit#unit.mp, DefTerrain, DefX, DefY, RemAttackMp, RemDefMp]);
+			    io:format("~p in a siegetower with ~p manpower on ~p-terrain from {~p,~p} attacked ~p with ~p manpower on ~p-terrain on {~p,~p}. Result Attacker: ~p mp left, Defender: ~p mp left~n", [AttackUnit#unit.str, AttackUnit#unit.mp, AttTerrain, AttX, AttY, DefUnit#unit.str, DefUnit#unit.mp, DefTerrain, DefX, DefY, RemAttackMp, RemDefMp]);
 
 			(DefUnit#unit.fortified =:= true) ->
 			    {RemAttackMp, RemDefMp} = ?COMBAT:combat(AttackUnit, AttTerrain, DefUnit, DefTerrain, {false, true}),
-			    DefMpLost = DefUnit#unit.mp - RemDefMp,
-			    io:format("~p  with ~p manpower on ~p-terrain from {~p,~p} attacked a fortified ~p with ~p manpower on ~p-terrain on {~p,~p}. Result Attacker: ~p mp left, Defender: ~p mp left~n", [AttackUnit#unit.str, AttackUnit#unit.mp, AttTerrain, AttX, AttY, DefUnit#unit.str, DefUnit#unit.mp, DefTerrain, DefX, DefY, RemAttackMp, RemDefMp]);
+			    io:format("~p in a siegetower with ~p manpower on ~p-terrain from {~p,~p} attacked ~p with ~p manpower on ~p-terrain on {~p,~p}. Result Attacker: ~p mp left, Defender: ~p mp left~n", [AttackUnit#unit.str, AttackUnit#unit.mp, AttTerrain, AttX, AttY, DefUnit#unit.str, DefUnit#unit.mp, DefTerrain, DefX, DefY, RemAttackMp, RemDefMp]);
 
-			(DefUnit#unit.name =:= siege_tower) ->
-			    {RemAttackMp, RemDefMp} = ?COMBAT:combat(AttackUnit, AttTerrain, DefInsideUnit, DefTerrain, {City_combat, false}),
-			    DefMpLost = DefInsideUnit#unit.mp - RemDefMp,
-			    io:format("~p with ~p manpower on ~p-terrain from {~p,~p} attacked ~p in a siegetower with ~p manpower on ~p-terrain on {~p,~p}. Result Attacker: ~p mp left, Defender: ~p mp left~n", [AttackUnit#unit.str, AttackUnit#unit.mp, AttTerrain, AttX, AttY, DefInsideUnit#unit.str, DefInsideUnit#unit.mp, DefTerrain, DefX, DefY, RemAttackMp, RemDefMp]);
 			true -> %else
 			    {RemAttackMp, RemDefMp} = ?COMBAT:combat(AttackUnit, AttTerrain, DefUnit, DefTerrain, {false, false}),
-			    DefMpLost = DefUnit#unit.mp - RemDefMp,
 			    io:format("~p with ~p manpower on ~p-terrain from {~p,~p} attacked ~p with ~p manpower on ~p-terrain on {~p,~p}. Result Attacker: ~p mp left, Defender: ~p mp left~n", [AttackUnit#unit.str, AttackUnit#unit.mp, AttTerrain, AttX, AttY, DefUnit#unit.str, DefUnit#unit.mp, DefTerrain, DefX, DefY, RemAttackMp, RemDefMp])
 		    end,
+
+		    DefMpLost = DefUnit#unit.mp - RemDefMp,
 
 		    FindUnit = fun(UR) ->
 			    UR =/= DefUnit
@@ -579,14 +574,7 @@ attack_unit(UnitMap, TerrainMap, {AttX, AttY}, {DefX, DefY}) -> %GLÖM EJ RANGEK
 
 		    if
 			(RemAttackMp =< 0) and (RemDefMp =< 0) ->
-			    case AttackUnit#unit.name =:= siege_tower of
-				false ->
-				    {ok, FirstUpdatedUnitMap} = remove_unit(UnitMap, AttX, AttY);
-				true ->
-				    UpdSiegeTower = AttackUnit#unit{units = []},
-				    {ok, FirstUpdatedUnitMap} = update_unit(UnitMap, UpdSiegeTower, AttX, AttY)
-			    end,
-
+			    {ok, FirstUpdatedUnitMap} = remove_unit(UnitMap, AttX, AttY), 
 			    if 
 				(City_combat =:= true) ->
 				    UpdatedCityUnits = lists:delete(DefUnit, DefCity#city.units),
@@ -595,29 +583,16 @@ attack_unit(UnitMap, TerrainMap, {AttX, AttY}, {DefX, DefY}) -> %GLÖM EJ RANGEK
 				    UpdatedTile = OldTile#tile{city = UpdatedCity},
 				    SecondUpdatedUnitMap = update_tile(FirstUpdatedUnitMap, UpdatedTile, DefX, DefY),
 				    {ok, SecondUpdatedUnitMap, {RemAttackMp, RemDefMp}, VictimStr, {DefMpLost, DefX, DefY}};
+				
 				true ->
-				    case DefUnit#unit.name =:= siege_tower of
-					false ->
-					    {ok, SecondUpdatedUnitMap} = remove_unit(FirstUpdatedUnitMap, DefX, DefY);
-					true ->
-					    UpdSiegeTower2 = DefUnit#unit{units = []},
-					    {ok, SecondUpdatedUnitMap} = update_unit(FirstUpdatedUnitMap, UpdSiegeTower2, DefX, DefY)
-				    end,
+				    {ok, SecondUpdatedUnitMap} = remove_unit(FirstUpdatedUnitMap, DefX, DefY),
 				    {ok, SecondUpdatedUnitMap, {RemAttackMp, RemDefMp}, VictimStr, {DefMpLost, DefX, DefY}}
 			    end;
-
 			(RemAttackMp =< 0) ->
-			    case AttackUnit#unit.name =:= siege_tower of
-				false ->
-				    {ok, FirstUpdatedUnitMap} = remove_unit(UnitMap, AttX, AttY);
-				true ->
-				    UpdSiegeTower = AttackUnit#unit{units = []},
-				    {ok, FirstUpdatedUnitMap} = update_unit(UnitMap, UpdSiegeTower, AttX, AttY)
-			    end,
-
+			    {ok, FirstUpdatedUnitMap} = remove_unit(UnitMap, AttX, AttY),
 			    if
 				(City_combat =:= true) ->
-				    OldCityUnits = lists:filter(FindUnit, DefCity#city.units),
+				    OldCityUnits = delete_unit(DefCity#city.units, DefUnit),
 				    UpdDefUnit = DefUnit#unit{mp = RemDefMp},
 				    UpdatedCityUnits = [UpdDefUnit | OldCityUnits],
 				    UpdatedCity = DefCity#city{units = UpdatedCityUnits},
@@ -626,64 +601,33 @@ attack_unit(UnitMap, TerrainMap, {AttX, AttY}, {DefX, DefY}) -> %GLÖM EJ RANGEK
 				    SecondUpdatedUnitMap = update_tile(FirstUpdatedUnitMap, UpdatedTile, DefX, DefY),
 				    {ok, SecondUpdatedUnitMap, {RemAttackMp, RemDefMp}, VictimStr, {DefMpLost, DefX, DefY}};
 				true ->
-				    case DefUnit#unit.name =:= siege_tower of
-					false ->
-					    UpdDefUnit = DefUnit#unit{mp = RemDefMp},
-					    {ok, SecondUpdatedUnitMap} = update_unit(FirstUpdatedUnitMap, UpdDefUnit, DefX, DefY);
-					true ->
-					    DUnit = get_siege_unit(DefUnit),
-					    UpdDefUnit = DUnit#unit{mp = RemAttackMp},
-					    UpdSiegeTower2 = DefUnit#unit{units = [UpdDefUnit]},
-					    {ok, SecondUpdatedUnitMap} = update_unit(FirstUpdatedUnitMap, UpdSiegeTower2, DefX, DefY)
-				    end,
+				    UpdDefUnit = DefUnit#unit{mp = RemDefMp},
+				    {ok, SecondUpdatedUnitMap} = update_unit(FirstUpdatedUnitMap, UpdDefUnit, DefX, DefY), 
 				    {ok, SecondUpdatedUnitMap, {RemAttackMp, RemDefMp}, VictimStr, {DefMpLost, DefX, DefY}}
 			    end;
 
 			(RemDefMp =< 0) ->
-			    case AttackUnit#unit.name =:= siege_tower of
-				false ->
-				    UpdAttackUnit = AttackUnit#unit{mp = RemAttackMp},
-				    {ok, FirstUpdatedUnitMap} = update_unit(UnitMap, UpdAttackUnit, AttX, AttY);
-				true ->
-				    AUnit = get_siege_unit(AttackUnit),
-				    UpdAttackUnit = AUnit#unit{mp = RemAttackMp},
-				    UpdSiegeTower = AttackUnit#unit{units = [UpdAttackUnit]},
-				    {ok, FirstUpdatedUnitMap} = update_unit(UnitMap, UpdSiegeTower, AttX, AttY)
-			    end,
-
+			    UpdAttackUnit = AttackUnit#unit{mp = RemAttackMp},
+			    {ok, FirstUpdatedUnitMap} = update_unit(UnitMap, UpdAttackUnit, AttX, AttY), 
 			    if
 				(City_combat =:= true) ->
-				    UpdatedCityUnits = lists:delete(DefUnit, DefCity#city.units),
+				    UpdatedCityUnits = delete_unit(DefCity#city.units, DefUnit),
 				    UpdatedCity = DefCity#city{units = UpdatedCityUnits},
 				    {ok, OldTile} = get_tile(FirstUpdatedUnitMap, DefX, DefY),
 				    UpdatedTile = OldTile#tile{city = UpdatedCity},
 				    SecondUpdatedUnitMap = update_tile(FirstUpdatedUnitMap, UpdatedTile, DefX, DefY),
 				    {ok, SecondUpdatedUnitMap, {RemAttackMp, RemDefMp}, VictimStr, {DefMpLost, DefX, DefY}};
 				true ->
-				    case DefUnit#unit.name =:= siege_tower of
-					false ->
-					    {ok, SecondUpdatedUnitMap} = remove_unit(FirstUpdatedUnitMap, DefX, DefY);
-					true ->
-					    UpdSiegeTower2 = DefUnit#unit{units = []},
-					    {ok, SecondUpdatedUnitMap} = update_unit(FirstUpdatedUnitMap, UpdSiegeTower2, DefX, DefY)
-				    end,
+				    {ok, SecondUpdatedUnitMap} = remove_unit(FirstUpdatedUnitMap, DefX, DefY),
 				    {ok, SecondUpdatedUnitMap, {RemAttackMp, RemDefMp}, VictimStr, {DefMpLost, DefX, DefY}}
 			    end;
 			true -> %else
-			    case AttackUnit#unit.name =:= siege_tower of
-				false ->
-				    UpdAttackUnit = AttackUnit#unit{mp = RemAttackMp},
-				    {ok, FirstUpdatedUnitMap} = update_unit(UnitMap, UpdAttackUnit, AttX, AttY);
-				true ->
-				    AUnit = get_siege_unit(AttackUnit),
-				    UpdAttackUnit = AUnit#unit{mp = RemAttackMp},
-				    UpdSiegeTower = AttackUnit#unit{units = [UpdAttackUnit]},
-				    {ok, FirstUpdatedUnitMap} = update_unit(UnitMap, UpdSiegeTower, AttX, AttY)
-			    end,
-
+			    UpdAttackUnit = AttackUnit#unit{mp = RemAttackMp},
+			    {ok, FirstUpdatedUnitMap} = update_unit(UnitMap, UpdAttackUnit, AttX, AttY), 
 			    if
 				(City_combat =:= true) ->
-				    OldCityUnits = lists:filter(FindUnit, DefCity#city.units),
+				    %OldCityUnits = lists:filter(FindUnit, DefCity#city.units),
+				    OldCityUnits = delete_unit(DefCity#city.units, DefUnit),
 				    UpdDefUnit = DefUnit#unit{mp = RemDefMp},
 				    UpdatedCityUnits = [UpdDefUnit | OldCityUnits],
 				    UpdatedCity = DefCity#city{units = UpdatedCityUnits},
@@ -692,21 +636,19 @@ attack_unit(UnitMap, TerrainMap, {AttX, AttY}, {DefX, DefY}) -> %GLÖM EJ RANGEK
 				    SecondUpdatedUnitMap = update_tile(FirstUpdatedUnitMap, UpdatedTile, DefX, DefY),
 				    {ok, SecondUpdatedUnitMap, {RemAttackMp, RemDefMp}, VictimStr, {DefMpLost, DefX, DefY}};
 				true ->
-				    case DefUnit#unit.name =:= siege_tower of
-					false ->
-					    UpdDefUnit = DefUnit#unit{mp = RemDefMp},
-					    {ok, SecondUpdatedUnitMap} = update_unit(FirstUpdatedUnitMap, UpdDefUnit, DefX, DefY);
-					true ->
-					    DUnit = get_siege_unit(DefUnit),
-					    UpdDefUnit = DUnit#unit{mp = RemAttackMp},
-					    UpdSiegeTower2 = DefUnit#unit{units = [UpdDefUnit]},
-					    {ok, SecondUpdatedUnitMap} = update_unit(FirstUpdatedUnitMap, UpdSiegeTower2, DefX, DefY)
-				    end,
+				    UpdDefUnit = DefUnit#unit{mp = RemDefMp},
+				    {ok, SecondUpdatedUnitMap} = update_unit(FirstUpdatedUnitMap, UpdDefUnit, DefX, DefY), 
 				    {ok, SecondUpdatedUnitMap, {RemAttackMp, RemDefMp}, VictimStr, {DefMpLost, DefX, DefY}}
 			    end
-		    end
-	    end
-    end.
+		end
+	end
+end.
+
+delete_unit([Unit1|Tail], Unit2) when Unit1 =:= Unit2 ->
+    Tail;
+delete_unit([Unit1|Tail], Unit2) when Unit1 =/= Unit2 ->
+    delete_unit(Tail++Unit1, Unit2).
+
 
 build_city(UnitMap, {X, Y}, CityName, CityOwner) ->
     Settler = get_unit(UnitMap, X, Y),
@@ -802,31 +744,31 @@ is_container_unit(#unit{name = Name}) ->
 	_ -> false
     end.
 
+get_container(#tile{city = null, unit = null}) -> none;
+get_container(#tile{city = City}) when City =/= null -> city;
 get_container(#tile{city = City, unit = Unit}) when City =:= null ->
-    if 
-	(Unit =:= null) -> none;
-	true ->
-	    case Unit#unit.name of
-		trireme -> unit;
-		galley -> unit;
-		caravel -> unit;
-		siege_tower -> unit;
-		_ -> none
-	    end
-    end;
-get_container(#tile{city = City}) when City =/= null -> city.
+    io:format("get_container unit: ~p~n", [Unit]),
+    case Unit#unit.name of
+	trireme -> unit;
+	galley -> unit;
+	caravel -> unit;
+	siege_tower -> unit;
+	_ -> none
+    end.
 
 
 % Fetches the best defender from a list of Unit records.
 
-get_city_def([])->
+get_defender([])->
     null;
-get_city_def([Defender | Tail]) -> 
-    get_city_def(Tail, Defender).
+get_defender([Defender | Tail]) -> 
+    get_defender(Tail, Defender).
 
-get_city_def([],Best_Defender)->
+get_defender([],Best_Defender)->
     Best_Defender;
-get_city_def(Defenders,Best_defender)->
+get_defender([DefUnit|Tail],Best_defender) when DefUnit#unit.name =:= pikeman ->
+    get_defender(Tail, Best_defender);
+get_defender(Defenders,Best_defender) ->
     %Contender to be best Defender!
     Contender = hd(Defenders),
     Contender_stats = unit_attr:get_attr(Contender#unit.name),
@@ -840,9 +782,9 @@ get_city_def(Defenders,Best_defender)->
     % The winner takes it all!
     case Contender_def_power > Best_def_power of
 	true ->
-	    get_city_def(tl(Defenders), Contender);
+	    get_defender(tl(Defenders), Contender);
 	false ->
-	    get_city_def(tl(Defenders),Best_defender)
+	    get_defender(tl(Defenders),Best_defender)
 
     end.
 
