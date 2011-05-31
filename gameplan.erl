@@ -455,7 +455,7 @@ leave_container(UnitMap, {CX, CY}, UnitType, MP, {TX, TY}, Type) ->
 	    end,
 	    UpdatedUnitMap1 = update_tile(UnitMap, UpdatedTile, CX, CY), %uppdatera tilen där staden stod med den nya tilen
 	    
-	    ToTile = get_tile(UpdatedUnitMap1, TX, TY),
+	    {ok, ToTile} = get_tile(UpdatedUnitMap1, TX, TY),
 	    case get_container(ToTile) of
 		unit -> {ok, UpdatedUnitMap2} = enter_container(UpdatedUnitMap1, Unit, {TX, TY}, unit);
 		city -> {ok, UpdatedUnitMap2} = enter_container(UpdatedUnitMap1, Unit, {TX, TY}, city);
