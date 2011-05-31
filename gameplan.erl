@@ -72,15 +72,15 @@ create_unit(Map, {X, Y}, UnitType, Owner) -> %Adds a unit if the tile is vacant 
 		NewUnit ->
 		    case get_tile(Map, X, Y) of
 			{ok, OldTile} ->
-			   	 NewTile = OldTile#tile{unit=NewUnit},
-	 			io:format("Created a ~p at {~p,~p}~n", [UnitType, X, Y]),
-				UpdatedMap = update_tile(Map, NewTile, X, Y),
-				case get_city(Map, X, Y) of
-					null ->
-						{ok, UpdatedMap};
-					_ ->
-						insert_unit(UpdatedMap, {X,Y},{X,Y})
-				end;		
+			    NewTile = OldTile#tile{unit=NewUnit},
+			    io:format("Created a ~p with ~p manpower at {~p,~p}~n", [UnitType, NewUnit#unit.mp, X, Y]),
+			    UpdatedMap = update_tile(Map, NewTile, X, Y),
+			    case get_city(Map, X, Y) of
+				null ->
+				    {ok, UpdatedMap};
+				_ ->
+				    insert_unit(UpdatedMap, {X,Y},{X,Y})
+			    end;		
 			{error, Reason} ->
 			    {error, Reason}
 		    end
@@ -218,7 +218,8 @@ make_move([{position, EX, EY}], Game, Unit, {startpos, SX, SY}) ->
 			    case is_empty(City) of
 				true ->
 				    io:format("~p took over ~p's city ~p~n", [Unit#unit.owner, City#city.owner, City#city.name]),
-				    NewCity = City#city{owner = Unit#unit.owner},
+				    NewCityUnits = change_city_owner(City#city.units, Unit#unit.owner),
+				    NewCity = City#city{owner = Unit#unit.owner, units = NewCityUnits},
 				    UpdatedTile = Tile#tile{city = NewCity},
 				    UpdatedUnitMap1 = update_tile(Unitmap, UpdatedTile, EX, EY),
 				    {ok, UpdatedUnitMap2} = insert_unit(UpdatedUnitMap1, {SX, SY}, {EX, EY}),
@@ -229,12 +230,24 @@ make_move([{position, EX, EY}], Game, Unit, {startpos, SX, SY}) ->
 		    end;
 
 		((Tile#tile.unit)#unit.name =:= trireme) ->
-		    {ok, UpdatedUnitMap} = insert_unit(Unitmap, {SX, SY}, {EX, EY}),
-		    {ok, Game#game{tilemap = UpdatedUnitMap}};
+		    Cont = Tile#tile.unit,
+		    case same_owner(Unit, Cont) of
+			true ->
+			    {ok, UpdatedUnitMap} = insert_unit(Unitmap, {SX, SY}, {EX, EY}),
+			    {ok, Game#game{tilemap = UpdatedUnitMap}};
+			false ->
+			    {error, "Permission denied"}
+		    end;
 
 		((Tile#tile.unit)#unit.name =:= galley) ->
-		    {ok, UpdatedUnitMap} = insert_unit(Unitmap, {SX, SY}, {EX, EY}),
-		    {ok, Game#game{tilemap = UpdatedUnitMap}};
+		    Cont = Tile#tile.unit,
+		    case same_owner(Unit, Cont) of
+			true ->
+			    {ok, UpdatedUnitMap} = insert_unit(Unitmap, {SX, SY}, {EX, EY}),
+			    {ok, Game#game{tilemap = UpdatedUnitMap}};
+			false ->
+			    {error, "Permission denied"}
+		    end;
 
 		((Tile#tile.unit)#unit.name =:= siege_tower) ->
 		    Tower = Tile#tile.unit,
@@ -258,8 +271,14 @@ make_move([{position, EX, EY}], Game, Unit, {startpos, SX, SY}) ->
 		    end;
 
 		((Tile#tile.unit)#unit.name =:= caravel) ->
-		    {ok, UpdatedUnitMap} = insert_unit(Unitmap, {SX, SY}, {EX, EY}),
-		    {ok, Game#game{tilemap = UpdatedUnitMap}};
+		    Cont = Tile#tile.unit,
+		    case same_owner(Unit, Cont) of
+			true ->
+			    {ok, UpdatedUnitMap} = insert_unit(Unitmap, {SX, SY}, {EX, EY}),
+			    {ok, Game#game{tilemap = UpdatedUnitMap}};
+			false ->
+			    {error, "Permission denied"}
+		    end;
 
 		true ->
 		    case remove_unit(Unitmap, SX, SY) of
@@ -279,6 +298,12 @@ make_move([{position, EX, EY}], Game, Unit, {startpos, SX, SY}) ->
 	{error, Reason} ->
 	    {error, Reason}
     end.
+
+
+change_city_owner(CityUnits, NewOwner) ->
+    [X#unit{owner = NewOwner} || X <- CityUnits].
+
+
 
 %Arguments: Unitmap, FromX, FromY, ToX, ToY, Owner of unit to be inserted
 % Returns error if:
@@ -353,6 +378,7 @@ enter_container(UnitMap, EnteringUnit, {TX, TY}, Type) ->
 % -the Containertile is out of bounds, not a "containerunit" nor a city
 % else calls on leave_ContainerType method and returns {ok, UpdatedUnitMap}
 extract_unit(UnitMap, {CX, CY}, UnitType, MP, {TX, TY}) ->
+    io:format("You want to remove a ~p with ~p manpower from a container~n", [UnitType, MP]),
     CTile = get_tile(UnitMap, CX, CY),
     ToPlace = get_unit(UnitMap, TX, TY),
     if
@@ -566,7 +592,7 @@ attack_unit(UnitMap, TerrainMap, {AttX, AttY}, {DefX, DefY}) -> %GLÖM EJ RANGEK
 			    {ok, FirstUpdatedUnitMap} = remove_unit(UnitMap, AttX, AttY),
 			    if
 				(City_combat =:= true) ->
-				    OldCityUnits = lists:filter(FindUnit, DefCity#city.units),
+				    OldCityUnits = delete_unit(DefCity#city.units, DefUnit),
 				    UpdDefUnit = DefUnit#unit{mp = RemDefMp},
 				    UpdatedCityUnits = [UpdDefUnit | OldCityUnits],
 				    UpdatedCity = DefCity#city{units = UpdatedCityUnits},
@@ -585,7 +611,7 @@ attack_unit(UnitMap, TerrainMap, {AttX, AttY}, {DefX, DefY}) -> %GLÖM EJ RANGEK
 			    {ok, FirstUpdatedUnitMap} = update_unit(UnitMap, UpdAttackUnit, AttX, AttY), 
 			    if
 				(City_combat =:= true) ->
-				    UpdatedCityUnits = lists:delete(DefUnit, DefCity#city.units),
+				    UpdatedCityUnits = delete_unit(DefCity#city.units, DefUnit),
 				    UpdatedCity = DefCity#city{units = UpdatedCityUnits},
 				    {ok, OldTile} = get_tile(FirstUpdatedUnitMap, DefX, DefY),
 				    UpdatedTile = OldTile#tile{city = UpdatedCity},
@@ -600,7 +626,8 @@ attack_unit(UnitMap, TerrainMap, {AttX, AttY}, {DefX, DefY}) -> %GLÖM EJ RANGEK
 			    {ok, FirstUpdatedUnitMap} = update_unit(UnitMap, UpdAttackUnit, AttX, AttY), 
 			    if
 				(City_combat =:= true) ->
-				    OldCityUnits = lists:filter(FindUnit, DefCity#city.units),
+				    %OldCityUnits = lists:filter(FindUnit, DefCity#city.units),
+				    OldCityUnits = delete_unit(DefCity#city.units, DefUnit),
 				    UpdDefUnit = DefUnit#unit{mp = RemDefMp},
 				    UpdatedCityUnits = [UpdDefUnit | OldCityUnits],
 				    UpdatedCity = DefCity#city{units = UpdatedCityUnits},
@@ -616,6 +643,12 @@ attack_unit(UnitMap, TerrainMap, {AttX, AttY}, {DefX, DefY}) -> %GLÖM EJ RANGEK
 		end
 	end
 end.
+
+delete_unit([Unit|Tail], Unit) when Unit =:= Unit ->
+    Tail;
+delete_unit([Unit|Tail], Unit) when Unit =/= Unit ->
+    delete_unit(Tail++Unit, Unit).
+
 
 build_city(UnitMap, {X, Y}, CityName, CityOwner) ->
     Settler = get_unit(UnitMap, X, Y),
@@ -735,9 +768,11 @@ get_defender(Defenders,Best_defender)->
     %Contender to be best Defender!
     Contender = hd(Defenders),
     Contender_stats = unit_attr:get_attr(Contender#unit.name),
+    io:format("Innan round, Contender stats= ~p, MP: ~p~n", [Contender_stats, Contender#unit.mp]),
     Contender_def_power = round(element(3,Contender_stats)*(Contender#unit.mp)/100),
     %Reigning champion!
     Best_def_stats = unit_attr:get_attr(Best_defender#unit.name),
+    io:format("efter första innan andra BDS = ~p, MP: ~p~n", [Best_def_stats, Best_defender#unit.mp]),
     Best_def_power = round(element(3,Best_def_stats)*(Best_defender#unit.mp)/100),
 
     % The winner takes it all!
@@ -749,17 +784,42 @@ get_defender(Defenders,Best_defender)->
 
     end.
 
+contains_def_units([]) ->
+    false;
+contains_def_units([Unit|Rest]) ->
+    case Unit#unit.name =:= siege_tower of
+	true ->
+	    case contains_def_units(Unit#unit.units) of
+		true ->
+		    true;
+		false ->
+		    contains_def_units(Rest)
+	    end;
+	false ->
+	    true
+    end.
+
+
 
 is_empty(#city{units = CityUnits}) ->
-    case CityUnits of
-	[] -> true;
-	_ -> false
-    end;
+    not(contains_def_units(CityUnits));
+
+%    #case CityUnits of
+%	Find_Def_Unit = fun(UR) ->
+%		UR#unit.mp =/= 0
+%	end,
+%	lists:filter(Find_Def_Unit, CityUnits)
+%
+%	[] -> true;
+%	
+%	_ -> false
+ %   end;
 is_empty(#unit{units = TowerUnits}) ->
-    case TowerUnits of
-	[] -> true;
-	_ -> false
-    end.
+    contains_def_units(TowerUnits).
+%case TowerUnits of
+%	[] -> true;
+%	_ -> false
+ %   end.
 
 get_siege_unit(null) -> null;
 get_siege_unit(UR) ->
