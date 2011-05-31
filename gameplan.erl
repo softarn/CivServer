@@ -744,6 +744,8 @@ is_container_unit(#unit{name = Name}) ->
 	_ -> false
     end.
 
+get_container(#tile{city = null, unit = null}) -> none;
+get_container(#tile{city = City}) when City =/= null -> city;
 get_container(#tile{city = City, unit = Unit}) when City =:= null ->
     case Unit#unit.name of
 	trireme -> unit;
@@ -751,8 +753,7 @@ get_container(#tile{city = City, unit = Unit}) when City =:= null ->
 	caravel -> unit;
 	siege_tower -> unit;
 	_ -> none
-    end;
-get_container(#tile{city = City}) when City =/= null -> city.
+    end.
 
 
 % Fetches the best defender from a list of Unit records.
