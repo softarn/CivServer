@@ -591,7 +591,7 @@ attack_unit(UnitMap, TerrainMap, {AttX, AttY}, {DefX, DefY}) -> %GLÖM EJ RANGEK
 
 			    if
 				(City_combat =:= true) ->
-				    OldCityUnits = lists:filter(FindUnit, DefCity#city.units),
+				    OldCityUnits = delete_unit(DefCity#city.units, DefUnit),
 				    UpdDefUnit = DefUnit#unit{mp = RemDefMp},
 				    UpdatedCityUnits = [UpdDefUnit | OldCityUnits],
 				    UpdatedCity = DefCity#city{units = UpdatedCityUnits},
@@ -627,7 +627,7 @@ attack_unit(UnitMap, TerrainMap, {AttX, AttY}, {DefX, DefY}) -> %GLÖM EJ RANGEK
 
 			    if
 				(City_combat =:= true) ->
-				    UpdatedCityUnits = lists:delete(DefUnit, DefCity#city.units),
+				    UpdatedCityUnits = delete_unit(DefCity#city.units, DefUnit),
 				    UpdatedCity = DefCity#city{units = UpdatedCityUnits},
 				    {ok, OldTile} = get_tile(FirstUpdatedUnitMap, DefX, DefY),
 				    UpdatedTile = OldTile#tile{city = UpdatedCity},
@@ -657,7 +657,8 @@ attack_unit(UnitMap, TerrainMap, {AttX, AttY}, {DefX, DefY}) -> %GLÖM EJ RANGEK
 
 			    if
 				(City_combat =:= true) ->
-				    OldCityUnits = lists:filter(FindUnit, DefCity#city.units),
+				    %OldCityUnits = lists:filter(FindUnit, DefCity#city.units),
+				    OldCityUnits = delete_unit(DefCity#city.units, DefUnit),
 				    UpdDefUnit = DefUnit#unit{mp = RemDefMp},
 				    UpdatedCityUnits = [UpdDefUnit | OldCityUnits],
 				    UpdatedCity = DefCity#city{units = UpdatedCityUnits},
@@ -681,6 +682,12 @@ attack_unit(UnitMap, TerrainMap, {AttX, AttY}, {DefX, DefY}) -> %GLÖM EJ RANGEK
 		    end
 	    end
     end.
+
+delete_unit([Unit|Tail], Unit) when Unit =:= Unit ->
+    Tail;
+delete_unit([Unit|Tail], Unit) when Unit =/= Unit ->
+    delete_unit(Tail++Unit, Unit).
+
 
 build_city(UnitMap, {X, Y}, CityName, CityOwner) ->
     Settler = get_unit(UnitMap, X, Y),
