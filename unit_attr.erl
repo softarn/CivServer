@@ -77,5 +77,6 @@ get_attr(Unit)->
 	trireme ->	{50,4,3,1,3,range,naval};		
 	galley ->	{250,30,25,2,3,bombardment,naval};		
 	caravel ->	{100,50,40,3,6,bombardment,naval};
+	siege_tower ->  {0, 0, 0, 0, 1, assault, ground};
 	_-> {error, invalid_unit}
     end.
