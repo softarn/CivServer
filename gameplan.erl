@@ -877,7 +877,7 @@ is_empty(#city{units = CityUnits}) ->
 %	_ -> false
  %   end;
 is_empty(#unit{units = TowerUnits}) ->
-    contains_def_units(TowerUnits).
+    not(contains_def_units(TowerUnits)).
 %case TowerUnits of
 %	[] -> true;
 %	_ -> false
