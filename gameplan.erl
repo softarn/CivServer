@@ -747,6 +747,7 @@ is_container_unit(#unit{name = Name}) ->
 get_container(#tile{city = null, unit = null}) -> none;
 get_container(#tile{city = City}) when City =/= null -> city;
 get_container(#tile{city = City, unit = Unit}) when City =:= null ->
+    io:format("get_container unit: ~p~n", [Unit]),
     case Unit#unit.name of
 	trireme -> unit;
 	galley -> unit;
