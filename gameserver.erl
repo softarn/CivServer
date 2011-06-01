@@ -291,6 +291,7 @@ starting_game(Game) ->
     ?SERVER:update_game(Game),
     broadcastMsg(Game, start_game),
     Players = Game#game.players,
+    io:format("Players ~p~n",[Players]),
     Fun = fun(X) ->
 	    FSM = X#player.fsm_pid,
 	    ?P_FSM:enter_game(FSM, Game)

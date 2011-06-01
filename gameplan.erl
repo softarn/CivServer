@@ -725,7 +725,6 @@ build_city(UnitMap, {X, Y}, CityName, CityOwner) ->
 	    City = #city{name = CityName, owner = CityOwner},
 	    UpdatedTile = Tile#tile{city = City, unit = null},
 	    UpdatedUnitMap1 = update_tile(UnitMap, UpdatedTile, X, Y), 
-	    io:format("~p built a city named ~p at {~p, ~p}~n", [CityOwner, CityName, X, Y]),
 	    {ok, UpdatedUnitMap1}
     end.
 
@@ -742,7 +741,6 @@ disband_unit(UnitMap, {X, Y}, Owner) ->
 		(Unit#unit.owner =/= Owner) ->
 		    {error, "Permission denied"};
 		true ->
-		    io:format("~p disbanded a ~p unit~n", [Owner, Unit#unit.str]),
 		    {ok, UpdatedUnitMap} = remove_unit(UnitMap, X, Y),
 		    {ok, UpdatedUnitMap}
 	    end
@@ -834,11 +832,9 @@ get_city_def(Defenders,Best_defender)->
     %Contender to be best Defender!
     Contender = hd(Defenders),
     Contender_stats = unit_attr:get_attr(Contender#unit.name),
-    io:format("Innan round, Contender stats= ~p, MP: ~p~n", [Contender_stats, Contender#unit.mp]),
     Contender_def_power = round(element(3,Contender_stats)*(Contender#unit.mp)/100),
     %Reigning champion!
     Best_def_stats = unit_attr:get_attr(Best_defender#unit.name),
-    io:format("efter första innan andra BDS = ~p, MP: ~p~n", [Best_def_stats, Best_defender#unit.mp]),
     Best_def_power = round(element(3,Best_def_stats)*(Best_defender#unit.mp)/100),
 
     % The winner takes it all!

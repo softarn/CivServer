@@ -12,8 +12,6 @@
 
 readHeader(Socket) -> % Tar ut den första byten och tolkar som Headern utifrån protokollet. 
     {ok, <<Byte?HEADER>>} = gen_tcp:recv(Socket, 1),
-    io:format("Read the following header: "),
-    io:format("~w\n", [Byte]),
     Byte.
 
 readBoolean(Socket) -> % Tar ut den första byten och tolkar som boolean utifrån protokollet. 
@@ -94,7 +92,6 @@ readElement(Socket, "Player") -> % Lista av Player
 readElement(Socket, "Position") -> % Lista av Position
     X = readInteger(Socket)+1,
     Y = readInteger(Socket)+1,
-    io:format("Läste positionen {~p,~p}~n", [X, Y]),
     {position, X, Y};
 
 readElement(Socket, "Column") -> % Lista av Column
@@ -103,9 +100,7 @@ readElement(Socket, "Column") -> % Lista av Column
 
 
 sendHeader(Socket, Header) ->
-    gen_tcp:send(Socket, <<Header?HEADER>>),
-    io:format("SendHeader sent: "),
-    io:format("~p\n", [Header]).
+    gen_tcp:send(Socket, <<Header?HEADER>>).
 
 sendString(Socket, List) ->
     NewList = List ++ "\0",
@@ -192,7 +187,6 @@ sendPerhaps(Socket, Type, Elem) ->
     end.
 
 sendFailPacket(Socket, FailureID, ReqHeader) -> % 2:Number to identify failure. 3:Head of failed package. NEGATIVT FAILUREID FUNGERAR EJ MED LIST2BINARY 
-    io:format("Created the following failmsg: "),
     FailText = getFailMsg(FailureID), % Text that describes the failure
     sendHeader(Socket, 0),
     sendHeader(Socket, ReqHeader),
