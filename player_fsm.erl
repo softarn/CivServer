@@ -16,7 +16,6 @@ connecting(Player, _StateData) ->
     {next_state, getting_p_info, {NewPlayer, #game{}}}. %2: new state, 3: state-data
 
 getting_p_info({Header, List}, {Player, Game}) -> 
-    io:format("INNE I GETTING P INFO!!!~n"),
     case Header of
 
 	2 -> % Hello World
@@ -50,7 +49,6 @@ getting_p_info({Header, List}, {Player, Game}) ->
     end. %end header
 
 server_lobby({Header, List}, {Player, Game}) ->
-    io:format("INNE I SERVER LOBBY~n"),
     case Header of
 	5 -> % List game request
 	    Games = ?SERVER:list_games(),
@@ -97,7 +95,6 @@ server_lobby({Header, List}, {Player, Game}) ->
     end.
 
 game_lobby({Header, List}, {Player, Game}) ->
-    io:format("INNE I GAME LOBBY~n"),
     case Header of
 
 	11 -> %Change civilization request
@@ -145,7 +142,6 @@ game_lobby({Header, List}, {Player, Game}) ->
     end. %end case header
 
 game_wait({Header, _List}, {Player, Game}) ->
-    io:format("INNE I GAMEWAIT: ~p~n", [Player#player.name]),
     case Header of
 
 	24 -> %Exit game request
